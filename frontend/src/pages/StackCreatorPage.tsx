@@ -209,7 +209,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
     <div className="h-full flex flex-col overflow-y-auto"> {/* Make the page itself scrollable */}
       <div className="flex-1 flex flex-col lg:flex-row gap-8 p-4 sm:p-6"> {/* Added padding here */}
         {/* Left content area: Stack Name Card, Main Editor Panel, and Networks Card */}
-        <div className="flex-1 flex flex-col gap-8 overflow-y-auto no-scrollbar"> {/* Added overflow-y-auto here */}
+        <div className="w-full lg:w-3/5 flex flex-col gap-8 overflow-y-auto no-scrollbar"> {/* Changed to lg:w-3/5 */}
           <StackNameCard
             stackName={stackName}
             setStackName={setStackName}
@@ -284,7 +284,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
         </div>
 
         {/* Right content area (Widgets and Logs) */}
-        <div className="lg:w-1/3 lg:sticky top-6 max-h-[calc(100vh-4.5rem)] h-full flex flex-col gap-6">
+        <div className="w-full lg:w-2/5 lg:sticky top-6 max-h-[calc(100vh-4.5rem)] h-full flex flex-col gap-6"> {/* Changed to lg:w-2/5 */}
           <Suspense fallback={<div className="flex-shrink-0 h-40 flex items-center justify-center"><LoadingSpinner /></div>}>
             <div className="flex-shrink-0">
               <SystemUsageWidget />
