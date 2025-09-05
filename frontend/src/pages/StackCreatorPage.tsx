@@ -206,7 +206,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
 
   return (
     <div className="flex-1 flex flex-col relative">
-      <div className="flex-1 flex flex-col lg:flex-row gap-8 pb-28"> {/* Added pb-28 for the fixed Networks card */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-8"> {/* Removed pb-28 */}
         {/* Left content area (Stack Editor) */}
         <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col`}>
           <fieldset disabled={deploymentId !== null}>
@@ -270,6 +270,14 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
                 <button onClick={addService} className="mt-6 flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none bg-dark-bg text-gray-300 shadow-neo active:shadow-neo-inset">
                   <Plus size={16} /> Add Service
                 </button>
+                {/* Networks Card moved here */}
+                <div className="mt-8">
+                  <NetworksEditorCard
+                    networks={networks}
+                    setNetworks={setNetworks}
+                    disabled={deploymentId !== null}
+                  />
+                </div>
               </div>
             ) : (
               <div className="flex-1 flex flex-col">
@@ -296,17 +304,6 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
           <div className="flex-grow min-h-0">
             <DeploymentLogViewer deploymentId={deploymentId} />
           </div>
-        </div>
-      </div>
-
-      {/* Networks Card - fixed at the bottom */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 p-4">
-        <div className="max-w-7xl mx-auto">
-          <NetworksEditorCard
-            networks={networks}
-            setNetworks={setNetworks}
-            disabled={deploymentId !== null}
-          />
         </div>
       </div>
 
