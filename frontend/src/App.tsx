@@ -1,11 +1,11 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import LoadingSpinner from "./components/LoadingSpinner";
-import { useAuth } from "./hooks/useAuth.jsx";
+import { useAuth } from "./hooks/useAuth";
 import SetupPage from "./pages/SetupPage";
 import LoginPage from "./pages/LoginPage";
 import BottomNavBar from "./components/BottomNavBar";
-import BackgroundManager from "./components/BackgroundManager.jsx";
+import BackgroundManager from "./components/BackgroundManager";
 
 const HomePage = lazy(() => import("./pages/HomePage"));
 const ManagementPage = lazy(() => import("./pages/ManagementPage"));

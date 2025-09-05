@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth.jsx';
+import { useAuth } from '../hooks/useAuth';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const SetupPage = () => {

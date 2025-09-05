@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash } from '../services/api';
-import FileViewerModal from '../components/modals/FileViewerModal.jsx';
+import FileViewerModal from '../components/modals/FileViewerModal';
 import CreateItemModal from '../components/modals/CreateItemModal';
 import RenameItemModal from '../components/modals/RenameItemModal';
 import ShareModal from '../components/modals/ShareModal';

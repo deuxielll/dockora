@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { useSettings } from '../hooks/useSettings.tsx';
+import { useSettings } from '../hooks/useSettings';
 import TimeWidget from '../components/widgets/TimeWidget';
 import SystemUsageWidget from '../components/widgets/SystemUsageWidget';
 import WeatherWidget from '../components/widgets/WeatherWidget';

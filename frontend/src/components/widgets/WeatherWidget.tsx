@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Sun, Cloud, CloudRain, CloudSnow, Wind, Loader, Zap, CloudFog, Droplets, Umbrella, CloudSun } from 'lucide-react';
 import axios from 'axios';
-import { useSettings } from '../../hooks/useSettings.tsx';
+import { useSettings } from '../../hooks/useSettings';
 
 const OwmWeatherIcon = ({ code, ...props }) => {
   if (!code) return <CloudSun {...props} />;
