@@ -10,7 +10,7 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from decorators import login_required
 from helpers import get_user_and_base_path, resolve_user_path, cleanup_trash, resolve_path_for_user
-from models import ShareLink, User, SharedItem, UserFileShare
+from models import ShareLink, User, SharedItem, UserFileShare, Notification # Import Notification
 from extensions import db
 
 files_bp = Blueprint('files', __name__)
@@ -447,6 +447,17 @@ def share_file_with_users():
                     path=path
                 )
                 db.session.add(new_share)
+
+                # Create a notification for the recipient
+                recipient_user = User.query.get(recipient_id)
+                if recipient_user:
+                    notification_message = f"'{os.path.basename(path)}' was shared with you by {sharer_user.username}."
+                    new_notification = Notification(
+                        user_id=recipient_id,
+                        message=notification_message,
+                        type='info'
+                    )
+                    db.session.add(new_notification)
     
     if errors:
         db.session.rollback()
