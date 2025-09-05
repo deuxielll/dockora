@@ -16,8 +16,6 @@ from routes.containers import containers_bp
 from routes.files import files_bp
 from routes.system import system_bp
 from routes.apps import apps_bp, start_app_refresh_scheduler
-from routes.custom_widgets import custom_widgets_bp
-from routes.public_custom_widgets import public_custom_widgets_bp
 
 def create_app():
     app = Flask(__name__, template_folder='templates')
@@ -44,8 +42,6 @@ def create_app():
     app.register_blueprint(files_bp) # Has /api and /shares prefixes
     app.register_blueprint(system_bp, url_prefix='/api')
     app.register_blueprint(apps_bp, url_prefix='/api')
-    app.register_blueprint(custom_widgets_bp, url_prefix='/api')
-    app.register_blueprint(public_custom_widgets_bp)
 
     return app
 
@@ -73,6 +69,7 @@ if __name__ == "__main__":
         exit(1)
 
     with app.app_context():
+        # db.create_all() # Moved to create_app function
         os.makedirs(os.path.realpath('/data/home'), exist_ok=True)
         os.makedirs('/data/.trash', exist_ok=True)
         os.makedirs('/data/avatars', exist_ok=True)
