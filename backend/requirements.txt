@@ -1,0 +1,10 @@
+Flask
+Flask-Cors
+SQLAlchemy
+Flask-SQLAlchemy
+Flask-Bcrypt
+docker
+psutil
+requests
+PyYAML
+gunicorn

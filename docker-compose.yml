@@ -11,7 +11,9 @@ services:
     restart: always
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: dockora-backend
     ports:
       - "5000:5000"
@@ -26,7 +28,9 @@ services:
       SECRET_KEY: 'a-very-secret-key-that-you-should-change'
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: dockora-frontend
     ports:
       - "3000:3000"
