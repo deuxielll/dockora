@@ -8,7 +8,7 @@ import AppLauncherWidget from '../components/widgets/AppLauncherWidget';
 import DeploymentStatusWidget from '../components/widgets/DeploymentStatusWidget';
 import DownloadClientWidget from '../components/widgets/DownloadClientWidget';
 import NetworkingWidget from '../components/widgets/NetworkingWidget';
-import FileActivityWidget from '../components/widgets/FileActivityWidget'; // New import
+import FileActivityWidget from '../components/widgets/FileActivityWidget';
 import { Sun, Moon } from 'lucide-react';
 import LogoutButton from '../components/LogoutButton';
 import NotificationBell from '../components/NotificationBell';
@@ -17,15 +17,16 @@ import { Responsive, WidthProvider } from 'react-grid-layout';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-const WIDGETS = {
-  appLauncher: { component: AppLauncherWidget, title: 'App Launcher', defaultVisible: true, defaultLayout: { h: 4, minH: 4, minW: 1 } },
-  systemUsage: { component: SystemUsageWidget, title: 'System Usage', defaultVisible: true, defaultLayout: { h: 1.5, minH: 1.5, minW: 1 } },
-  networking: { component: NetworkingWidget, title: 'Network Status', defaultVisible: true, defaultLayout: { h: 3, minH: 3, minW: 1 } },
-  time: { component: TimeWidget, title: 'Time & Date', defaultVisible: true, defaultLayout: { h: 2, minH: 2, minW: 1 } },
+// Define WIDGETS_CONFIG here, consistent with WidgetSettings.tsx
+const WIDGETS_CONFIG = {
   deploymentStatus: { component: DeploymentStatusWidget, title: 'Deployment Status', defaultVisible: true, defaultLayout: { h: 2.5, minH: 2, minW: 1 } },
+  systemUsage: { component: SystemUsageWidget, title: 'System Usage', defaultVisible: true, defaultLayout: { h: 1.5, minH: 1.5, minW: 1 } },
   weather: { component: WeatherWidget, title: 'Weather', defaultVisible: true, defaultLayout: { h: 1.5, minH: 1.5, minW: 1 } },
+  time: { component: TimeWidget, title: 'Time & Date', defaultVisible: true, defaultLayout: { h: 2, minH: 2, minW: 1 } },
+  networking: { component: NetworkingWidget, title: 'Network Status', defaultVisible: true, defaultLayout: { h: 3, minH: 3, minW: 1 } },
   downloadClient: { component: DownloadClientWidget, title: 'Download Client', defaultVisible: true, defaultLayout: { h: 3.5, minH: 3, minW: 1 } },
-  fileActivity: { component: FileActivityWidget, title: 'File Activity', defaultVisible: true, defaultLayout: { h: 3, minH: 3, minW: 1 } }, // New widget
+  appLauncher: { component: AppLauncherWidget, title: 'App Launcher', defaultVisible: true, defaultLayout: { h: 4, minH: 4, minW: 1 } },
+  fileActivity: { component: FileActivityWidget, title: 'File Activity', defaultVisible: true, defaultLayout: { h: 3, minH: 3, minW: 1 } },
 };
 
 const HomePage = () => {
@@ -56,7 +57,7 @@ const HomePage = () => {
     } catch (e) { return false; }
   }, [settings.downloadClientConfig]);
 
-  const visibleWidgets = useMemo(() => Object.keys(WIDGETS).filter(key => {
+  const visibleWidgets = useMemo(() => Object.keys(WIDGETS_CONFIG).filter(key => {
     if (key === 'downloadClient' && !isDownloadClientConfigured) return false;
     return widgetVisibility[key] !== false;
   }), [widgetVisibility, isDownloadClientConfigured]);
@@ -68,7 +69,7 @@ const HomePage = () => {
       newLayouts[breakpoint] = [];
       const colY = Array(cols).fill(0);
       visibleWidgets.forEach((key) => {
-        const widgetConfig = WIDGETS[key];
+        const widgetConfig = WIDGETS_CONFIG[key];
         if (!widgetConfig) return;
         const col = colY.indexOf(Math.min(...colY));
         const layoutItem = {
@@ -162,12 +163,12 @@ const HomePage = () => {
           isResizable={!isLayoutLocked}
         >
           {visibleWidgets.map(key => {
-            const WidgetComponent = WIDGETS[key].component;
+            const WidgetComponent = WIDGETS_CONFIG[key].component;
             return (
               <div key={key}>
                 <WidgetWrapper
                   widgetId={key}
-                  title={WIDGETS[key].title}
+                  title={WIDGETS_CONFIG[key].title}
                   onHide={handleHideWidget}
                   isLocked={isLayoutLocked}
                 >

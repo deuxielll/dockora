@@ -1,12 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { useSettings } from '../../hooks/useSettings.tsx';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useSettings } from '../../hooks/useSettings';
 import SettingsCard from './SettingsCard';
+import { Search } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+const WIDGETS_CONFIG = {
+  deploymentStatus: { title: 'Deployment Status', defaultVisible: true },
+  systemUsage: { title: 'System Usage', defaultVisible: true },
+  weather: { title: 'Weather', defaultVisible: true },
+  time: { title: 'Time & Date', defaultVisible: true },
+  networking: { title: 'Network Status', defaultVisible: true },
+  downloadClient: { title: 'Download Client', defaultVisible: true },
+  appLauncher: { title: 'App Launcher', defaultVisible: true },
+  fileActivity: { title: 'File Activity', defaultVisible: true },
+};
 
 const WidgetSettings = () => {
-  const { settings, setSetting } = useSettings();
-  
-  // State for all settings
-  const [backgroundUrl, setBackgroundUrl] = useState('');
+  const { settings, setSetting, isLoading: isSettingsLoading } = useSettings();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [localWidgetVisibility, setLocalWidgetVisibility] = useState({});
   const [weatherProvider, setWeatherProvider] = useState('openmeteo');
   const [weatherApiKey, setWeatherApiKey] = useState('');
   const [downloadClientConfig, setDownloadClientConfig] = useState({
@@ -15,17 +27,17 @@ const WidgetSettings = () => {
     username: '',
     password: ''
   });
-  const [lockLayout, setLockLayout] = useState(false);
-
-  const [success, setSuccess] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (settings) {
-      setBackgroundUrl(settings.backgroundUrl || '');
+      try {
+        setLocalWidgetVisibility(settings.widgetVisibility ? JSON.parse(settings.widgetVisibility) : {});
+      } catch {
+        setLocalWidgetVisibility({});
+      }
       setWeatherProvider(settings.weatherProvider || 'openmeteo');
       setWeatherApiKey(settings.weatherApiKey || '');
-      setLockLayout(settings.lockWidgetLayout === 'true');
       if (settings.downloadClientConfig) {
         try {
           const parsedConfig = JSON.parse(settings.downloadClientConfig);
@@ -37,117 +49,173 @@ const WidgetSettings = () => {
     }
   }, [settings]);
 
+  const handleToggleVisibility = (widgetKey) => {
+    setLocalWidgetVisibility(prev => ({ ...prev, [widgetKey]: !prev[widgetKey] }));
+  };
+
   const handleDownloadClientChange = (e) => {
     const { name, value } = e.target;
     setDownloadClientConfig(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    setSuccess('');
-    setIsLoading(true);
+    setIsSaving(true);
     try {
       const settingsPromises = [
-        setSetting('backgroundUrl', backgroundUrl),
+        setSetting('widgetVisibility', JSON.stringify(localWidgetVisibility)),
         setSetting('weatherProvider', weatherProvider),
         setSetting('weatherApiKey', weatherApiKey),
         setSetting('downloadClientConfig', JSON.stringify(downloadClientConfig)),
-        setSetting('lockWidgetLayout', String(lockLayout))
       ];
       
       await Promise.all(settingsPromises);
-
-      setSuccess('Widget settings saved!');
-      setTimeout(() => setSuccess(''), 3000);
+      toast.success('Widget settings saved!');
     } catch (err) {
       console.error("Failed to save widget settings", err);
+      toast.error('Failed to save widget settings.');
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
-  const inputStyles = "w-full p-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition";
+  const handleReset = async () => {
+    if (window.confirm('Are you sure you want to reset all widget settings to default?')) {
+      setIsSaving(true);
+      try {
+        const defaultVisibility = Object.fromEntries(
+          Object.entries(WIDGETS_CONFIG).map(([key, config]) => [key, config.defaultVisible])
+        );
+        await Promise.all([
+          setSetting('widgetVisibility', JSON.stringify(defaultVisibility)),
+          setSetting('weatherProvider', 'openmeteo'),
+          setSetting('weatherApiKey', ''),
+          setSetting('downloadClientConfig', JSON.stringify({ type: 'none', url: '', username: '', password: '' })),
+          setSetting('widgetLayouts', null) // Also reset layouts
+        ]);
+        toast.success('Widget settings reset to default!');
+      } catch (err) {
+        console.error("Failed to reset widget settings", err);
+        toast.error('Failed to reset widget settings.');
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  const filteredWidgets = useMemo(() => {
+    if (!searchTerm) {
+      return Object.entries(WIDGETS_CONFIG);
+    }
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    return Object.entries(WIDGETS_CONFIG).filter(([key, config]) =>
+      config.title.toLowerCase().includes(lowerCaseSearchTerm)
+    );
+  }, [searchTerm]);
+
+  const showSearchBar = Object.keys(WIDGETS_CONFIG).length > 5; // Adjust threshold as needed
+  const inputStyles = "w-full p-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition placeholder:text-gray-500";
   const buttonStyles = "px-6 py-3 bg-dark-bg text-accent rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
+  const secondaryButtonStyles = "px-6 py-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
+
+  const isWeatherWidgetEnabled = localWidgetVisibility.weather !== false;
+  const isDownloadClientWidgetEnabled = localWidgetVisibility.downloadClient !== false;
 
   return (
-    <SettingsCard title="Widgets & Appearance">
-      <form onSubmit={handleSubmit}>
-        <h4 className="text-lg font-semibold mb-4 text-gray-300">Appearance</h4>
-        <div className="mb-6">
-          <label htmlFor="backgroundUrl" className="block text-sm font-medium mb-2 text-gray-400">Custom Background URL</label>
-          <input type="text" id="backgroundUrl" value={backgroundUrl} onChange={(e) => setBackgroundUrl(e.target.value)} className={inputStyles} placeholder="https://example.com/image.png" />
-          <p className="text-xs text-gray-400 mt-1">Leave blank for the default background.</p>
+    <SettingsCard title="Widgets">
+      <p className="text-sm text-gray-400 mb-6">Manage and customize the widgets displayed on your homepage.</p>
+      
+      {showSearchBar && (
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-200" size={20} />
+          <input
+            type="text"
+            placeholder="Search widgets..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className={`${inputStyles} pl-10`}
+          />
         </div>
+      )}
 
-        <div className="mb-6 flex items-center justify-between p-3 rounded-lg shadow-neo-inset">
-          <div>
-            <label htmlFor="lockLayout" className="font-medium text-gray-300">Lock Widget Layout</label>
-            <p className="text-xs text-gray-400 mt-1">Prevent widgets from being moved or resized.</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setLockLayout(!lockLayout)}
-            className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${lockLayout ? 'bg-accent' : 'bg-gray-600'} shadow-neo-inset`}
-          >
-            <span
-              className={`inline-block w-4 h-4 transform bg-gray-400 rounded-full transition-transform shadow-neo ${lockLayout ? 'translate-x-6' : 'translate-x-1'}`}
-            />
-          </button>
-        </div>
-
-        <hr className="my-8 border-gray-700/50" />
-
-        <h4 className="text-lg font-semibold mb-4 text-gray-300">Weather Widget</h4>
-        <div className="mb-4">
-          <label htmlFor="weatherProvider" className="block text-sm font-medium mb-2 text-gray-400">Weather Provider</label>
-          <select id="weatherProvider" value={weatherProvider} onChange={(e) => setWeatherProvider(e.target.value)} className={inputStyles}>
-            <option value="openmeteo">Open-Meteo (No API Key needed)</option>
-            <option value="openweathermap">OpenWeatherMap (API Key required)</option>
-          </select>
-        </div>
-        {weatherProvider === 'openweathermap' && (
-          <>
-            <p className="text-sm text-gray-400 mb-4">Get a free API key from <a href="https://openweathermap.org/api" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">OpenWeatherMap</a>.</p>
-            <div className="mb-6">
-              <label htmlFor="weatherApiKey" className="block text-sm font-medium mb-2 text-gray-400">API Key</label>
-              <input type="text" id="weatherApiKey" value={weatherApiKey} onChange={(e) => setWeatherApiKey(e.target.value)} className={inputStyles} placeholder="Enter your OpenWeatherMap API key" />
+      <form onSubmit={handleSave}>
+        <div className="space-y-4 mb-6">
+          {filteredWidgets.map(([key, config]) => (
+            <div key={key} className="flex items-center justify-between p-3 rounded-lg shadow-neo-inset">
+              <span className="font-medium text-gray-200">{config.title}</span>
+              <button
+                type="button"
+                onClick={() => handleToggleVisibility(key)}
+                className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${localWidgetVisibility[key] !== false ? 'bg-accent' : 'bg-gray-600'} shadow-neo-inset`}
+              >
+                <span
+                  className={`inline-block w-4 h-4 transform bg-gray-400 rounded-full transition-transform shadow-neo ${localWidgetVisibility[key] !== false ? 'translate-x-6' : 'translate-x-1'}`}
+                />
+              </button>
             </div>
+          ))}
+        </div>
+
+        {isWeatherWidgetEnabled && (
+          <>
+            <hr className="my-8 border-gray-700/50" />
+            <h4 className="text-lg font-semibold mb-4 text-gray-300">Weather Widget Settings</h4>
+            <div className="mb-4">
+              <label htmlFor="weatherProvider" className="block text-sm font-medium mb-2 text-gray-400">Weather Provider</label>
+              <select id="weatherProvider" value={weatherProvider} onChange={(e) => setWeatherProvider(e.target.value)} className={inputStyles}>
+                <option value="openmeteo">Open-Meteo (No API Key needed)</option>
+                <option value="openweathermap">OpenWeatherMap (API Key required)</option>
+              </select>
+            </div>
+            {weatherProvider === 'openweathermap' && (
+              <>
+                <p className="text-sm text-gray-400 mb-4">Get a free API key from <a href="https://openweathermap.org/api" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">OpenWeatherMap</a>.</p>
+                <div className="mb-6">
+                  <label htmlFor="weatherApiKey" className="block text-sm font-medium mb-2 text-gray-400">API Key</label>
+                  <input type="text" id="weatherApiKey" value={weatherApiKey} onChange={(e) => setWeatherApiKey(e.target.value)} className={inputStyles} placeholder="Enter your OpenWeatherMap API key" />
+                </div>
+              </>
+            )}
           </>
         )}
 
-        <hr className="my-8 border-gray-700/50" />
-
-        <h4 className="text-lg font-semibold mb-4 text-gray-300">Download Client Widget</h4>
-        <div className="mb-4">
-          <label htmlFor="clientType" className="block text-sm font-medium mb-2 text-gray-400">Client Type</label>
-          <select id="clientType" name="type" value={downloadClientConfig.type} onChange={handleDownloadClientChange} className={inputStyles}>
-            <option value="none">None</option>
-            <option value="qbittorrent">qBittorrent</option>
-            <option value="transmission">Transmission</option>
-          </select>
-        </div>
-        {downloadClientConfig.type !== 'none' && (
+        {isDownloadClientWidgetEnabled && (
           <>
+            <hr className="my-8 border-gray-700/50" />
+            <h4 className="text-lg font-semibold mb-4 text-gray-300">Download Client Widget Settings</h4>
             <div className="mb-4">
-              <label htmlFor="clientUrl" className="block text-sm font-medium mb-2 text-gray-400">Client URL</label>
-              <input type="url" id="clientUrl" name="url" value={downloadClientConfig.url} onChange={handleDownloadClientChange} className={inputStyles} placeholder="e.g., http://localhost:8080" required />
+              <label htmlFor="clientType" className="block text-sm font-medium mb-2 text-gray-400">Client Type</label>
+              <select id="clientType" name="type" value={downloadClientConfig.type} onChange={handleDownloadClientChange} className={inputStyles}>
+                <option value="none">None</option>
+                <option value="qbittorrent">qBittorrent</option>
+                <option value="transmission">Transmission</option>
+              </select>
             </div>
-            <div className="mb-4">
-              <label htmlFor="clientUsername" className="block text-sm font-medium mb-2 text-gray-400">Username</label>
-              <input type="text" id="clientUsername" name="username" value={downloadClientConfig.username} onChange={handleDownloadClientChange} className={inputStyles} />
-            </div>
-            <div className="mb-6">
-              <label htmlFor="clientPassword" className="block text-sm font-medium mb-2 text-gray-400">Password</label>
-              <input type="password" id="clientPassword" name="password" value={downloadClientConfig.password} onChange={handleDownloadClientChange} className={inputStyles} />
-            </div>
+            {downloadClientConfig.type !== 'none' && (
+              <>
+                <div className="mb-4">
+                  <label htmlFor="clientUrl" className="block text-sm font-medium mb-2 text-gray-400">Client URL</label>
+                  <input type="url" id="clientUrl" name="url" value={downloadClientConfig.url} onChange={handleDownloadClientChange} className={inputStyles} placeholder="e.g., http://localhost:8080" required />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="clientUsername" className="block text-sm font-medium mb-2 text-gray-400">Username</label>
+                  <input type="text" id="clientUsername" name="username" value={downloadClientConfig.username} onChange={handleDownloadClientChange} className={inputStyles} />
+                </div>
+                <div className="mb-6">
+                  <label htmlFor="clientPassword" className="block text-sm font-medium mb-2 text-gray-400">Password</label>
+                  <input type="password" id="clientPassword" name="password" value={downloadClientConfig.password} onChange={handleDownloadClientChange} className={inputStyles} />
+                </div>
+              </>
+            )}
           </>
         )}
-
-        {success && <p className="text-green-600 text-sm my-4 text-center">{success}</p>}
         
-        <div className="flex justify-end mt-8">
-          <button type="submit" className={buttonStyles} disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save Settings'}
+        <div className="flex justify-end gap-4 mt-8">
+          <button type="button" onClick={handleReset} disabled={isSaving || isSettingsLoading} className={secondaryButtonStyles}>
+            Reset to Default
+          </button>
+          <button type="submit" disabled={isSaving || isSettingsLoading} className={buttonStyles}>
+            {isSaving ? 'Saving...' : 'Save Widget Settings'}
           </button>
         </div>
       </form>
