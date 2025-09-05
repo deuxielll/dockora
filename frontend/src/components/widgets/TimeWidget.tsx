@@ -38,7 +38,7 @@ const TimeWidget = () => {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             title={tab.label}
-            className={`p-3 rounded-full transition-all ${activeTab === tab.id ? 'text-accent shadow-neo-inset' : 'text-gray-400 hover:text-gray-200'}`}
+            className={`p-3 rounded-full transition-all ${activeTab === tab.id ? 'text-accent shadow-neo-inset' : 'text-gray-200 hover:text-gray-200'}`}
           >
             <tab.icon size={20} />
           </button>

@@ -127,7 +127,7 @@ const Alarm = () => {
     <div className="h-full flex flex-col">
       <div className="flex justify-between items-center mb-2">
         <h4 className="font-semibold text-gray-200">Alarms</h4>
-        <button onClick={() => setShowForm(!showForm)} className="p-2 bg-dark-bg rounded-full shadow-neo active:shadow-neo-inset"><Plus size={16} /></button>
+        <button onClick={() => setShowForm(!showForm)} className="p-2 bg-dark-bg rounded-full shadow-neo active:shadow-neo-inset text-gray-200"><Plus size={16} /></button>
       </div>
       {showForm && (
         <div className="p-3 mb-2 bg-dark-bg-secondary rounded-lg shadow-neo-inset">
@@ -145,7 +145,7 @@ const Alarm = () => {
           <div key={alarm.id} className={`flex items-center justify-between p-2 rounded-lg ${alarm.enabled ? '' : 'opacity-50'}`}>
             <span className="text-lg font-mono text-gray-200">{alarm.time}</span>
             <div>
-              <button onClick={() => toggleAlarm(alarm.id)} className="p-2">{alarm.enabled ? <Bell size={18} /> : <BellOff size={18} />}</button>
+              <button onClick={() => toggleAlarm(alarm.id)} className="p-2 text-gray-200">{alarm.enabled ? <Bell size={18} /> : <BellOff size={18} />}</button>
               <button onClick={() => deleteAlarm(alarm.id)} className="p-2 text-red-500"><Trash2 size={18} /></button>
             </div>
           </div>
