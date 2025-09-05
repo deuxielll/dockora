@@ -10,3 +10,4 @@ PyYAML==6.0.1
 schedule==1.2.1
 jsonschema==4.19.1
 psycopg2-binary
+gunicorn==20.1.0
