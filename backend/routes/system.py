@@ -12,7 +12,7 @@ import subprocess
 import re
 from datetime import datetime, date, timedelta
 from sqlalchemy import func
-import os # <--- ADDED: Import the os module
+import os
 
 system_bp = Blueprint('system', __name__)
 
@@ -172,14 +172,17 @@ def network_stats():
             elif any(keyword in active_interface.lower() for keyword in ['eth', 'enp', 'ethernet']):
                 connection_type = 'lan'
             
-            # Try to get gateway (platform-dependent)
+            # Try to get gateway using 'ip route show default'
             try:
-                gateways = psutil.net_if_gateways()
-                if 'default' in gateways and socket.AF_INET in gateways['default']:
-                    gateway = gateways['default'][socket.AF_INET][0]
-            except AttributeError: # <--- ADDED: Catch AttributeError for net_if_gateways
-                current_app.logger.warning("Failed to get gateway: module 'psutil' has no attribute 'net_if_gateways'")
-                errors.append("Failed to get gateway (psutil.net_if_gateways not available).")
+                gateway_output = subprocess.run(['ip', 'route', 'show', 'default'], capture_output=True, text=True, check=True)
+                gateway_match = re.search(r'default via (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', gateway_output.stdout)
+                if gateway_match:
+                    gateway = gateway_match.group(1)
+                else:
+                    errors.append("Gateway not found in 'ip route show default' output.")
+            except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                current_app.logger.warning(f"Failed to get gateway via 'ip route': {e}")
+                errors.append(f"Failed to get gateway (ip route command failed).")
             except Exception as e:
                 current_app.logger.warning(f"Failed to get gateway: {e}")
                 errors.append(f"Failed to get gateway: {e}")
@@ -215,7 +218,6 @@ def network_stats():
             daily_usage = NetworkUsage(user_id=user_id, date=today)
             db.session.add(daily_usage)
         
-        # <--- FIX: Ensure uploaded_bytes and downloaded_bytes are not None before adding
         daily_usage.uploaded_bytes = (daily_usage.uploaded_bytes or 0) + bytes_sent_interval
         daily_usage.downloaded_bytes = (daily_usage.downloaded_bytes or 0) + bytes_recv_interval
         db.session.commit()
@@ -254,7 +256,7 @@ def network_stats():
         "daily_download_total": daily_download_total,
         "monthly_upload_total": monthly_upload_total,
         "monthly_download_total": monthly_download_total,
-        "errors": errors # Include collected errors
+        "errors": errors
     })
 
 qbit_session = requests.Session()
