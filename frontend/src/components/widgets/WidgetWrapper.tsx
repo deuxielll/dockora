@@ -1,5 +1,5 @@
 import React from 'react';
-import { EyeOff, GripVertical } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 
 const WidgetWrapper = ({ widgetId, title, onHide, children, isLocked }) => {
   const panelClasses = "bg-dark-bg shadow-neo";
@@ -15,16 +15,7 @@ const WidgetWrapper = ({ widgetId, title, onHide, children, isLocked }) => {
           )}
           <h3 className="font-semibold">{title}</h3>
         </div>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onHide(widgetId);
-          }}
-          className="p-2 rounded-full hover:shadow-neo-inset transition-all text-gray-200"
-          title="Hide Widget"
-        >
-          <EyeOff size={16} className="text-gray-200" />
-        </button>
+        {/* The hide widget button has been removed */}
       </header>
       <div className="p-4 pt-2 flex-grow min-h-0">
         {children}
