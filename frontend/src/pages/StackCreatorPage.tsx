@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { useDeployment } from '../hooks/useDeployment';
 import { createStack } from '../services/api';
 import ServiceEditor from '../components/stackcreator/ServiceEditor';
@@ -8,8 +8,11 @@ import { Plus } from 'lucide-react';
 import yaml from 'js-yaml';
 import KeyValueEditor from '../components/stackcreator/KeyValueEditor';
 import toast from 'react-hot-toast';
-import SystemUsageWidget from '../components/widgets/SystemUsageWidget';
-import NetworkingWidget from '../components/widgets/NetworkingWidget'; // Import NetworkingWidget
+import LoadingSpinner from '../components/LoadingSpinner'; // Ensure LoadingSpinner is imported
+
+// Lazy load widgets
+const SystemUsageWidget = lazy(() => import('../components/widgets/SystemUsageWidget'));
+const NetworkingWidget = lazy(() => import('../components/widgets/NetworkingWidget'));
 
 const StackCreatorPage = ({ onCancel, onSuccess }) => {
   const { deployments, addDeployment, updateDeployment } = useDeployment();
@@ -203,7 +206,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
   return (
     <div className="flex-1 flex flex-col">
       <div className="flex justify-between items-center mb-6 flex-shrink-0">
-        <h2 className="text-2xl font-bold text-gray-200">Create New Stack</h2>
+        {/* Removed h2 tag with "Create New Stack" */}
       </div>
       <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col`}>
         <div className={`grid grid-cols-1 ${deploymentId ? 'lg:grid-cols-3' : ''} gap-8 flex-1`}>
@@ -293,12 +296,14 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
           
           {deploymentId && (
             <div className="lg:sticky top-6 self-start max-h-[calc(100vh-4.5rem)] h-full flex flex-col gap-6">
-              <div className="flex-shrink-0">
-                <SystemUsageWidget />
-              </div>
-              <div className="flex-shrink-0">
-                <NetworkingWidget />
-              </div>
+              <Suspense fallback={<div className="flex-shrink-0 h-40 flex items-center justify-center"><LoadingSpinner /></div>}>
+                <div className="flex-shrink-0">
+                  <SystemUsageWidget />
+                </div>
+                <div className="flex-shrink-0">
+                  <NetworkingWidget />
+                </div>
+              </Suspense>
               <div className="flex-grow min-h-0">
                 <DeploymentLogViewer deploymentId={deploymentId} />
               </div>
