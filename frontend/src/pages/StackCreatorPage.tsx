@@ -11,6 +11,8 @@ import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 import NetworksEditorCard from '../components/stackcreator/NetworksEditorCard';
 import StackNameCard from '../components/stackcreator/StackNameCard';
+import StackControlsCard from '../components/stackcreator/StackControlsCard'; // New import
+import ServicesEditorCard from '../components/stackcreator/ServicesEditorCard'; // New import
 
 // Lazy load widgets
 const SystemUsageWidget = lazy(() => import('../components/widgets/SystemUsageWidget'));
@@ -182,25 +184,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
     }
   };
 
-  const inputStyles = "w-full p-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition";
   const panelClasses = "bg-dark-bg shadow-neo";
-  const primaryButtonStyles = "px-6 py-3 bg-dark-bg text-accent rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
-  const secondaryButtonStyles = "px-6 py-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
-
-  const TabButton = ({ active, onClick, children, disabled = false }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none ${
-        active
-          ? "text-accent shadow-neo-inset"
-          : "text-gray-200 bg-dark-bg shadow-neo hover:shadow-neo-inset"
-      } disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:shadow-none`}
-    >
-      {children}
-    </button>
-  );
 
   const deployment = deployments.find(d => d.id === deploymentId);
   const isFinished = deployment && (deployment.status === 'success' || deployment.status === 'error');
@@ -208,7 +192,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
   return (
     <div className="h-full flex flex-col overflow-y-auto"> {/* Make the page itself scrollable */}
       <div className="flex-1 flex flex-col lg:flex-row gap-8 p-4 sm:p-6"> {/* Added padding here */}
-        {/* Left content area: Stack Name Card, Main Editor Panel, and Networks Card */}
+        {/* Left content area: Stack Name Card, Controls Card, Services Editor Card, and Networks Card */}
         <div className="w-full lg:w-3/5 flex flex-col gap-8 overflow-y-auto no-scrollbar"> {/* Changed to lg:w-3/5 */}
           <StackNameCard
             stackName={stackName}
@@ -216,65 +200,29 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
             disabled={deploymentId !== null}
           />
 
-          <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col`}>
-            <div className="flex justify-between items-center flex-shrink-0">
-              <div className="flex gap-2">
-                <TabButton active={editorMode === 'visual'} onClick={() => handleTabSwitch('visual')} disabled={deploymentId !== null}>Visual Editor</TabButton>
-                <TabButton active={editorMode === 'yaml'} onClick={() => handleTabSwitch('yaml')} disabled={deploymentId !== null}>Paste YAML</TabButton>
-              </div>
-              <div className="flex gap-4">
-                {isFinished ? (
-                  deployment.status === 'success' ? (
-                    <>
-                      <button onClick={() => { setDeploymentId(null); setError(''); }} className={secondaryButtonStyles}>Edit & Deploy Again</button>
-                      <button onClick={onSuccess} className={primaryButtonStyles}>Finish</button>
-                    </>
-                  ) : ( // status === 'error'
-                    <>
-                      <button onClick={onSuccess} className={secondaryButtonStyles}>Close</button>
-                      <button onClick={() => { setDeploymentId(null); setError(''); }} className={primaryButtonStyles}>Edit & Deploy Again</button>
-                    </>
-                  )
-                ) : (
-                  <>
-                    <button onClick={onCancel} disabled={isDeploying} className={secondaryButtonStyles}>Cancel</button>
-                    <button onClick={handleDeploy} disabled={isDeploying || deploymentId !== null} className={primaryButtonStyles}>
-                      {isDeploying ? 'Deploying...' : 'Deploy Stack'}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
+          <StackControlsCard
+            editorMode={editorMode}
+            handleTabSwitch={handleTabSwitch}
+            deploymentId={deploymentId}
+            isDeploying={isDeploying}
+            isFinished={isFinished}
+            deployment={deployment}
+            onCancel={onCancel}
+            onDeploy={handleDeploy} // Pass handleDeploy directly
+            onSuccess={onSuccess}
+            setError={setError} // Pass setError
+          />
 
-            <fieldset disabled={deploymentId !== null} className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
-              {editorMode === 'visual' ? (
-                <div>
-                  <h3 className="text-lg font-semibold mb-4 text-gray-200">Services</h3>
-                  <div className="space-y-6">
-                    {services.map(service => (
-                      <ServiceEditor
-                        key={service.id}
-                        service={service}
-                        updateService={updateService}
-                        removeService={removeService}
-                      />
-                    ))}
-                  </div>
-                  <button onClick={addService} className="mt-6 flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none bg-dark-bg text-gray-300 shadow-neo active:shadow-neo-inset">
-                    <Plus size={16} /> Add Service
-                  </button>
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col">
-                  <label htmlFor="yaml-input" className="block text-lg font-semibold mb-4 text-gray-200">Paste docker-compose.yml</label>
-                  <SimpleCodeEditor
-                    value={rawYaml}
-                    onChange={(e) => setRawYaml(e.target.value)}
-                  />
-                </div>
-              )}
-            </fieldset>
-          </div>
+          <ServicesEditorCard
+            services={services}
+            updateService={updateService}
+            removeService={removeService}
+            addService={addService}
+            editorMode={editorMode}
+            rawYaml={rawYaml}
+            setRawYaml={setRawYaml}
+            disabled={deploymentId !== null}
+          />
 
           <NetworksEditorCard
             networks={networks}
