@@ -10,7 +10,7 @@ const StatCircle = ({ percentage, label }) => {
     : 'text-blue-500';
 
   return (
-    <div className="relative w-28 h-28 filter drop-shadow-neo">
+    <div className="relative w-20 h-20 filter drop-shadow-neo">
       <svg className="w-full h-full" viewBox="0 0 36 36">
         <path
           className="text-gray-700/50"
@@ -35,8 +35,8 @@ const StatCircle = ({ percentage, label }) => {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-shadow-neo">
-        <span className="text-xl font-bold text-gray-200">{Math.round(percentage)}%</span>
-        <span className="text-sm text-gray-200">{label}</span>
+        <span className="text-lg font-bold text-gray-200">{Math.round(percentage)}%</span>
+        <span className="text-xs text-gray-200">{label}</span>
       </div>
     </div>
   );

@@ -147,7 +147,7 @@ const NetworkingWidget = () => {
 
     return (
       <>
-        <div className="flex-grow min-h-[120px] mb-4">
+        <div className="h-24 mb-4">
           <Line options={chartOptions} data={chartData} />
         </div>
         <div className="flex justify-between items-center text-sm mb-4">
@@ -179,6 +179,13 @@ const NetworkingWidget = () => {
               {stats.online_status ? <Signal size={16} className="text-green-500" /> : <WifiOff size={16} className="text-red-500" />}
               <span className={stats.online_status ? "text-green-400" : "text-red-400"}>{stats.online_status ? "Online" : "Offline"}</span>
             </div>
+          </div>
+          <div className="flex justify-between items-center w-full">
+            <div className="flex items-center gap-2">
+              <Zap size={16} className="text-purple-400" />
+              <span>Latency:</span>
+            </div>
+            <span>{typeof stats.ping_latency === 'number' ? `${stats.ping_latency.toFixed(1)} ms` : stats.ping_latency}</span>
           </div>
           <div className="flex justify-between items-center w-full">
             <div className="flex items-center gap-2">
