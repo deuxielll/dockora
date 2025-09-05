@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dockora Share</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a; /* dark-bg */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ffffff; /* text-white */
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background: #252526; /* similar to panelClasses */
+            border-radius: 20px;
+            box-shadow: 10px 10px 20px #1f1f1f, -10px -10px 20px #2f2f34;
+            overflow: hidden;
+        }
+        h1 {
+            font-size: 28px;
+            color: #ffffff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .item-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+            border-top: 1px solid #333;
+        }
+        .item-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #333;
+        }
+        .item-list li:last-child {
+            border-bottom: none;
+        }
+        .item-name {
+            font-weight: bold;
+            color: #ffffff;
+            flex-grow: 1;
+        }
+        .item-size {
+            font-size: 14px;
+            color: #e0e0e0; /* gray-400 */
+            margin-left: 15px;
+        }
+        .item-type {
+            font-size: 12px;
+            color: #c0c0c0; /* gray-500 */
+            margin-left: 10px;
+            text-transform: capitalize;
+        }
+        .download-btn {
+            background: linear-gradient(145deg, #3c8df6, #3374db); /* accent */
+            color: #ffffff;
+            padding: 8px 15px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 3px 3px 6px #1c1c1f, -3px -3px 6px #38383d;
+            display: inline-block;
+            transition: all 0.3s ease-in-out;
+            margin-left: 15px;
+        }
+        .download-btn:hover {
+            opacity: 0.9;
+        }
+        .download-all-btn {
+            display: block;
+            width: fit-content;
+            margin: 30px auto 0;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 30px;
+        }
+        .error-message {
+            color: #f87171; /* red-500 */
+            text-align: center;
+            margin-top: 20px;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #3b82f6; /* accent */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .icon {
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="share-title">Loading Shared Content...</h1>
+        <div id="loading" class="loading-spinner"></div>
+        <p id="error-message" class="error-message" style="display: none;"></p>
+        <ul id="item-list" class="item-list" style="display: none;"></ul>
+        <a id="download-all-link" class="download-btn download-all-btn" style="display: none;">Download All as Zip</a>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin + '/api';
+        const pathParts = window.location.pathname.split('/');
+        const token = pathParts[pathParts.length - 1];
+
+        const shareTitle = document.getElementById('share-title');
+        const loadingSpinner = document.getElementById('loading');
+        const errorMessage = document.getElementById('error-message');
+        const itemList = document.getElementById('item-list');
+        const downloadAllLink = document.getElementById('download-all-link');
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function getIconSvg(type) {
+            if (type === 'dir') {
+                return `<svg class="icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+            }
+            return `<svg class="icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
+        }
+
+        async function fetchSharedContent() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/shares/${token}/details`);
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || 'Failed to fetch shared content.');
+                }
+                const data = await response.json();
+
+                shareTitle.textContent = `Shared: ${data.name}`;
+                
+                if (data.contents && data.contents.length > 0) {
+                    data.contents.forEach(item => {
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `
+                            <div style="display: flex; align-items: center;">
+                                ${getIconSvg(item.type)}
+                                <span class="item-name">${item.name}</span>
+                                <span class="item-type">${item.type}</span>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <span class="item-size">${item.type === 'file' ? formatSize(item.size) : ''}</span>
+                                <a href="${API_BASE_URL}/shares/${token}/download?file=${encodeURIComponent(item.path)}" class="download-btn">Download</a>
+                                ${item.type === 'file' ? `<a href="${API_BASE_URL}/shares/${token}/view?file=${encodeURIComponent(item.path)}" target="_blank" class="download-btn" style="margin-left: 5px;">View</a>` : ''}
+                            </div>
+                        `;
+                        itemList.appendChild(listItem);
+                    });
+                    itemList.style.display = 'block';
+                    downloadAllLink.href = `${API_BASE_URL}/shares/${token}/download`;
+                    downloadAllLink.style.display = 'block';
+                } else {
+                    errorMessage.textContent = 'No items found in this share.';
+                    errorMessage.style.display = 'block';
+                }
+
+            } catch (error) {
+                console.error('Error fetching shared content:', error);
+                shareTitle.textContent = 'Error Loading Share';
+                errorMessage.textContent = error.message || 'Could not load shared content. The link might be invalid or expired.';
+                errorMessage.style.display = 'block';
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        if (token) {
+            fetchSharedContent();
+        } else {
+            shareTitle.textContent = 'Invalid Share Link';
+            errorMessage.textContent = 'No share token provided in the URL.';
+            errorMessage.style.display = 'block';
+            loadingSpinner.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
