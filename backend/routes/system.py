@@ -72,7 +72,12 @@ def network_stats():
     session_upload_total += bytes_sent_interval
     session_download_total += bytes_recv_interval
 
-    ip_address = "N/A"
+    # Initialize network details
+    public_ip = "N/A"
+    local_ip = "N/A"
+    subnet_mask = "N/A"
+    gateway = "N/A"
+    dns_servers = []
     connection_type = "unknown"
     location = "N/A"
     online_status = False
@@ -94,20 +99,13 @@ def network_stats():
                 geo_res.raise_for_status()
                 geo_data = geo_res.json()
                 if geo_data.get('status') == 'success':
-                    ip_address = geo_data.get('query', 'N/A')
+                    public_ip = geo_data.get('query', 'N/A')
                     city = geo_data.get('city')
                     country = geo_data.get('country')
                     if city and country:
                         location = f"{city}, {country}"
             except requests.RequestException:
-                # Fallback to local IP if geo lookup fails
-                try:
-                    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    s.connect(("8.8.8.8", 80))
-                    ip_address = s.getsockname()[0]
-                    s.close()
-                except Exception:
-                    pass
+                pass # Public IP lookup failed, continue with other checks
 
             # Latency and Packet Loss using ping
             try:
@@ -129,7 +127,7 @@ def network_stats():
                 ping_latency = "N/A"
                 packet_loss = "N/A"
 
-        # Get connection type
+        # Get local IP, subnet, gateway, connection type
         stats_if = psutil.net_if_stats()
         addrs = psutil.net_if_addrs()
         active_interface = None
@@ -139,6 +137,8 @@ def network_stats():
                 for addr in addr_list:
                     if addr.family == socket.AF_INET and not addr.address.startswith("127."):
                         active_interface = interface
+                        local_ip = addr.address
+                        subnet_mask = addr.netmask
                         break
             if active_interface:
                 break
@@ -148,7 +148,25 @@ def network_stats():
                 connection_type = 'wifi'
             elif any(keyword in active_interface.lower() for keyword in ['eth', 'enp', 'ethernet']):
                 connection_type = 'lan'
-    except Exception:
+            
+            # Try to get gateway (platform-dependent)
+            try:
+                gateways = psutil.net_if_gateways()
+                if 'default' in gateways and socket.AF_INET in gateways['default']:
+                    gateway = gateways['default'][socket.AF_INET][0]
+            except Exception:
+                pass
+
+        # Get DNS servers from /etc/resolv.conf (Linux-specific)
+        if os.path.exists('/etc/resolv.conf'):
+            with open('/etc/resolv.conf', 'r') as f:
+                for line in f:
+                    if line.startswith('nameserver'):
+                        parts = line.split()
+                        if len(parts) > 1:
+                            dns_servers.append(parts[1])
+    except Exception as e:
+        current_app.logger.error(f"General network stats error: {e}")
         pass
 
     # --- Daily/Monthly Usage Tracking ---
@@ -188,7 +206,11 @@ def network_stats():
     return jsonify({
         "upload_speed": upload_speed,
         "download_speed": download_speed,
-        "ip_address": ip_address,
+        "public_ip": public_ip, # New
+        "local_ip": local_ip, # New
+        "subnet_mask": subnet_mask, # New
+        "gateway": gateway, # New
+        "dns_servers": dns_servers, # New
         "connection_type": connection_type,
         "location": location,
         "online_status": online_status,

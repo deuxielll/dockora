@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wifi, Server, Globe, ArrowDown, ArrowUp, Loader, MapPin, Signal, WifiOff, Zap, Clock, CalendarDays, Calendar } from 'lucide-react';
+import { Wifi, Server, Globe, ArrowDown, ArrowUp, Loader, MapPin, Signal, WifiOff, Zap, Clock, CalendarDays, Calendar, Network, Router, Dns } from 'lucide-react';
 import { getNetworkStats } from '../../services/api';
 import { Line } from 'react-chartjs-2';
 import {
@@ -150,7 +150,7 @@ const NetworkingWidget = () => {
           <div className="flex justify-between items-center w-full">
             <div className="flex items-center gap-2">
               <Globe size={16} />
-              <span>{stats.ip_address}</span>
+              <span>{stats.public_ip}</span>
             </div>
             <div className="flex items-center gap-2">
               {stats.connection_type === 'wifi' && <Wifi size={16} />}
@@ -179,7 +179,47 @@ const NetworkingWidget = () => {
               <span>{typeof stats.packet_loss === 'number' ? `${stats.packet_loss.toFixed(0)}%` : stats.packet_loss}</span>
             </div>
           </div>
-          {/* New: Data Usage */}
+          {/* IP Addresses and DNS */}
+          <div className="mt-4 pt-4 border-t border-gray-700/50 flex flex-col gap-2 text-sm text-gray-400">
+            <p className="font-semibold text-gray-200 mb-2">IP Details:</p>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Network size={16} />
+                <span>Local IP:</span>
+              </div>
+              <span>{stats.local_ip}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Network size={16} />
+                <span>Subnet:</span>
+              </div>
+              <span>{stats.subnet_mask}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Router size={16} />
+                <span>Gateway:</span>
+              </div>
+              <span>{stats.gateway}</span>
+            </div>
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-2">
+                <Dns size={16} />
+                <span>DNS:</span>
+              </div>
+              <div className="text-right">
+                {stats.dns_servers && stats.dns_servers.length > 0 ? (
+                  stats.dns_servers.map((dns, index) => (
+                    <span key={index} className="block">{dns}</span>
+                  ))
+                ) : (
+                  <span>N/A</span>
+                )}
+              </div>
+            </div>
+          </div>
+          {/* Data Usage */}
           <div className="mt-4 pt-4 border-t border-gray-700/50 flex flex-col gap-2 text-sm text-gray-400">
             <p className="font-semibold text-gray-200 mb-2">Data Usage:</p>
             <div className="flex justify-between items-center">
