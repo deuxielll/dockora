@@ -48,10 +48,10 @@ const ImageView = () => {
         <table className="w-full text-left hidden md:table">
           <thead>
             <tr className="border-b border-gray-700/50">
-              <th className="p-4 text-sm font-semibold tracking-wider text-gray-400">Tag</th>
-              <th className="p-4 text-sm font-semibold tracking-wider text-gray-400">ID</th>
-              <th className="p-4 text-sm font-semibold tracking-wider text-gray-400">Size</th>
-              <th className="p-4 text-sm font-semibold tracking-wider text-gray-400 text-right">Actions</th>
+              <th className="p-4 text-sm font-semibold tracking-wider text-gray-200">Tag</th>
+              <th className="p-4 text-sm font-semibold tracking-wider text-gray-200">ID</th>
+              <th className="p-4 text-sm font-semibold tracking-wider text-gray-200">Size</th>
+              <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -59,9 +59,9 @@ const ImageView = () => {
               const isSystemImage = img.tags && img.tags.some(tag => tag.includes('dockora') || tag.includes('postgres'));
               return (
                 <tr key={img.id} className="transition-colors duration-300 hover:shadow-neo-inset">
-                  <td className="p-4 text-sm break-all">{(img.tags && img.tags.length > 0) ? img.tags.join(', ') : '<none>'}</td>
-                  <td className="p-4 font-mono text-xs">{img.id}</td>
-                  <td className="p-4 text-sm">{formatSize(img.size)}</td>
+                  <td className="p-4 text-sm break-all text-gray-200">{(img.tags && img.tags.length > 0) ? img.tags.join(', ') : '<none>'}</td>
+                  <td className="p-4 font-mono text-xs text-gray-300">{img.id}</td>
+                  <td className="p-4 text-sm text-gray-200">{formatSize(img.size)}</td>
                   <td className="p-4 text-right">
                     <button 
                       onClick={() => handleRemove(img.id)} 
@@ -107,11 +107,11 @@ const ImageView = () => {
                 <div className="mt-3 space-y-2 text-xs text-gray-300">
                   <div className="flex items-center gap-2">
                     <Hash size={14} className="text-gray-400" />
-                    <span className="font-mono">{img.id}</span>
+                    <span className="font-mono text-gray-300">{img.id}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <HardDrive size={14} className="text-gray-400" />
-                    <span>{formatSize(img.size)}</span>
+                    <span className="text-gray-200">{formatSize(img.size)}</span>
                   </div>
                 </div>
               </div>
