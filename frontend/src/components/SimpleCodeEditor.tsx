@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 
-const SimpleCodeEditor = ({ value, onChange, placeholder, required = false, disabled = false }) => {
+const SimpleCodeEditor = ({ value, onChange, placeholder, required = false }) => {
   const textareaRef = useRef(null);
   const preRef = useRef(null); // Added ref for pre tag
   const containerRef = useRef(null);
@@ -58,7 +58,6 @@ const SimpleCodeEditor = ({ value, onChange, placeholder, required = false, disa
         className="absolute inset-0 w-full h-full p-3 bg-transparent text-transparent caret-white resize-none outline-none no-scrollbar"
         spellCheck="false"
         required={required}
-        disabled={disabled}
       />
       <pre ref={preRef} className="absolute inset-0 w-full h-full p-3 rounded-lg overflow-hidden pointer-events-none no-scrollbar text-gray-200" aria-hidden="true">
         <code dangerouslySetInnerHTML={{ __html: highlight(value) + '\n' }} />
