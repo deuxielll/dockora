@@ -292,7 +292,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
         </div>
 
         {/* Right content area (Widgets and Logs) */}
-        <div className="lg:w-1/3 lg:sticky top-6 self-start max-h-[calc(100vh-4.5rem)] h-full flex flex-col gap-6">
+        <div className="lg:w-1/3 lg:sticky top-6 max-h-[calc(100vh-4.5rem)] h-full flex flex-col gap-6">
           <Suspense fallback={<div className="flex-shrink-0 h-40 flex items-center justify-center"><LoadingSpinner /></div>}>
             <div className="flex-shrink-0">
               <SystemUsageWidget />
