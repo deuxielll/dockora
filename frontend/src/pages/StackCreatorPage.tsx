@@ -252,9 +252,9 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
             </div>
           </div>
 
-          <fieldset disabled={deploymentId !== null} className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
+          <fieldset disabled={deploymentId !== null} className="flex-1 flex flex-col"> {/* Removed overflow-y-auto from fieldset */}
             {editorMode === 'visual' ? (
-              <div>
+              <div className="flex-1 overflow-y-auto no-scrollbar"> {/* Added flex-1 overflow-y-auto to this div */}
                 <h3 className="text-lg font-semibold mb-4 text-gray-200">Services</h3>
                 <div className="space-y-6">
                   {services.map(service => (
