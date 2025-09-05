@@ -205,107 +205,104 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
 
   return (
     <div className="flex-1 flex flex-col">
-      <div className="flex justify-between items-center mb-6 flex-shrink-0">
-        {/* Removed h2 tag with "Create New Stack" */}
-      </div>
-      <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col`}>
-        <div className={`grid grid-cols-1 ${deploymentId ? 'lg:grid-cols-3' : ''} gap-8 flex-1`}>
-          <div className={`space-y-8 ${deploymentId ? 'lg:col-span-2' : ''} flex-1 flex flex-col`}>
-            <fieldset disabled={deploymentId !== null}>
-              <div>
-                <label htmlFor="stack-name" className="block text-lg font-semibold mb-4 text-gray-200">Stack Name</label>
-                <input
-                  id="stack-name"
-                  type="text"
-                  value={stackName}
-                  onChange={(e) => setStackName(e.target.value)}
-                  className={inputStyles}
-                  placeholder="my-awesome-app"
-                  required
-                />
-              </div>
-            </fieldset>
-
-            <div className="flex justify-between items-center flex-shrink-0">
-              <div className="flex gap-2">
-                <TabButton active={editorMode === 'visual'} onClick={() => handleTabSwitch('visual')} disabled={deploymentId !== null}>Visual Editor</TabButton>
-                <TabButton active={editorMode === 'yaml'} onClick={() => handleTabSwitch('yaml')} disabled={deploymentId !== null}>Paste YAML</TabButton>
-              </div>
-              <div className="flex gap-4">
-                {isFinished ? (
-                  deployment.status === 'success' ? (
-                    <>
-                      <button onClick={() => { setDeploymentId(null); setError(''); }} className={secondaryButtonStyles}>Edit & Deploy Again</button>
-                      <button onClick={onSuccess} className={primaryButtonStyles}>Finish</button>
-                    </>
-                  ) : ( // status === 'error'
-                    <>
-                      <button onClick={onSuccess} className={secondaryButtonStyles}>Close</button>
-                      <button onClick={() => { setDeploymentId(null); setError(''); }} className={primaryButtonStyles}>Edit & Deploy Again</button>
-                    </>
-                  )
-                ) : (
-                  <>
-                    <button onClick={onCancel} disabled={isDeploying} className={secondaryButtonStyles}>Cancel</button>
-                    <button onClick={handleDeploy} disabled={isDeploying || deploymentId !== null} className={primaryButtonStyles}>
-                      {isDeploying ? 'Deploying...' : 'Deploy Stack'}
-                    </button>
-                  </>
-                )}
-              </div>
+      <div className="flex-1 flex flex-col lg:flex-row gap-8"> {/* New wrapper for the two main content areas */}
+        {/* Left content area (Stack Editor) */}
+        <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col`}>
+          <fieldset disabled={deploymentId !== null}>
+            <div>
+              <label htmlFor="stack-name" className="block text-lg font-semibold mb-4 text-gray-200">Stack Name</label>
+              <input
+                id="stack-name"
+                type="text"
+                value={stackName}
+                onChange={(e) => setStackName(e.target.value)}
+                className={inputStyles}
+                placeholder="my-awesome-app"
+                required
+              />
             </div>
+          </fieldset>
 
-            <fieldset disabled={deploymentId !== null} className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
-              {editorMode === 'visual' ? (
-                <div>
-                  <h3 className="text-lg font-semibold mb-4 text-gray-200">Services</h3>
-                  <div className="space-y-6">
-                    {services.map(service => (
-                      <ServiceEditor
-                        key={service.id}
-                        service={service}
-                        updateService={updateService}
-                        removeService={removeService}
-                      />
-                    ))}
-                  </div>
-                  <button onClick={addService} className="mt-6 flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none bg-dark-bg text-gray-300 shadow-neo active:shadow-neo-inset">
-                    <Plus size={16} /> Add Service
-                  </button>
-                  <div className="mt-8">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-200">Networks</h3>
-                    <p className="text-sm text-gray-400 mb-4">Define top-level networks here. You can then assign services to these networks in the service editor.</p>
-                    <KeyValueEditor
-                      items={networks}
-                      setItems={setNetworks}
-                      placeholder="e.g., media-net"
-                    />
-                  </div>
-                </div>
+          <div className="flex justify-between items-center flex-shrink-0">
+            <div className="flex gap-2">
+              <TabButton active={editorMode === 'visual'} onClick={() => handleTabSwitch('visual')} disabled={deploymentId !== null}>Visual Editor</TabButton>
+              <TabButton active={editorMode === 'yaml'} onClick={() => handleTabSwitch('yaml')} disabled={deploymentId !== null}>Paste YAML</TabButton>
+            </div>
+            <div className="flex gap-4">
+              {isFinished ? (
+                deployment.status === 'success' ? (
+                  <>
+                    <button onClick={() => { setDeploymentId(null); setError(''); }} className={secondaryButtonStyles}>Edit & Deploy Again</button>
+                    <button onClick={onSuccess} className={primaryButtonStyles}>Finish</button>
+                  </>
+                ) : ( // status === 'error'
+                  <>
+                    <button onClick={onSuccess} className={secondaryButtonStyles}>Close</button>
+                    <button onClick={() => { setDeploymentId(null); setError(''); }} className={primaryButtonStyles}>Edit & Deploy Again</button>
+                  </>
+                )
               ) : (
-                <div className="flex-1 flex flex-col">
-                  <label htmlFor="yaml-input" className="block text-lg font-semibold mb-4 text-gray-200">Paste docker-compose.yml</label>
-                  <SimpleCodeEditor
-                    value={rawYaml}
-                    onChange={(e) => setRawYaml(e.target.value)}
+                <>
+                  <button onClick={onCancel} disabled={isDeploying} className={secondaryButtonStyles}>Cancel</button>
+                  <button onClick={handleDeploy} disabled={isDeploying || deploymentId !== null} className={primaryButtonStyles}>
+                    {isDeploying ? 'Deploying...' : 'Deploy Stack'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          <fieldset disabled={deploymentId !== null} className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
+            {editorMode === 'visual' ? (
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-200">Services</h3>
+                <div className="space-y-6">
+                  {services.map(service => (
+                    <ServiceEditor
+                      key={service.id}
+                      service={service}
+                      updateService={updateService}
+                      removeService={removeService}
+                    />
+                  ))}
+                </div>
+                <button onClick={addService} className="mt-6 flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none bg-dark-bg text-gray-300 shadow-neo active:shadow-neo-inset">
+                  <Plus size={16} /> Add Service
+                </button>
+                <div className="mt-8">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-200">Networks</h3>
+                  <p className="text-sm text-gray-400 mb-4">Define top-level networks here. You can then assign services to these networks in the service editor.</p>
+                  <KeyValueEditor
+                    items={networks}
+                    setItems={setNetworks}
+                    placeholder="e.g., media-net"
                   />
                 </div>
-              )}
-            </fieldset>
-          </div>
-          
-          <div className="lg:sticky top-6 self-start max-h-[calc(100vh-4.5rem)] h-full flex flex-col gap-6">
-            <Suspense fallback={<div className="flex-shrink-0 h-40 flex items-center justify-center"><LoadingSpinner /></div>}>
-              <div className="flex-shrink-0">
-                <SystemUsageWidget />
               </div>
-              <div className="flex-shrink-0">
-                <NetworkingWidget />
+            ) : (
+              <div className="flex-1 flex flex-col">
+                <label htmlFor="yaml-input" className="block text-lg font-semibold mb-4 text-gray-200">Paste docker-compose.yml</label>
+                <SimpleCodeEditor
+                  value={rawYaml}
+                  onChange={(e) => setRawYaml(e.target.value)}
+                />
               </div>
-            </Suspense>
-            <div className="flex-grow min-h-0">
-              <DeploymentLogViewer deploymentId={deploymentId} />
+            )}
+          </fieldset>
+        </div>
+
+        {/* Right content area (Widgets and Logs) */}
+        <div className="lg:w-1/3 lg:sticky top-6 self-start max-h-[calc(100vh-4.5rem)] h-full flex flex-col gap-6">
+          <Suspense fallback={<div className="flex-shrink-0 h-40 flex items-center justify-center"><LoadingSpinner /></div>}>
+            <div className="flex-shrink-0">
+              <SystemUsageWidget />
             </div>
+            <div className="flex-shrink-0">
+              <NetworkingWidget />
+            </div>
+          </Suspense>
+          <div className="flex-grow min-h-0">
+            <DeploymentLogViewer deploymentId={deploymentId} />
           </div>
         </div>
       </div>
