@@ -50,48 +50,40 @@ def cleanup_trash(user):
             except (json.JSONDecodeError, KeyError, OSError):
                 continue
 
-def resolve_user_path(user_id, user_path, allow_system_root_access=False):
-    """
-    Resolves a user-provided path to a real file system path,
-    applying sandboxing unless system root access is explicitly allowed for an admin.
-
-    :param user_id: The ID of the current user.
-    :param user_path: The path provided by the user (e.g., '/', '/Documents', '/etc').
-    :param allow_system_root_access: If True, and the user is an admin,
-                                     absolute user_paths will be resolved from system root.
-    :return: The resolved real path, or None if invalid/inaccessible.
-    """
+def get_user_and_base_path():
+    user_id = session.get('user_id')
     user = User.query.get(user_id)
     if not user:
-        return None
+        return None, None, None
 
-    # If admin and requesting system root access, treat user_path as absolute from system root
-    if allow_system_root_access and user.role == 'admin' and user_path.startswith('/'):
-        real_path = os.path.realpath(user_path)
-        # Ensure it doesn't escape the actual root (e.g., /../)
-        if not real_path.startswith(os.path.realpath('/')):
-            return None
-        return real_path
-    
-    # For all other cases (regular user, or admin within their home, or relative paths),
-    # resolve relative to the user's home directory and apply sandboxing.
+    # Admins will now also be sandboxed to their home directory for file management
     base_path = os.path.join(USER_HOMES_BASE_DIR, user.username)
-    is_sandboxed = True # All users are sandboxed to their home for non-system-root access
+    is_sandboxed = True # All users, including admins, are sandboxed to their home directory for file operations
+    
+    return user, base_path, is_sandboxed
 
+def resolve_user_path(base_path, is_sandboxed, user_path):
     safe_user_path = user_path.lstrip('/')
     full_path = os.path.join(base_path, safe_user_path)
     real_path = os.path.realpath(full_path)
 
     if is_sandboxed:
-        # Ensure the resolved path is within the user's base directory
         if not real_path.startswith(os.path.realpath(base_path)):
             return None
     
     return real_path
 
-def resolve_path_for_user(target_user_id, user_path, allow_system_root_access=False):
+def resolve_path_for_user(target_user_id, user_path):
     """
     Resolves a file system path for a given user, based on their home directory.
     This is used for shared files, where the path is relative to the sharer's home.
     """
-    return resolve_user_path(target_user_id, user_path, allow_system_root_access)
+    target_user = User.query.get(target_user_id)
+    if not target_user:
+        return None
+
+    # All users, including admins, are sandboxed to their home directory for file operations
+    base_path = os.path.join(USER_HOMES_BASE_DIR, target_user.username)
+    is_sandboxed = True
+    
+    return resolve_user_path(base_path, is_sandboxed, user_path)

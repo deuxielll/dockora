@@ -3,8 +3,8 @@ import os
 import stat
 from datetime import datetime
 from decorators import login_required
-from helpers import resolve_user_path, USER_HOMES_BASE_DIR # Removed get_user_and_base_path
-from models import UserSetting, UserFileShare, User
+from helpers import get_user_and_base_path, resolve_user_path
+from models import UserSetting, UserFileShare
 from extensions import db
 
 file_activity_bp = Blueprint('file_activity', __name__)
@@ -12,16 +12,12 @@ file_activity_bp = Blueprint('file_activity', __name__)
 @file_activity_bp.route("/files/recent-activity", methods=["GET"])
 @login_required
 def get_recent_file_activity():
-    user_id = session.get('user_id')
-    user = User.query.get(user_id)
+    user, base_path, is_sandboxed = get_user_and_base_path()
     if not user:
         return jsonify({"error": "User not found"}), 404
 
     recent_items = []
     max_depth = 3 # Limit recursion depth for performance
-    
-    # Always sandbox recent activity to the user's home directory
-    base_path = os.path.join(USER_HOMES_BASE_DIR, user.username)
     
     for root, dirs, files in os.walk(base_path):
         current_depth = root.count(os.sep) - base_path.count(os.sep)

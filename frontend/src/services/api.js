@@ -81,23 +81,23 @@ export const getStack = (name) => api.get(`/stacks/${name}`);
 export const updateStack = (name, data) => api.put(`/stacks/${name}`, data);
 
 // File Manager
-export const browseFiles = (path, system_root_access = false) => api.get(`/files/browse?path=${encodeURIComponent(path)}&system_root_access=${system_root_access}`);
-export const getFileContent = (path, system_root_access = false) => api.get(`/files/content?path=${encodeURIComponent(path)}&system_root_access=${system_root_access}`);
-export const createItem = (data) => api.post('/files/create', data); // data should include system_root_access
-export const uploadFile = (formData) => api.post('/files/upload', formData, { // formData should include system_root_access
+export const browseFiles = (path) => api.get(`/files/browse?path=${encodeURIComponent(path)}`);
+export const getFileContent = (path) => api.get(`/files/content?path=${encodeURIComponent(path)}`);
+export const createItem = (data) => api.post('/files/create', data);
+export const uploadFile = (formData) => api.post('/files/upload', formData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });
-export const deleteItem = (paths, system_root_access = false) => api.post('/files/delete', { paths, system_root_access });
-export const renameItem = (old_path, new_name, system_root_access = false) => api.post('/files/rename', { old_path, new_name, system_root_access });
-export const moveItems = (source_paths, destination_path, system_root_access = false) => api.post('/files/move', { source_paths, destination_path, system_root_access });
-export const viewFile = (path, system_root_access = false) => api.get(`/files/view?path=${encodeURIComponent(path)}&system_root_access=${system_root_access}`, { responseType: 'blob' });
+export const deleteItem = (paths) => api.post('/files/delete', { paths });
+export const renameItem = (old_path, new_name) => api.post('/files/rename', { old_path, new_name });
+export const moveItems = (source_paths, destination_path) => api.post('/files/move', { source_paths, destination_path });
+export const viewFile = (path) => api.get(`/files/view?path=${encodeURIComponent(path)}`, { responseType: 'blob' });
 
 // Sharing (Public Links)
-export const createShare = (data) => api.post('/files/share', data); // data should include system_root_access
+export const createShare = (data) => api.post('/files/share', data);
 export const deleteShare = (token) => api.post('/files/unshare', { token });
 
 // Sharing (User-to-User)
-export const shareFileWithUsers = (paths, recipient_user_ids, system_root_access = false) => api.post('/files/share-with-user', { paths, recipient_user_ids, system_root_access });
+export const shareFileWithUsers = (paths, recipient_user_ids) => api.post('/files/share-with-user', { paths, recipient_user_ids });
 export const unshareFileWithUsers = (share_ids) => api.post('/files/unshare-with-user', { share_ids });
 export const getSharedWithMeItems = () => api.get('/files/shared-with-me');
 export const viewSharedWithMeFile = (share_id) => api.get(`/files/shared-with-me/view?share_id=${share_id}`, { responseType: 'blob' });

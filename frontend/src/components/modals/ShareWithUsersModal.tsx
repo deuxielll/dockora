@@ -4,7 +4,7 @@ import { getUsers, shareFileWithUsers } from '../../services/api';
 import { useAuth } from '../../hooks/useAuth';
 import toast from 'react-hot-toast';
 
-const ShareWithUsersModal = ({ itemsToShare, onClose, onSuccess, systemRootAccess = false }) => {
+const ShareWithUsersModal = ({ itemsToShare, onClose, onSuccess }) => {
   const { currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [selectedUserIds, setSelectedUserIds] = useState(new Set());
@@ -56,7 +56,7 @@ const ShareWithUsersModal = ({ itemsToShare, onClose, onSuccess, systemRootAcces
         toast.error("Please select at least one user to share with.");
         return;
       }
-      await shareFileWithUsers(itemsToShare, Array.from(selectedUserIds), systemRootAccess);
+      await shareFileWithUsers(itemsToShare, Array.from(selectedUserIds));
       toast.success(`File(s) shared successfully.`);
       onSuccess();
       onClose();

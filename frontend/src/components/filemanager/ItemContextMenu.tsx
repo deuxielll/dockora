@@ -5,12 +5,12 @@ const ItemContextMenu = ({
   contextMenu,
   isTrashView,
   isSharedWithMeView,
-  isMySharesView,
+  isMySharesView, // New prop
   selectedCount,
   singleSelectedItem,
   onView,
-  onSharePublic,
-  onShareWithUsers,
+  onSharePublic, // For public links
+  onShareWithUsers, // For user-to-user sharing
   onCopyPath,
   onRename,
   onDelete,
@@ -41,7 +41,7 @@ const ItemContextMenu = ({
           <li><button onClick={() => { onCopyPath(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Copy size={16} /><span>Copy Path(s)</span></button></li>
           <li><button onClick={() => { onDelete(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md"><Trash2 size={16} /><span>Remove from list ({selectedCount})</span></button></li>
         </ul>
-      ) : isMySharesView ? (
+      ) : isMySharesView ? ( // New context menu for My Shares
         <ul className="space-y-1">
           <li><button onClick={() => { onCopyPath(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Copy size={16} /><span>Copy Path(s)</span></button></li>
           <li><button onClick={() => { onDelete(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md"><Trash2 size={16} /><span>Unshare ({selectedCount})</span></button></li>

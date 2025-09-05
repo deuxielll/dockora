@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, Link, Copy, Trash2, Loader } from "lucide-react";
 import { createShare, deleteShare } from "../../services/api";
 
-const ShareModal = ({ items, onClose, systemRootAccess = false }) => {
+const ShareModal = ({ items, onClose }) => {
   const [token, setToken] = useState(null);
   const [name, setName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -26,7 +26,7 @@ const ShareModal = ({ items, onClose, systemRootAccess = false }) => {
     setIsCreating(true);
     setError('');
     try {
-      const shareRes = await createShare({ paths: items, name, system_root_access: systemRootAccess });
+      const shareRes = await createShare({ paths: items, name });
       setToken(shareRes.data.token);
     } catch (err) {
       setError("Failed to create public link.");

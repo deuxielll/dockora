@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash, getSharedWithMeItems, viewSharedWithMeFile, downloadSharedWithMeFile, getSharedWithMeFileContent, unshareFileWithUsers, getSharedByMeItems, updateLastViewedSharedFilesTimestamp, createShare, deleteShare } from '../services/api';
+import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash, getSharedWithMeItems, viewSharedWithMeFile, downloadSharedWithMeFile, getSharedWithMeFileContent, unshareFileWithUsers, getSharedByMeItems, updateLastViewedSharedFilesTimestamp } from '../services/api'; // Import updateLastViewedSharedFilesTimestamp
 import FileViewerModal from '../components/modals/FileViewerModal';
 import CreateItemModal from '../components/modals/CreateItemModal';
 import RenameItemModal from '../components/modals/RenameItemModal';
@@ -29,7 +29,7 @@ const FileManagerPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const [emptySpaceContextMenu, setEmptySpaceContextMenu] = useState(null);
-  const [selectedItems, setSelectedItems] = useState(new Set());
+  const [selectedItems, setSelectedItems] = useState(new Set()); // Corrected line
   const [selectionAnchor, setSelectionAnchor] = useState(null);
   const [draggedOverItem, setDraggedOverItem] = useState(null);
   const fileInputRef = useRef(null);
@@ -38,33 +38,6 @@ const FileManagerPage = () => {
   const isTrashView = currentPath === 'trash';
   const isSharedWithMeView = currentPath === 'shared-with-me';
   const isMySharesView = currentPath === 'my-shares';
-  const isAdminRootView = currentPath === '/' && currentUser?.role === 'admin' && localStorage.getItem('isAdminRootView') === 'true';
-
-  const handleNavigate = useCallback(async (path, isSystemRoot = false) => {
-    if (isSystemRoot && currentUser?.role === 'admin') {
-      localStorage.setItem('isAdminRootView', 'true');
-      setCurrentPath('/'); // Always set to '/' for system root
-    } else if (path === '/') {
-      localStorage.removeItem('isAdminRootView');
-      setCurrentPath('/'); // Default home for non-admin or regular home for admin
-    } else {
-      localStorage.removeItem('isAdminRootView');
-      setCurrentPath(path);
-    }
-  }, [currentUser]);
-
-  useEffect(() => {
-    // Initialize isAdminRootView state from localStorage on component mount
-    if (currentUser?.role === 'admin' && localStorage.getItem('isAdminRootView') === 'true') {
-      // If currentPath is not '/', it means user navigated away from root, so clear flag
-      if (currentPath !== '/') {
-        localStorage.removeItem('isAdminRootView');
-      }
-    } else {
-      localStorage.removeItem('isAdminRootView');
-    }
-  }, [currentUser, currentPath]);
-
 
   const fetchItems = useCallback(async (path) => {
     setIsLoading(true);
@@ -81,23 +54,17 @@ const FileManagerPage = () => {
         setIsLoading(false);
         return;
       } else {
-        res = await browseFiles(path, isAdminRootView);
+        res = await browseFiles(path);
       }
       setItems(res.data);
       setSelectedItems(new Set());
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to load directory.');
-      // If an error occurs and it's not a special view, try to go to user's home
-      if (path !== '/' && !isTrashView && !isSharedWithMeView && !isMySharesView && !isAdminRootView) {
-        setCurrentPath('/');
-        localStorage.removeItem('isAdminRootView');
-      } else if (isAdminRootView && path !== '/') { // If admin root view and path is not root, reset to root
-        setCurrentPath('/');
-      }
+      if (path !== '/' && path !== 'trash' && path !== 'shared-with-me' && path !== 'my-shares') setCurrentPath('/');
     } finally {
       setIsLoading(false);
     }
-  }, [isAdminRootView, isTrashView, isSharedWithMeView, isMySharesView]);
+  }, []);
 
   const closeAllContextMenus = useCallback(() => {
     setContextMenu(null);
@@ -168,17 +135,12 @@ const FileManagerPage = () => {
   };
 
   const goUp = () => {
-    if (isAdminRootView) {
-      const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
-      setCurrentPath(parentPath === '' ? '/' : parentPath);
-    } else if (currentPath !== '/') {
-      setCurrentPath(currentPath.substring(0, currentPath.lastIndexOf('/')) || '/');
-    }
+    if (currentPath !== '/') setCurrentPath(currentPath.substring(0, currentPath.lastIndexOf('/')) || '/');
   };
 
   const handleCreate = async (name) => {
     try {
-      await createItem({ path: currentPath, name, type: showCreateModal.type, system_root_access: isAdminRootView });
+      await createItem({ path: currentPath, name, type: showCreateModal.type });
       toast.success(`'${name}' created successfully.`);
       setShowCreateModal(null);
       fetchItems(currentPath);
@@ -192,7 +154,6 @@ const FileManagerPage = () => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('path', currentPath);
-      formData.append('system_root_access', isAdminRootView);
       return uploadFile(formData);
     });
     
@@ -244,7 +205,7 @@ const FileManagerPage = () => {
     if (window.confirm(confirmMessage)) {
       try {
         if (isTrashView) await deleteTrashItemsPermanently(itemsToDelete);
-        else await deleteItem(itemsToDelete, isAdminRootView);
+        else await deleteItem(itemsToDelete);
         toast.success(`${itemsToDelete.length} item(s) deleted.`);
         fetchItems(currentPath);
       } catch (err) {
@@ -279,7 +240,7 @@ const FileManagerPage = () => {
 
   const handleRename = async (newName) => {
     try {
-      await renameItem(itemToRename.path, newName, isAdminRootView);
+      await renameItem(itemToRename.path, newName);
       toast.success(`Renamed to '${newName}'.`);
       setItemToRename(null);
       fetchItems(currentPath);
@@ -329,7 +290,7 @@ const FileManagerPage = () => {
     const draggedItems = selectedItems.has(itemIdentifier) ? Array.from(selectedItems) : [itemIdentifier];
     if (!selectedItems.has(itemIdentifier)) setSelectedItems(new Set(draggedItems));
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('application/json', JSON.stringify({ paths: draggedItems, system_root_access: isAdminRootView }));
+    e.dataTransfer.setData('application/json', JSON.stringify(draggedItems));
 
     const dragPreview = document.createElement('div');
     dragPreview.id = 'drag-preview';
@@ -348,19 +309,12 @@ const FileManagerPage = () => {
     e.stopPropagation();
     setDraggedOverItem(null);
     if (dropTargetItem.type !== 'dir' || isTrashView || isSharedWithMeView || isMySharesView) return;
-    const draggedDataJSON = e.dataTransfer.getData('application/json');
-    if (!draggedDataJSON) return;
+    const draggedItemsJSON = e.dataTransfer.getData('application/json');
+    if (!draggedItemsJSON) return;
     try {
-        const { paths: sourcePaths, system_root_access: sourceSystemRootAccess } = JSON.parse(draggedDataJSON);
+        const sourcePaths = JSON.parse(draggedItemsJSON);
         if (sourcePaths.includes(dropTargetItem.path)) return;
-        
-        // If dragging from system root to non-system root, or vice-versa, it's a problem
-        if (sourceSystemRootAccess !== isAdminRootView) {
-          toast.error("Cannot move items between system root and user home directories directly.");
-          return;
-        }
-
-        await moveItems(sourcePaths, dropTargetItem.path, isAdminRootView);
+        await moveItems(sourcePaths, dropTargetItem.path);
         toast.success(`${sourcePaths.length} item(s) moved to ${dropTargetItem.name}`);
         fetchItems(currentPath);
     } catch (err) {
@@ -399,8 +353,7 @@ const FileManagerPage = () => {
         path: item.id,
         type: item.type,
         isShared: true,
-        sharer_name: item.sharer_name,
-        is_system_root_share: item.is_system_root_share // Pass this flag
+        sharer_name: item.sharer_name
     });
   };
 
@@ -424,7 +377,7 @@ const FileManagerPage = () => {
   return (
     <>
       <div className="flex h-full p-4 sm:p-6 pb-28">
-        <Sidebar onNavigate={handleNavigate} currentUser={currentUser} />
+        <Sidebar onNavigate={setCurrentPath} currentUser={currentUser} />
         <div className="flex-1 flex flex-col overflow-hidden ml-6">
           <h2 className="text-2xl font-bold text-gray-200 mb-6">File Manager</h2>
           <div 
@@ -443,7 +396,7 @@ const FileManagerPage = () => {
             )}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4 flex-shrink-0">
               <div className="flex-grow">
-                <Breadcrumbs currentPath={currentPath} setCurrentPath={handleNavigate} isTrashView={isTrashView} isSharedWithMeView={isSharedWithMeView} isMySharesView={isMySharesView} />
+                <Breadcrumbs currentPath={currentPath} setCurrentPath={setCurrentPath} isTrashView={isTrashView} isSharedWithMeView={isSharedWithMeView} isMySharesView={isMySharesView} />
                 {selectedCount > 0 && !isMySharesView && <p className="text-sm text-gray-200 mt-1">{selectedCount} item(s) selected</p>}
               </div>
               {!isMySharesView && (
@@ -501,7 +454,7 @@ const FileManagerPage = () => {
       )}
       {showCreateModal && <CreateItemModal type={showCreateModal.type} onClose={() => setShowCreateModal(null)} onCreate={handleCreate} />}
       {itemToRename && <RenameItemModal item={itemToRename} onClose={() => setItemToRename(null)} onRename={handleRename} />}
-      {itemsToSharePublic && <ShareModal items={itemsToSharePublic} onClose={() => setItemsToSharePublic(null)} systemRootAccess={isAdminRootView} />}
+      {itemsToSharePublic && <ShareModal items={itemsToSharePublic} onClose={() => setItemsToSharePublic(null)} />}
       {itemsToShareWithUsers && (
         <ShareWithUsersModal
           itemsToShare={itemsToShareWithUsers}
@@ -510,7 +463,6 @@ const FileManagerPage = () => {
             setItemsToShareWithUsers(null);
             setSelectedItems(new Set());
           }}
-          systemRootAccess={isAdminRootView}
         />
       )}
       <ItemContextMenu

@@ -8,7 +8,6 @@ import threading
 
 from extensions import db, bcrypt
 from models import User, SystemSetting # Import at least one model to ensure tables are created
-from helpers import USER_HOMES_BASE_DIR # Import USER_HOMES_BASE_DIR
 
 # Import Blueprints
 from routes.auth import auth_bp
@@ -71,7 +70,7 @@ if __name__ == "__main__":
 
     with app.app_context():
         # db.create_all() # Moved to create_app function
-        os.makedirs(os.path.realpath(USER_HOMES_BASE_DIR), exist_ok=True)
+        os.makedirs(os.path.realpath('/data/home'), exist_ok=True)
         os.makedirs('/data/.trash', exist_ok=True)
         os.makedirs('/data/avatars', exist_ok=True)
         
