@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSettings } from '../../hooks/useSettings';
+import { useSettings } from '../../hooks/useSettings.tsx';
 import SettingsCard from './SettingsCard';
 
 const WidgetSettings = () => {

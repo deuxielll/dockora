@@ -3,7 +3,7 @@ import { Search, RefreshCw } from 'lucide-react';
 import { getApps, refreshApps, manageContainer } from '../../services/api';
 import LoadingSpinner from '../LoadingSpinner';
 import AppIcon from '../AppIcon';
-import { useSettings } from '../../hooks/useSettings';
+import { useSettings } from '../../hooks/useSettings.tsx';
 import { useAuth } from '../../hooks/useAuth';
 import ShareAppModal from '../modals/ShareAppModal';
 import AppContextMenu from './AppContextMenu';
