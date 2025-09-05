@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request, send_from_directory, send_file, s
 import os
 import stat
 from decorators import login_required
-from helpers import get_user_and_base_path, resolve_user_path, resolve_path_for_user
+from helpers import resolve_user_path
 from models import User, UserFileShare, Notification
 from extensions import db
 
@@ -12,23 +12,22 @@ user_shares_bp = Blueprint('user_shares', __name__)
 @login_required
 def share_file_with_users():
     sharer_user_id = session.get('user_id')
-    if not sharer_user_id:
-        return jsonify({"error": "Authentication required"}), 401
+    sharer_user = User.query.get(sharer_user_id)
+    if not sharer_user:
+        return jsonify({"error": "Sharer user not found"}), 404
 
     data = request.get_json()
     paths = data.get('paths')
     recipient_user_ids = data.get('recipient_user_ids')
+    requesting_system_root = data.get('system_root_access', False) # From JSON body
 
     if not paths or not isinstance(paths, list) or not recipient_user_ids or not isinstance(recipient_user_ids, list):
         return jsonify({"error": "Paths and recipient user IDs are required"}), 400
     
-    sharer_user, sharer_base_path, sharer_is_sandboxed = get_user_and_base_path()
-    if not sharer_user:
-        return jsonify({"error": "Sharer user not found"}), 404
-
     errors = []
     for path in paths:
-        real_path = resolve_user_path(sharer_base_path, sharer_is_sandboxed, path)
+        # Validate the path from the sharer's perspective
+        real_path = resolve_user_path(sharer_user_id, path, allow_system_root_access=requesting_system_root)
         if not real_path or not os.path.exists(real_path):
             errors.append(f"Item not found or inaccessible: {path}")
             continue
@@ -40,14 +39,16 @@ def share_file_with_users():
             existing_share = UserFileShare.query.filter_by(
                 sharer_user_id=sharer_user_id,
                 recipient_user_id=recipient_id,
-                path=path
+                path=path,
+                is_system_root_share=requesting_system_root # Include this in unique constraint check
             ).first()
 
             if not existing_share:
                 new_share = UserFileShare(
                     sharer_user_id=sharer_user_id,
                     recipient_user_id=recipient_id,
-                    path=path
+                    path=path,
+                    is_system_root_share=requesting_system_root # Store the flag
                 )
                 db.session.add(new_share)
 
@@ -83,6 +84,7 @@ def unshare_file_with_users():
         return jsonify({"error": "Share IDs are required"}), 400
 
     try:
+        # Allow sharer or recipient to remove the share
         deleted_count = UserFileShare.query.filter(
             UserFileShare.id.in_(share_ids),
             (UserFileShare.sharer_user_id == current_user_id) | (UserFileShare.recipient_user_id == current_user_id)
@@ -108,7 +110,8 @@ def get_shared_with_me_items():
     result = []
 
     for share in shared_items:
-        real_path = resolve_path_for_user(share.sharer_user_id, share.path)
+        # Use the stored is_system_root_share flag to resolve the path correctly
+        real_path = resolve_user_path(share.sharer_user_id, share.path, allow_system_root_access=share.is_system_root_share)
         if not real_path or not os.path.exists(real_path):
             # If the original file no longer exists or is inaccessible, skip it
             continue
@@ -130,7 +133,8 @@ def get_shared_with_me_items():
                 "modified_at": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
                 "sharer_id": share.sharer_user_id,
                 "sharer_name": sharer_name,
-                "shared_at": share.shared_at.isoformat()
+                "shared_at": share.shared_at.isoformat(),
+                "is_system_root_share": share.is_system_root_share # Pass the flag to frontend
             })
         except (IOError, OSError):
             continue # Skip if stat fails
@@ -148,7 +152,8 @@ def get_shared_by_me_items():
     result = []
 
     for share in shared_items:
-        real_path = resolve_path_for_user(share.sharer_user_id, share.path)
+        # Use the stored is_system_root_share flag to resolve the path correctly
+        real_path = resolve_user_path(share.sharer_user_id, share.path, allow_system_root_access=share.is_system_root_share)
         if not real_path or not os.path.exists(real_path):
             # If the original file no longer exists or is inaccessible, skip it
             continue
@@ -170,7 +175,8 @@ def get_shared_by_me_items():
                 "modified_at": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
                 "recipient_id": share.recipient_user_id,
                 "recipient_name": recipient_name,
-                "shared_at": share.shared_at.isoformat()
+                "shared_at": share.shared_at.isoformat(),
+                "is_system_root_share": share.is_system_root_share # Pass the flag to frontend
             })
         except (IOError, OSError):
             continue # Skip if stat fails
@@ -190,7 +196,8 @@ def view_shared_with_me_file():
     if not share_entry:
         return jsonify({"error": "Shared item not found or access denied"}), 404
 
-    real_path = resolve_path_for_user(share_entry.sharer_user_id, share_entry.path)
+    # Use the stored is_system_root_share flag to resolve the path correctly
+    real_path = resolve_user_path(share_entry.sharer_user_id, share_entry.path, allow_system_root_access=share_entry.is_system_root_share)
     if not real_path or not os.path.isfile(real_path):
         return jsonify({"error": "File not found or inaccessible"}), 404
     
@@ -212,7 +219,8 @@ def download_shared_with_me_file():
     if not share_entry:
         return jsonify({"error": "Shared item not found or access denied"}), 404
 
-    real_path = resolve_path_for_user(share_entry.sharer_user_id, share_entry.path)
+    # Use the stored is_system_root_share flag to resolve the path correctly
+    real_path = resolve_user_path(share_entry.sharer_user_id, share_entry.path, allow_system_root_access=share_entry.is_system_root_share)
     if not real_path or not os.path.exists(real_path):
         return jsonify({"error": "File not found or inaccessible"}), 404
     
@@ -234,7 +242,8 @@ def get_shared_with_me_file_content():
     if not share_entry:
         return jsonify({"error": "Shared item not found or access denied"}), 404
 
-    real_path = resolve_path_for_user(share_entry.sharer_user_id, share_entry.path)
+    # Use the stored is_system_root_share flag to resolve the path correctly
+    real_path = resolve_user_path(share_entry.sharer_user_id, share_entry.path, allow_system_root_access=share_entry.is_system_root_share)
     if not real_path or not os.path.isfile(real_path):
         return jsonify({"error": "File not found or inaccessible"}), 404
     

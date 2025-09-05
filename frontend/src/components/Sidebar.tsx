@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Video, Music, FileText, Download, Image as GalleryIcon, Trash2, Users, Share2 } from 'lucide-react'; // Import Share2 icon
+import { ChevronLeft, Video, Music, FileText, Download, Image as GalleryIcon, Trash2, Users, Share2, HardDrive } from 'lucide-react'; // Import HardDrive icon
 import SidebarItem from './SidebarItem';
 
 const Sidebar = ({ onNavigate, currentUser }) => {
@@ -17,9 +17,14 @@ const Sidebar = ({ onNavigate, currentUser }) => {
 
     const specialSections = [
         { name: 'Shared with me', icon: Users, path: 'shared-with-me' },
-        { name: 'My Shares', icon: Share2, path: 'my-shares' }, // New entry for managing own shares
+        { name: 'My Shares', icon: Share2, path: 'my-shares' },
         { name: 'Trash', icon: Trash2, path: 'trash' },
     ];
+
+    // Add Root section only for admins
+    if (currentUser && currentUser.role === 'admin') {
+        specialSections.unshift({ name: 'Root', icon: HardDrive, path: '/', special: 'admin-root' });
+    }
 
     const panelClasses = "bg-dark-bg shadow-neo";
 
@@ -49,7 +54,7 @@ const Sidebar = ({ onNavigate, currentUser }) => {
                 {specialSections.map(section => (
                      <div
                         key={section.path}
-                        onClick={() => onNavigate(section.path)}
+                        onClick={() => onNavigate(section.path, section.special === 'admin-root')}
                         title={section.name}
                         className="flex items-center p-3 rounded-lg cursor-pointer hover:shadow-neo-inset"
                     >

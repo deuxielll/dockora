@@ -100,7 +100,8 @@ class UserFileShare(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sharer_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     recipient_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    path = db.Column(db.String(1024), nullable=False) # Path relative to sharer's base path
+    path = db.Column(db.String(1024), nullable=False) # Path as provided by sharer
+    is_system_root_share = db.Column(db.Boolean, default=False, nullable=False) # New column
     shared_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
     __table_args__ = (db.UniqueConstraint('sharer_user_id', 'recipient_user_id', 'path', name='_user_file_share_uc'),)

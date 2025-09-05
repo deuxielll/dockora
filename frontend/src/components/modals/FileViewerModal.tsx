@@ -49,10 +49,10 @@ const FileViewerModal = ({ item, onClose }) => {
             setError('');
             try {
                 if (fileType === 'code') {
-                    const res = await fetchContentApi(item.path);
+                    const res = await fetchContentApi(item.path, item.is_system_root_share); // Pass system_root_access for shared files
                     setTextContent(res.data.content);
                 } else if (fileType === 'video' || fileType === 'audio' || fileType === 'image' || fileType === 'pdf') {
-                    const res = await viewFileApi(item.path);
+                    const res = await viewFileApi(item.path, item.is_system_root_share); // Pass system_root_access for shared files
                     objectUrl = URL.createObjectURL(res.data);
                     setMediaUrl(objectUrl);
                 }
@@ -70,7 +70,7 @@ const FileViewerModal = ({ item, onClose }) => {
                 URL.revokeObjectURL(objectUrl);
             }
         };
-    }, [item.path, fileType, fetchContentApi, viewFileApi]);
+    }, [item.path, fileType, fetchContentApi, viewFileApi, item.is_system_root_share]);
 
     const renderContent = () => {
         if (isLoading) return <div className="flex-grow flex items-center justify-center"><LoadingSpinner /></div>;
