@@ -28,6 +28,7 @@ class User(db.Model):
     received_file_shares = db.relationship('UserFileShare', foreign_keys='UserFileShare.recipient_user_id', backref='recipient', lazy=True, cascade="all, delete-orphan")
     # New relationship for files shared *by* this user
     sent_file_shares = db.relationship('UserFileShare', foreign_keys='UserFileShare.sharer_user_id', backref='sharer', lazy=True, cascade="all, delete-orphan")
+    network_usage = db.relationship('NetworkUsage', backref='user', lazy=True, cascade="all, delete-orphan")
 
 
     def __init__(self, username, password, role='user'):
@@ -123,3 +124,12 @@ class SystemSetting(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.String(100), unique=True, nullable=False)
     value = db.Column(db.Text, nullable=True)
+
+class NetworkUsage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    uploaded_bytes = db.Column(db.BigInteger, default=0, nullable=False)
+    downloaded_bytes = db.Column(db.BigInteger, default=0, nullable=False)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'date', name='_user_date_uc'),)

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wifi, Server, Globe, ArrowDown, ArrowUp, Loader, MapPin, Signal, WifiOff, Zap } from 'lucide-react';
+import { Wifi, Server, Globe, ArrowDown, ArrowUp, Loader, MapPin, Signal, WifiOff, Zap, Clock, CalendarDays, Calendar } from 'lucide-react';
 import { getNetworkStats } from '../../services/api';
 import { Line } from 'react-chartjs-2';
 import {
@@ -21,10 +21,17 @@ ChartJS.register(
   Filler
 );
 
+const formatBytes = (bytes) => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+};
+
 const formatSpeed = (bytes) => {
-  if (bytes < 1024) return `${bytes.toFixed(0)} B/s`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB/s`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB/s`;
+  if (bytes === 0) return '0 B/s';
+  return `${formatBytes(bytes)}/s`;
 };
 
 const MAX_DATA_POINTS = 20;
@@ -157,7 +164,7 @@ const NetworkingWidget = () => {
               <span>{stats.location}</span>
             </div>
           )}
-          {/* New network status details */}
+          {/* Network status details */}
           <div className="flex justify-between items-center w-full mt-2">
             <div className="flex items-center gap-2">
               {stats.online_status ? <Signal size={16} className="text-green-500" /> : <WifiOff size={16} className="text-red-500" />}
@@ -170,6 +177,46 @@ const NetworkingWidget = () => {
             <div className="flex items-center gap-2">
               <span className="text-gray-400">Loss:</span>
               <span>{typeof stats.packet_loss === 'number' ? `${stats.packet_loss.toFixed(0)}%` : stats.packet_loss}</span>
+            </div>
+          </div>
+          {/* New: Data Usage */}
+          <div className="mt-4 pt-4 border-t border-gray-700/50 flex flex-col gap-2 text-sm text-gray-400">
+            <p className="font-semibold text-gray-200 mb-2">Data Usage:</p>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Clock size={16} />
+                <span>Session:</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ArrowDown size={14} className="text-blue-400" />
+                <span>{formatBytes(stats.session_download_total)}</span>
+                <ArrowUp size={14} className="text-green-400" />
+                <span>{formatBytes(stats.session_upload_total)}</span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <CalendarDays size={16} />
+                <span>Daily:</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ArrowDown size={14} className="text-blue-400" />
+                <span>{formatBytes(stats.daily_download_total)}</span>
+                <ArrowUp size={14} className="text-green-400" />
+                <span>{formatBytes(stats.daily_upload_total)}</span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Calendar size={16} />
+                <span>Monthly:</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ArrowDown size={14} className="text-blue-400" />
+                <span>{formatBytes(stats.monthly_download_total)}</span>
+                <ArrowUp size={14} className="text-green-400" />
+                <span>{formatBytes(stats.monthly_upload_total)}</span>
+              </div>
             </div>
           </div>
         </div>

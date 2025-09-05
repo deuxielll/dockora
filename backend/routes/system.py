@@ -1,21 +1,25 @@
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, jsonify, request, session, current_app
 import psutil
 import requests
 import json
 import time
 import socket
 from urllib.parse import urlparse
-from models import UserSetting, SystemSetting
+from models import UserSetting, SystemSetting, NetworkUsage
 from decorators import login_required, admin_required
 from extensions import db
 import subprocess # Added for ping
 import re # Added for parsing ping output
+from datetime import datetime, date, timedelta
+from sqlalchemy import func
 
 system_bp = Blueprint('system', __name__)
 
-# Global state for network speed calculation
+# Global state for network speed calculation and session usage
 last_net_io = psutil.net_io_counters()
 last_time = time.time()
+session_upload_total = 0
+session_download_total = 0
 
 @system_bp.route("/system/smtp-status", methods=["GET"])
 def get_smtp_status():
@@ -46,7 +50,7 @@ def system_stats():
 @system_bp.route("/system/network-stats", methods=["GET"])
 @login_required
 def network_stats():
-    global last_net_io, last_time
+    global last_net_io, last_time, session_upload_total, session_download_total
 
     current_time = time.time()
     current_net_io = psutil.net_io_counters()
@@ -55,21 +59,25 @@ def network_stats():
     if elapsed_time == 0:
         elapsed_time = 1
 
-    bytes_sent = current_net_io.bytes_sent - last_net_io.bytes_sent
-    bytes_recv = current_net_io.bytes_recv - last_net_io.bytes_recv
+    bytes_sent_interval = current_net_io.bytes_sent - last_net_io.bytes_sent
+    bytes_recv_interval = current_net_io.bytes_recv - last_net_io.bytes_recv
 
-    upload_speed = bytes_sent / elapsed_time
-    download_speed = bytes_recv / elapsed_time
+    upload_speed = bytes_sent_interval / elapsed_time
+    download_speed = bytes_recv_interval / elapsed_time
 
     last_net_io = current_net_io
     last_time = current_time
 
+    # Update session totals
+    session_upload_total += bytes_sent_interval
+    session_download_total += bytes_recv_interval
+
     ip_address = "N/A"
     connection_type = "unknown"
     location = "N/A"
-    online_status = False # New: Online/offline status
-    ping_latency = "N/A" # New: Latency
-    packet_loss = "N/A" # New: Packet loss
+    online_status = False
+    ping_latency = "N/A"
+    packet_loss = "N/A"
 
     try:
         # Check online status by trying to reach a reliable external server
@@ -101,23 +109,19 @@ def network_stats():
                 except Exception:
                     pass
 
-            # New: Latency and Packet Loss using ping
+            # Latency and Packet Loss using ping
             try:
-                # Use -c for count, -W for timeout (seconds)
                 ping_output = subprocess.run(['ping', '-c', '4', '-W', '1', '8.8.8.8'], capture_output=True, text=True, check=True)
                 
-                # Parse latency (avg)
                 latency_match = re.search(r'min/avg/max/mdev = [\d.]+/([\d.]+)/[\d.]+/[\d.]+ ms', ping_output.stdout)
                 if latency_match:
                     ping_latency = float(latency_match.group(1))
 
-                # Parse packet loss
                 loss_match = re.search(r'(\d+)% packet loss', ping_output.stdout)
                 if loss_match:
                     packet_loss = float(loss_match.group(1))
 
             except (subprocess.CalledProcessError, FileNotFoundError, AttributeError):
-                # Ping command failed or output not parsed
                 ping_latency = "N/A"
                 packet_loss = "N/A"
             except Exception as e:
@@ -126,12 +130,12 @@ def network_stats():
                 packet_loss = "N/A"
 
         # Get connection type
-        stats = psutil.net_if_stats()
+        stats_if = psutil.net_if_stats()
         addrs = psutil.net_if_addrs()
         active_interface = None
         
         for interface, addr_list in addrs.items():
-            if interface in stats and stats[interface].isup:
+            if interface in stats_if and stats_if[interface].isup:
                 for addr in addr_list:
                     if addr.family == socket.AF_INET and not addr.address.startswith("127."):
                         active_interface = interface
@@ -147,15 +151,55 @@ def network_stats():
     except Exception:
         pass
 
+    # --- Daily/Monthly Usage Tracking ---
+    user_id = session.get('user_id')
+    today = date.today()
+    daily_upload_total = 0
+    daily_download_total = 0
+    monthly_upload_total = 0
+    monthly_download_total = 0
+
+    if user_id:
+        # Update daily usage
+        daily_usage = NetworkUsage.query.filter_by(user_id=user_id, date=today).first()
+        if not daily_usage:
+            daily_usage = NetworkUsage(user_id=user_id, date=today)
+            db.session.add(daily_usage)
+        
+        daily_usage.uploaded_bytes += bytes_sent_interval
+        daily_usage.downloaded_bytes += bytes_recv_interval
+        db.session.commit()
+
+        daily_upload_total = daily_usage.uploaded_bytes
+        daily_download_total = daily_usage.downloaded_bytes
+
+        # Calculate monthly usage
+        start_of_month = today.replace(day=1)
+        monthly_usage_records = NetworkUsage.query.filter(
+            NetworkUsage.user_id == user_id,
+            NetworkUsage.date >= start_of_month,
+            NetworkUsage.date <= today
+        ).all()
+
+        for record in monthly_usage_records:
+            monthly_upload_total += record.uploaded_bytes
+            monthly_download_total += record.downloaded_bytes
+
     return jsonify({
         "upload_speed": upload_speed,
         "download_speed": download_speed,
         "ip_address": ip_address,
         "connection_type": connection_type,
         "location": location,
-        "online_status": online_status, # New
-        "ping_latency": ping_latency, # New
-        "packet_loss": packet_loss # New
+        "online_status": online_status,
+        "ping_latency": ping_latency,
+        "packet_loss": packet_loss,
+        "session_upload_total": session_upload_total,
+        "session_download_total": session_download_total,
+        "daily_upload_total": daily_upload_total,
+        "daily_download_total": daily_download_total,
+        "monthly_upload_total": monthly_upload_total,
+        "monthly_download_total": monthly_download_total,
     })
 
 qbit_session = requests.Session()
