@@ -10,6 +10,7 @@ const WIDGETS = {
   networking: 'Network Status',
   downloadClient: 'Download Client',
   appLauncher: 'App Launcher',
+  fileActivity: 'File Activity', // New widget entry
 };
 
 const HomepageSettings = () => {

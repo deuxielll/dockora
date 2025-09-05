@@ -6,11 +6,11 @@ import json
 import uuid
 import io
 import zipfile
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from decorators import login_required
 from helpers import get_user_and_base_path, resolve_user_path, cleanup_trash, resolve_path_for_user
-from models import ShareLink, User, SharedItem, UserFileShare, Notification
+from models import ShareLink, User, SharedItem, UserFileShare, Notification, UserSetting
 from extensions import db
 
 files_bp = Blueprint('files', __name__)
@@ -651,3 +651,86 @@ def get_shared_with_me_file_content():
             return jsonify({"content": f.read()})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@files_bp.route("/api/files/recent-activity", methods=["GET"])
+@login_required
+def get_recent_file_activity():
+    user, base_path, is_sandboxed = get_user_and_base_path()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    recent_items = []
+    max_depth = 3 # Limit recursion depth for performance
+    
+    for root, dirs, files in os.walk(base_path):
+        current_depth = root.count(os.sep) - base_path.count(os.sep)
+        if current_depth > max_depth:
+            del dirs[:] # Don't recurse further
+
+        for name in files:
+            if name.startswith('.'): continue # Skip hidden files
+            full_path = os.path.join(root, name)
+            try:
+                stat_info = os.stat(full_path)
+                relative_path = '/' + os.path.relpath(full_path, base_path).replace('\\', '/')
+                recent_items.append({
+                    "name": name,
+                    "path": relative_path,
+                    "type": "file",
+                    "modified_at": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
+                })
+            except (IOError, OSError):
+                continue
+        
+        for name in dirs:
+            if name.startswith('.'): continue # Skip hidden directories
+            full_path = os.path.join(root, name)
+            try:
+                stat_info = os.stat(full_path)
+                relative_path = '/' + os.path.relpath(full_path, base_path).replace('\\', '/')
+                recent_items.append({
+                    "name": name,
+                    "path": relative_path,
+                    "type": "dir",
+                    "modified_at": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
+                })
+            except (IOError, OSError):
+                continue
+
+    # Sort by modified_at descending and take the top 5
+    recent_items.sort(key=lambda x: x['modified_at'], reverse=True)
+    return jsonify(recent_items[:5])
+
+@files_bp.route("/api/files/new-shared-count", methods=["GET"])
+@login_required
+def get_new_shared_files_count():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
+    last_viewed_setting = UserSetting.query.filter_by(user_id=user_id, key='lastViewedSharedFilesTimestamp').first()
+    last_viewed_timestamp = datetime.fromisoformat(last_viewed_setting.value) if last_viewed_setting and last_viewed_setting.value else datetime.min
+
+    new_shares_count = UserFileShare.query.filter(
+        UserFileShare.recipient_user_id == user_id,
+        UserFileShare.shared_at > last_viewed_timestamp
+    ).count()
+
+    return jsonify({"count": new_shares_count})
+
+@files_bp.route("/api/files/update-last-viewed-shared", methods=["POST"])
+@login_required
+def update_last_viewed_shared_files_timestamp():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
+    setting = UserSetting.query.filter_by(user_id=user_id, key='lastViewedSharedFilesTimestamp').first()
+    if setting:
+        setting.value = datetime.utcnow().isoformat()
+    else:
+        setting = UserSetting(user_id=user_id, key='lastViewedSharedFilesTimestamp', value=datetime.utcnow().isoformat())
+        db.session.add(setting)
+    
+    db.session.commit()
+    return jsonify({"success": True})

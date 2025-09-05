@@ -8,6 +8,7 @@ import AppLauncherWidget from '../components/widgets/AppLauncherWidget';
 import DeploymentStatusWidget from '../components/widgets/DeploymentStatusWidget';
 import DownloadClientWidget from '../components/widgets/DownloadClientWidget';
 import NetworkingWidget from '../components/widgets/NetworkingWidget';
+import FileActivityWidget from '../components/widgets/FileActivityWidget'; // New import
 import { Sun, Moon } from 'lucide-react';
 import LogoutButton from '../components/LogoutButton';
 import NotificationBell from '../components/NotificationBell';
@@ -24,6 +25,7 @@ const WIDGETS = {
   deploymentStatus: { component: DeploymentStatusWidget, title: 'Deployment Status', defaultVisible: true, defaultLayout: { h: 2.5, minH: 2, minW: 1 } },
   weather: { component: WeatherWidget, title: 'Weather', defaultVisible: true, defaultLayout: { h: 1.5, minH: 1.5, minW: 1 } },
   downloadClient: { component: DownloadClientWidget, title: 'Download Client', defaultVisible: true, defaultLayout: { h: 3.5, minH: 3, minW: 1 } },
+  fileActivity: { component: FileActivityWidget, title: 'File Activity', defaultVisible: true, defaultLayout: { h: 3, minH: 3, minW: 1 } }, // New widget
 };
 
 const HomePage = () => {
