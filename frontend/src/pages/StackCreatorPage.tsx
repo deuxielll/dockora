@@ -210,22 +210,24 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
       </div>
       <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col`}>
         <div className={`grid grid-cols-1 ${deploymentId ? 'lg:grid-cols-3' : ''} gap-8 flex-1`}>
+          {/* Left Column: Editor and Controls */}
           <div className={`space-y-8 ${deploymentId ? 'lg:col-span-2' : ''} flex-1 flex flex-col`}>
-            <fieldset disabled={deploymentId !== null}>
-              <div>
-                <label htmlFor="stack-name" className="block text-lg font-semibold mb-4 text-gray-200">Stack Name</label>
-                <input
-                  id="stack-name"
-                  type="text"
-                  value={stackName}
-                  onChange={(e) => setStackName(e.target.value)}
-                  className={inputStyles}
-                  placeholder="my-awesome-app"
-                  required
-                />
-              </div>
-            </fieldset>
+            {/* Sticky Top: Stack Name */}
+            <div className="flex-shrink-0">
+              <label htmlFor="stack-name" className="block text-lg font-semibold mb-4 text-gray-200">Stack Name</label>
+              <input
+                id="stack-name"
+                type="text"
+                value={stackName}
+                onChange={(e) => setStackName(e.target.value)}
+                className={inputStyles}
+                placeholder="my-awesome-app"
+                required
+                disabled={deploymentId !== null}
+              />
+            </div>
 
+            {/* Sticky Middle: Tabs and Action Buttons */}
             <div className="flex justify-between items-center flex-shrink-0">
               <div className="flex gap-2">
                 <TabButton active={editorMode === 'visual'} onClick={() => handleTabSwitch('visual')} disabled={deploymentId !== null}>Visual Editor</TabButton>
@@ -255,32 +257,19 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
               </div>
             </div>
 
-            <fieldset disabled={deploymentId !== null} className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
+            {/* Scrollable Content Area */}
+            <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
               {editorMode === 'visual' ? (
-                <div>
+                <div className="space-y-6 pb-4">
                   <h3 className="text-lg font-semibold mb-4 text-gray-200">Services</h3>
-                  <div className="space-y-6">
-                    {services.map(service => (
-                      <ServiceEditor
-                        key={service.id}
-                        service={service}
-                        updateService={updateService}
-                        removeService={removeService}
-                      />
-                    ))}
-                  </div>
-                  <button onClick={addService} className="mt-6 flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none bg-dark-bg text-gray-300 shadow-neo active:shadow-neo-inset">
-                    <Plus size={16} /> Add Service
-                  </button>
-                  <div className="mt-8">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-200">Networks</h3>
-                    <p className="text-sm text-gray-400 mb-4">Define top-level networks here. You can then assign services to these networks in the service editor.</p>
-                    <KeyValueEditor
-                      items={networks}
-                      setItems={setNetworks}
-                      placeholder="e.g., media-net"
+                  {services.map(service => (
+                    <ServiceEditor
+                      key={service.id}
+                      service={service}
+                      updateService={updateService}
+                      removeService={removeService}
                     />
-                  </div>
+                  ))}
                 </div>
               ) : (
                 <div className="flex-1 flex flex-col">
@@ -288,12 +277,33 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
                   <SimpleCodeEditor
                     value={rawYaml}
                     onChange={(e) => setRawYaml(e.target.value)}
+                    disabled={deploymentId !== null}
                   />
                 </div>
               )}
-            </fieldset>
+
+              {/* Sticky Bottom: Add Service Button and Networks Section */}
+              <div className="flex-shrink-0 pt-4 border-t border-gray-700/50">
+                {editorMode === 'visual' && (
+                  <button onClick={addService} className="mb-6 flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none bg-dark-bg text-gray-300 shadow-neo active:shadow-neo-inset" disabled={deploymentId !== null}>
+                    <Plus size={16} /> Add Service
+                  </button>
+                )}
+                <div className="mt-8">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-200">Networks</h3>
+                  <p className="text-sm text-gray-400 mb-4">Define top-level networks here. You can then assign services to these networks in the service editor.</p>
+                  <KeyValueEditor
+                    items={networks}
+                    setItems={setNetworks}
+                    placeholder="e.g., media-net"
+                    disabled={deploymentId !== null}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
           
+          {/* Right Column: Widgets and Deployment Logs (Sticky) */}
           {deploymentId && (
             <div className="lg:sticky top-6 self-start max-h-[calc(100vh-4.5rem)] h-full flex flex-col gap-6">
               <Suspense fallback={<div className="flex-shrink-0 h-40 flex items-center justify-center"><LoadingSpinner /></div>}>

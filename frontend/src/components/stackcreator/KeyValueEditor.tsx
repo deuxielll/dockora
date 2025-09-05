@@ -1,7 +1,7 @@
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 
-const KeyValueEditor = ({ items, setItems, placeholder, title }) => {
+const KeyValueEditor = ({ items, setItems, placeholder, title, disabled = false }) => {
   const handleItemChange = (index, value) => {
     const newItems = [...items];
     newItems[index].value = value;
@@ -31,14 +31,15 @@ const KeyValueEditor = ({ items, setItems, placeholder, title }) => {
               onChange={(e) => handleItemChange(index, e.target.value)}
               className={inputStyles}
               placeholder={placeholder}
+              disabled={disabled}
             />
-            <button type="button" onClick={() => removeItem(index)} className={`${iconButtonStyles} text-red-500`}>
+            <button type="button" onClick={() => removeItem(index)} className={`${iconButtonStyles} text-red-500`} disabled={disabled}>
               <Trash2 size={16} />
             </button>
           </div>
         ))}
       </div>
-      <button type="button" onClick={addItem} className="flex items-center gap-2 text-sm font-semibold text-accent mt-2 p-2 rounded-lg hover:bg-blue-900/30 transition-colors">
+      <button type="button" onClick={addItem} className="flex items-center gap-2 text-sm font-semibold text-accent mt-2 p-2 rounded-lg hover:bg-blue-900/30 transition-colors" disabled={disabled}>
         <Plus size={16} /> Add
       </button>
     </div>
