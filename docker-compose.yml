@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:13
+    container_name: dockora-db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: dockora
+    volumes:
+      - postgres_data_v2:/var/lib/postgresql/data
+    restart: always
+
+  backend:
+    build: ./backend
+    container_name: dockora-backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - dockora_data:/data
+    restart: always
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://admin:password@db:5432/dockora
+      SECRET_KEY: 'a-very-secret-key-that-you-should-change'
+
+  frontend:
+    build: ./frontend
+    container_name: dockora-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data_v2:
+  dockora_data:

@@ -1,0 +1,12 @@
+{
+  "name": "dockora-root",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter dockora dev"
+  },
+  "dependencies": {
+    "postcss-import": "^16.1.1",
+    "react-grid-layout": "^1.5.2",
+    "react-resizable": "^3.0.5"
+  }
+}

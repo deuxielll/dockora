@@ -1,0 +1,158 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useLocalStorage } from '../../hooks/useLocalStorage';
+import { useInterval } from '../../hooks/useInterval';
+import { Plus, Trash2, Bell, BellOff, Timer } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+let audioContext;
+let oscillator;
+
+const playAlarmSound = () => {
+  if (oscillator) return;
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  oscillator.type = 'square';
+  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+  oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+  oscillator.start();
+};
+
+const stopAlarmSound = () => {
+  if (oscillator) {
+    oscillator.stop();
+    oscillator = null;
+  }
+  if (audioContext) {
+    audioContext.close();
+    audioContext = null;
+  }
+};
+
+const Alarm = () => {
+  const [alarms, setAlarms] = useLocalStorage('dockora-alarms', []);
+  const [time, setTime] = useState(new Date());
+  const [ringingAlarm, setRingingAlarm] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [newAlarmTime, setNewAlarmTime] = useState('07:00');
+  const [newAlarmDays, setNewAlarmDays] = useState([]);
+
+  useInterval(() => setTime(new Date()), 1000);
+
+  useEffect(() => {
+    if (ringingAlarm) {
+      const interval = setInterval(playAlarmSound, 600);
+      return () => {
+        clearInterval(interval);
+        stopAlarmSound();
+      };
+    }
+  }, [ringingAlarm]);
+
+  useInterval(() => {
+    if (ringingAlarm) return;
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const currentDay = now.getDay();
+
+    alarms.forEach(alarm => {
+      const isSnoozed = alarm.snoozedUntil && alarm.snoozedUntil > now.getTime();
+      if (alarm.enabled && !isSnoozed && alarm.time === currentTime) {
+        const repeatsToday = alarm.days.length === 0 || alarm.days.includes(currentDay);
+        if (repeatsToday) {
+          setRingingAlarm(alarm);
+        }
+      }
+    });
+  }, 1000);
+
+  const handleAddAlarm = () => {
+    const newAlarm = {
+      id: Date.now(),
+      time: newAlarmTime,
+      days: newAlarmDays,
+      enabled: true,
+      snoozedUntil: null,
+    };
+    setAlarms([...alarms, newAlarm]);
+    setShowForm(false);
+    setNewAlarmTime('07:00');
+    setNewAlarmDays([]);
+    toast.success(`Alarm set for ${newAlarmTime}.`);
+  };
+
+  const toggleAlarm = (id) => {
+    setAlarms(alarms.map(a => a.id === id ? { ...a, enabled: !a.enabled } : a));
+  };
+
+  const deleteAlarm = (id) => {
+    setAlarms(alarms.filter(a => a.id !== id));
+  };
+
+  const handleSnooze = () => {
+    const snoozedUntil = new Date().getTime() + 5 * 60 * 1000; // 5 minutes
+    setAlarms(alarms.map(a => a.id === ringingAlarm.id ? { ...a, snoozedUntil } : a));
+    setRingingAlarm(null);
+  };
+
+  const handleDismiss = () => {
+    if (ringingAlarm.days.length === 0) {
+      toggleAlarm(ringingAlarm.id); // Disable one-time alarms
+    }
+    setRingingAlarm(null);
+  };
+
+  const toggleDay = (day) => {
+    setNewAlarmDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
+  };
+
+  const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+  if (ringingAlarm) {
+    return (
+      <div className="text-center flex flex-col items-center justify-center h-full">
+        <Bell size={48} className="text-yellow-500 animate-pulse mb-4" />
+        <p className="text-2xl font-bold">{ringingAlarm.time}</p>
+        <div className="flex gap-4 mt-6">
+          <button onClick={handleSnooze} className="flex items-center gap-2 px-4 py-2 bg-dark-bg text-gray-300 rounded-lg shadow-neo active:shadow-neo-inset"><Timer size={16} /> Snooze</button>
+          <button onClick={handleDismiss} className="px-4 py-2 bg-dark-bg text-accent rounded-lg shadow-neo active:shadow-neo-inset">Dismiss</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex justify-between items-center mb-2">
+        <h4 className="font-semibold text-gray-200">Alarms</h4>
+        <button onClick={() => setShowForm(!showForm)} className="p-2 bg-dark-bg rounded-full shadow-neo active:shadow-neo-inset"><Plus size={16} /></button>
+      </div>
+      {showForm && (
+        <div className="p-3 mb-2 bg-dark-bg-secondary rounded-lg shadow-neo-inset">
+          <input type="time" value={newAlarmTime} onChange={e => setNewAlarmTime(e.target.value)} className="w-full p-2 bg-dark-bg rounded-lg shadow-neo-inset mb-2" />
+          <div className="flex justify-center gap-1 mb-3">
+            {dayLabels.map((label, index) => (
+              <button key={index} onClick={() => toggleDay((index + 7 - 1) % 7)} className={`w-7 h-7 text-xs rounded-full transition-all ${newAlarmDays.includes((index + 7 - 1) % 7) ? 'bg-accent text-white shadow-neo' : 'bg-dark-bg shadow-neo-inset'}`}>{label}</button>
+            ))}
+          </div>
+          <button onClick={handleAddAlarm} className="w-full px-4 py-2 bg-dark-bg text-accent rounded-lg shadow-neo active:shadow-neo-inset text-sm font-semibold">Add Alarm</button>
+        </div>
+      )}
+      <div className="flex-grow overflow-y-auto space-y-2 pr-1 no-scrollbar">
+        {alarms.map(alarm => (
+          <div key={alarm.id} className={`flex items-center justify-between p-2 rounded-lg ${alarm.enabled ? '' : 'opacity-50'}`}>
+            <span className="text-lg font-mono">{alarm.time}</span>
+            <div>
+              <button onClick={() => toggleAlarm(alarm.id)} className="p-2">{alarm.enabled ? <Bell size={18} /> : <BellOff size={18} />}</button>
+              <button onClick={() => deleteAlarm(alarm.id)} className="p-2 text-red-500"><Trash2 size={18} /></button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default Alarm;
