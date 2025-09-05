@@ -7,7 +7,7 @@ const WidgetWrapper = ({ widgetId, title, onHide, children, isLocked }) => {
   return (
     <div className={`${panelClasses} rounded-2xl flex flex-col overflow-hidden h-full`}>
       <header className="flex justify-between items-center p-4 pb-2 flex-shrink-0">
-        <div className="flex items-center gap-2 text-gray-400">
+        <div className="flex items-center gap-2 text-gray-200">
           {!isLocked && (
             <div className="drag-handle cursor-move">
               <GripVertical size={20} />

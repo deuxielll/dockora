@@ -206,8 +206,8 @@ const WeatherWidget = () => {
                     <div className="text-yellow-400">
                       <MeteoWeatherIcon code={daily.weathercode[i]} size={24} />
                     </div>
-                    <span className="text-gray-400 w-8 text-right">{Math.round(daily.temperature_2m_min[i])}°</span>
-                    <span className="text-gray-500">/</span>
+                    <span className="text-gray-200 w-8 text-right">{Math.round(daily.temperature_2m_min[i])}°</span>
+                    <span className="text-gray-200">/</span>
                     <span className="font-semibold w-8 text-right">{Math.round(daily.temperature_2m_max[i])}°</span>
                   </div>
                 </div>
