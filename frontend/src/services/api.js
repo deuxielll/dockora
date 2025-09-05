@@ -128,6 +128,37 @@ export const getSmtpSettings = () => api.get("/system/smtp-settings");
 export const setSmtpSettings = (data) => api.post("/system/smtp-settings", data);
 export const getSmtpStatus = () => api.get("/system/smtp-status");
 
+// SSH Terminal
+export const getSshSettings = () => api.get("/system/ssh-settings");
+export const setSshSettings = (data) => api.post("/system/ssh-settings", data);
+export const executeSshCommand = async (data, onChunk) => {
+  const response = await fetch(`${API_URL}/system/ssh/execute-command`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include',
+  });
+
+  if (!response.body) {
+    throw new Error("Response has no body");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value, { stream: true });
+    onChunk(chunk);
+  }
+
+  if (!response.ok) {
+    throw new Error(`SSH command failed with status: ${response.status}`);
+  }
+};
+
+
 // Download Client
 export const getDownloadClientStats = () => api.get("/download-client/stats");
 export const getTorrents = () => api.get("/download-client/torrents");

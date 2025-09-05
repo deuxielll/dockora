@@ -1,23 +1,22 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Video, Music, FileText, Download, Image as GalleryIcon, Trash2, Users, Share2 } from 'lucide-react'; // Import Share2 icon
+import { ChevronLeft, Video, Music, FileText, Download, Image as GalleryIcon, Trash2, Users, Share2 } from 'lucide-react';
 import SidebarItem from './SidebarItem';
 
 const Sidebar = ({ onNavigate, currentUser }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
-    const basePath = currentUser.role === 'admin' ? `/data/home/${currentUser.username}` : '';
-
+    // Paths are now relative to the user's home directory, which the backend resolves.
     const sections = [
-        { name: 'Videos', icon: Video, path: `${basePath}/Videos` },
-        { name: 'Music', icon: Music, path: `${basePath}/Music` },
-        { name: 'Documents', icon: FileText, path: `${basePath}/Documents` },
-        { name: 'Downloads', icon: Download, path: `${basePath}/Downloads` },
-        { name: 'Gallery', icon: GalleryIcon, path: `${basePath}/Gallery` },
+        { name: 'Videos', icon: Video, path: '/Videos' },
+        { name: 'Music', icon: Music, path: '/Music' },
+        { name: 'Documents', icon: FileText, path: '/Documents' },
+        { name: 'Downloads', icon: Download, path: '/Downloads' },
+        { name: 'Gallery', icon: GalleryIcon, path: '/Gallery' },
     ];
 
     const specialSections = [
         { name: 'Shared with me', icon: Users, path: 'shared-with-me' },
-        { name: 'My Shares', icon: Share2, path: 'my-shares' }, // New entry for managing own shares
+        { name: 'My Shares', icon: Share2, path: 'my-shares' },
         { name: 'Trash', icon: Trash2, path: 'trash' },
     ];
 
