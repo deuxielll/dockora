@@ -46,10 +46,10 @@ const FileTable = ({
     <table className="w-full text-left select-none">
       <thead>
         <tr className="border-b border-gray-700/50">
-          <th className="p-4 text-sm font-semibold tracking-wider text-gray-400">Name</th>
-          {isTrashView && <th className="p-4 text-sm font-semibold tracking-wider text-gray-400 hidden lg:table-cell">Original Location</th>}
-          <th className="p-4 text-sm font-semibold tracking-wider text-gray-400 hidden md:table-cell">Size</th>
-          <th className="p-4 text-sm font-semibold tracking-wider text-gray-400 hidden sm:table-cell">{isTrashView ? 'Date Deleted' : 'Last Modified'}</th>
+          <th className="p-4 text-sm font-semibold tracking-wider text-gray-200">Name</th>
+          {isTrashView && <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden lg:table-cell">Original Location</th>}
+          <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden md:table-cell">Size</th>
+          <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden sm:table-cell">{isTrashView ? 'Date Deleted' : 'Last Modified'}</th>
         </tr>
       </thead>
       <tbody>

@@ -2,7 +2,7 @@ import React from 'react';
 
 const Breadcrumbs = ({ currentPath, setCurrentPath, isTrashView }) => {
   if (isTrashView) {
-    return <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">Trash</div>;
+    return <div className="flex items-center gap-2 text-sm text-gray-200">Trash</div>;
   }
 
   const parts = currentPath.split('/').filter(Boolean);
@@ -15,7 +15,7 @@ const Breadcrumbs = ({ currentPath, setCurrentPath, isTrashView }) => {
   }
 
   return (
-    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
+    <div className="flex items-center gap-2 text-sm text-gray-200 flex-wrap">
       {breadcrumbs.map((crumb, index) => (
         <React.Fragment key={crumb.path}>
           <button onClick={() => setCurrentPath(crumb.path)} className="px-2 py-1 rounded-md hover:shadow-neo-inset transition-all">{crumb.name}</button>

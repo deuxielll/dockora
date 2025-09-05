@@ -301,7 +301,7 @@ const FileManagerPage = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4 flex-shrink-0">
               <div className="flex-grow">
                 <Breadcrumbs currentPath={currentPath} setCurrentPath={setCurrentPath} isTrashView={isTrashView} />
-                {selectedCount > 0 && <p className="text-sm text-gray-400 mt-1">{selectedCount} item(s) selected</p>}
+                {selectedCount > 0 && <p className="text-sm text-gray-200 mt-1">{selectedCount} item(s) selected</p>}
               </div>
               <FileManagerActions
                 isTrashView={isTrashView}

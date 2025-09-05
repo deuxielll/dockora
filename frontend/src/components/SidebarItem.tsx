@@ -93,12 +93,12 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate }) => {
             {!isCollapsed && isExpanded && (
                 <div className="pl-8 py-1 space-y-1">
                     {subfolders.length > 0 ? subfolders.map(item => (
-                        <div key={item.name} className="flex items-center gap-2 p-2 text-sm text-gray-400">
+                        <div key={item.name} className="flex items-center gap-2 p-2 text-sm text-gray-200">
                             <Folder size={16} />
                             <span className="truncate">{item.name}</span>
                         </div>
                     )) : (
-                        <p className="p-2 text-xs text-gray-500">No subfolders</p>
+                        <p className="p-2 text-xs text-gray-400">No subfolders</p>
                     )}
                 </div>
             )}
