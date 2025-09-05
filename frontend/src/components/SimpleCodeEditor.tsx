@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 
 const SimpleCodeEditor = ({ value, onChange, placeholder, required = false }) => {
   const textareaRef = useRef(null);
+  const preRef = useRef(null); // Added ref for pre tag
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -37,8 +38,8 @@ const SimpleCodeEditor = ({ value, onChange, placeholder, required = false }) =>
       .replace(/'/g, '&#039;')
       // Keywords (at the start of a line, indented)
       .replace(/^(\s*)(\w+):/gm, '$1<span class="text-accent">$2</span>:')
-      // Comments
-      .replace(/(#.*$)/gm, '<span class="text-gray-500">$1</span>')
+      // Comments - changed from text-gray-500 to text-gray-400 for better visibility
+      .replace(/(#.*$)/gm, '<span class="text-gray-400">$1</span>')
       // String values after a colon
       .replace(/:\s*(".*?"|'.*?'|`.*?`|\|.*)/g, ':<span class="text-green-400">$1</span>')
       // Boolean/null values
@@ -58,7 +59,7 @@ const SimpleCodeEditor = ({ value, onChange, placeholder, required = false }) =>
         spellCheck="false"
         required={required}
       />
-      <pre className="absolute inset-0 w-full h-full p-3 rounded-lg overflow-hidden pointer-events-none no-scrollbar" aria-hidden="true">
+      <pre ref={preRef} className="absolute inset-0 w-full h-full p-3 rounded-lg overflow-hidden pointer-events-none no-scrollbar text-gray-200" aria-hidden="true">
         <code dangerouslySetInnerHTML={{ __html: highlight(value) + '\n' }} />
       </pre>
     </div>
