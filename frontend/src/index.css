@@ -6,7 +6,7 @@
 @tailwind utilities;
 
 body {
-  @apply bg-dark-bg text-gray-300;
+  @apply bg-dark-bg text-white; /* Changed to text-white */
 }
 
 /* Disable default browser animation for view transitions */
