@@ -89,7 +89,7 @@ const SmtpSettings = () => {
           <button
             type="button"
             onClick={() => handleChange({ target: { name: 'smtp_use_tls', type: 'checkbox', checked: !settings.smtp_use_tls } })}
-            className="w-5 h-5 rounded bg-dark-bg shadow-neo-inset flex items-center justify-center"
+            className="w-5 h-5 rounded bg-gray-600 shadow-neo-inset flex items-center justify-center"
           >
             {settings.smtp_use_tls && <div className="w-2.5 h-2.5 bg-accent rounded-sm shadow-neo" />}
           </button>

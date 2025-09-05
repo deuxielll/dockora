@@ -32,10 +32,10 @@ const HomepageSettings = () => {
             <button
               type="button"
               onClick={() => handleToggleVisibility(key)}
-              className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors bg-dark-bg shadow-neo-inset`}
+              className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${widgetVisibility[key] !== false ? 'bg-accent' : 'bg-gray-600'} shadow-neo-inset`}
             >
               <span
-                className={`inline-block w-4 h-4 transform bg-dark-bg-secondary rounded-full transition-transform shadow-neo ${widgetVisibility[key] !== false ? 'translate-x-6 bg-accent' : 'translate-x-1'}`}
+                className={`inline-block w-4 h-4 transform bg-gray-400 rounded-full transition-transform shadow-neo ${widgetVisibility[key] !== false ? 'translate-x-6' : 'translate-x-1'}`}
               />
             </button>
           </div>
