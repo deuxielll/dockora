@@ -29,7 +29,7 @@ const FileManagerPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const [emptySpaceContextMenu, setEmptySpaceContextMenu] = useState(null);
-  const [selectedItems, setSelectedItems] = new Set());
+  const [selectedItems, setSelectedItems] = useState(new Set()); // Corrected line
   const [selectionAnchor, setSelectionAnchor] = useState(null);
   const [draggedOverItem, setDraggedOverItem] = useState(null);
   const fileInputRef = useRef(null);
