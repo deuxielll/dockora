@@ -206,8 +206,8 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
 
   return (
     <div className="flex-1 flex flex-col relative">
-      <div className="flex-1 flex flex-col lg:flex-row gap-8 pb-40"> {/* Added pb-40 for the fixed Networks card */}
-        {/* Left content area (Stack Editor) */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-8">
+        {/* Left content area: Main Editor Panel and Networks Card */}
         <div className="flex-1 flex flex-col gap-8"> {/* New wrapper for left-side cards */}
           <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col`}>
             <fieldset disabled={deploymentId !== null}>
@@ -283,6 +283,13 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
               )}
             </fieldset>
           </div>
+
+          {/* Networks Card - now a separate card on the left */}
+          <NetworksEditorCard
+            networks={networks}
+            setNetworks={setNetworks}
+            disabled={deploymentId !== null}
+          />
         </div>
 
         {/* Right content area (Widgets and Logs) */}
@@ -297,19 +304,6 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
           </Suspense>
           <div className="flex-grow min-h-0">
             <DeploymentLogViewer deploymentId={deploymentId} />
-          </div>
-        </div>
-      </div>
-
-      {/* Networks Card - fixed at the bottom left */}
-      <div className="fixed bottom-0 left-0 right-0 z-40">
-        <div className="max-w-7xl mx-auto p-4 sm:p-6">
-          <div className="lg:w-2/3"> {/* This div constrains the width to the left column's space */}
-            <NetworksEditorCard
-              networks={networks}
-              setNetworks={setNetworks}
-              disabled={deploymentId !== null}
-            />
           </div>
         </div>
       </div>
