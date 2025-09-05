@@ -103,6 +103,7 @@ export const getSharedWithMeItems = () => api.get('/files/shared-with-me');
 export const viewSharedWithMeFile = (share_id) => api.get(`/files/shared-with-me/view?share_id=${share_id}`, { responseType: 'blob' });
 export const downloadSharedWithMeFile = (share_id) => api.get(`/files/shared-with-me/download?share_id=${share_id}`, { responseType: 'blob' });
 export const getSharedWithMeFileContent = (share_id) => api.get(`/files/shared-with-me/content?share_id=${share_id}`);
+export const getSharedByMeItems = () => api.get('/files/shared-by-me'); // New API call
 
 
 // Trash

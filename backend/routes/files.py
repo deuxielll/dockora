@@ -478,8 +478,8 @@ def share_file_with_users():
 @files_bp.route("/api/files/unshare-with-user", methods=["POST"])
 @login_required
 def unshare_file_with_users():
-    sharer_user_id = session.get('user_id')
-    if not sharer_user_id:
+    current_user_id = session.get('user_id') # Can be sharer or recipient
+    if not current_user_id:
         return jsonify({"error": "Authentication required"}), 401
 
     data = request.get_json()
@@ -489,10 +489,10 @@ def unshare_file_with_users():
         return jsonify({"error": "Share IDs are required"}), 400
 
     try:
-        # Only allow a user to delete shares they created
+        # Allow sharer to delete their own shares, or recipient to remove from their list
         UserFileShare.query.filter(
             UserFileShare.id.in_(share_ids),
-            UserFileShare.sharer_user_id == sharer_user_id
+            (UserFileShare.sharer_user_id == current_user_id) | (UserFileShare.recipient_user_id == current_user_id)
         ).delete(synchronize_session=False)
         db.session.commit()
         return jsonify({"message": "Shares removed successfully."}), 200
@@ -533,6 +533,46 @@ def get_shared_with_me_items():
                 "modified_at": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
                 "sharer_id": share.sharer_user_id,
                 "sharer_name": sharer_name,
+                "shared_at": share.shared_at.isoformat()
+            })
+        except (IOError, OSError):
+            continue # Skip if stat fails
+
+    return jsonify(result)
+
+@files_bp.route("/api/files/shared-by-me", methods=["GET"])
+@login_required
+def get_shared_by_me_items():
+    current_user_id = session.get('user_id')
+    if not current_user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
+    shared_items = UserFileShare.query.filter_by(sharer_user_id=current_user_id).all()
+    result = []
+
+    for share in shared_items:
+        real_path = resolve_path_for_user(share.sharer_user_id, share.path)
+        if not real_path or not os.path.exists(real_path):
+            # If the original file no longer exists or is inaccessible, skip it
+            continue
+        
+        try:
+            stat_info = os.stat(real_path)
+            item_type = 'dir' if stat.S_ISDIR(stat_info.st_mode) else 'file'
+            
+            # Get recipient's username for display
+            recipient = User.query.get(share.recipient_user_id)
+            recipient_name = recipient.username if recipient else "Unknown"
+
+            result.append({
+                "id": share.id, # The ID of the UserFileShare entry
+                "name": os.path.basename(real_path),
+                "path": share.path, # The original path relative to sharer
+                "type": item_type,
+                "size": stat_info.st_size,
+                "modified_at": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
+                "recipient_id": share.recipient_user_id,
+                "recipient_name": recipient_name,
                 "shared_at": share.shared_at.isoformat()
             })
         except (IOError, OSError):

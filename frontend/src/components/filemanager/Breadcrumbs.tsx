@@ -1,11 +1,14 @@
 import React from 'react';
 
-const Breadcrumbs = ({ currentPath, setCurrentPath, isTrashView, isSharedWithMeView }) => {
+const Breadcrumbs = ({ currentPath, setCurrentPath, isTrashView, isSharedWithMeView, isMySharesView }) => {
   if (isTrashView) {
     return <div className="flex items-center gap-2 text-sm text-gray-200">Trash</div>;
   }
   if (isSharedWithMeView) {
     return <div className="flex items-center gap-2 text-sm text-gray-200">Shared with me</div>;
+  }
+  if (isMySharesView) {
+    return <div className="flex items-center gap-2 text-sm text-gray-200">My Shares</div>;
   }
 
   const parts = currentPath.split('/').filter(Boolean);
