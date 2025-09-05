@@ -12,6 +12,7 @@ import subprocess
 import re
 from datetime import datetime, date, timedelta
 from sqlalchemy import func
+import os # <--- ADDED: Import the os module
 
 system_bp = Blueprint('system', __name__)
 
@@ -176,6 +177,9 @@ def network_stats():
                 gateways = psutil.net_if_gateways()
                 if 'default' in gateways and socket.AF_INET in gateways['default']:
                     gateway = gateways['default'][socket.AF_INET][0]
+            except AttributeError: # <--- ADDED: Catch AttributeError for net_if_gateways
+                current_app.logger.warning("Failed to get gateway: module 'psutil' has no attribute 'net_if_gateways'")
+                errors.append("Failed to get gateway (psutil.net_if_gateways not available).")
             except Exception as e:
                 current_app.logger.warning(f"Failed to get gateway: {e}")
                 errors.append(f"Failed to get gateway: {e}")
@@ -211,8 +215,9 @@ def network_stats():
             daily_usage = NetworkUsage(user_id=user_id, date=today)
             db.session.add(daily_usage)
         
-        daily_usage.uploaded_bytes += bytes_sent_interval
-        daily_usage.downloaded_bytes += bytes_recv_interval
+        # <--- FIX: Ensure uploaded_bytes and downloaded_bytes are not None before adding
+        daily_usage.uploaded_bytes = (daily_usage.uploaded_bytes or 0) + bytes_sent_interval
+        daily_usage.downloaded_bytes = (daily_usage.downloaded_bytes or 0) + bytes_recv_interval
         db.session.commit()
 
         daily_upload_total = daily_usage.uploaded_bytes
