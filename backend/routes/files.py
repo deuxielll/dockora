@@ -478,24 +478,27 @@ def share_file_with_users():
 @files_bp.route("/api/files/unshare-with-user", methods=["POST"])
 @login_required
 def unshare_file_with_users():
-    current_user_id = session.get('user_id') # Can be sharer or recipient
+    current_user_id = session.get('user_id')
     if not current_user_id:
         return jsonify({"error": "Authentication required"}), 401
 
     data = request.get_json()
-    share_ids = data.get('share_ids') # IDs of UserFileShare objects
+    share_ids = data.get('share_ids')
 
     if not share_ids or not isinstance(share_ids, list):
         return jsonify({"error": "Share IDs are required"}), 400
 
     try:
-        # Allow sharer to delete their own shares, or recipient to remove from their list
-        UserFileShare.query.filter(
+        deleted_count = UserFileShare.query.filter(
             UserFileShare.id.in_(share_ids),
             (UserFileShare.sharer_user_id == current_user_id) | (UserFileShare.recipient_user_id == current_user_id)
         ).delete(synchronize_session=False)
         db.session.commit()
-        return jsonify({"message": "Shares removed successfully."}), 200
+
+        if deleted_count > 0:
+            return jsonify({"message": "Shares removed successfully."}), 200
+        else:
+            return jsonify({"error": "No matching shares found or you do not have permission to unshare these items."}), 403
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
