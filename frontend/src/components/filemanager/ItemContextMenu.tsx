@@ -1,18 +1,21 @@
 import React from 'react';
-import { Eye, Share2, Copy, Edit, Trash2, RotateCcw } from 'lucide-react';
+import { Eye, Share2, Copy, Edit, Trash2, RotateCcw, Users, Download } from 'lucide-react';
 
 const ItemContextMenu = ({
   contextMenu,
   isTrashView,
+  isSharedWithMeView,
   selectedCount,
   singleSelectedItem,
   onView,
-  onShare,
+  onSharePublic, // For public links
+  onShareWithUsers, // For user-to-user sharing
   onCopyPath,
   onRename,
   onDelete,
   onRestore,
   onClose,
+  onDownloadShared,
 }) => {
   if (!contextMenu || selectedCount === 0) return null;
 
@@ -26,13 +29,27 @@ const ItemContextMenu = ({
           <li><button onClick={() => { onRestore(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><RotateCcw size={16} /><span>Restore ({selectedCount})</span></button></li>
           <li><button onClick={() => { onDelete(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md"><Trash2 size={16} /><span>Delete Permanently ({selectedCount})</span></button></li>
         </ul>
+      ) : isSharedWithMeView ? (
+        <ul className="space-y-1">
+          {singleSelectedItem && singleSelectedItem.type === 'file' && (
+            <li><button onClick={() => { onView(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Eye size={16} /><span>View</span></button></li>
+          )}
+          {singleSelectedItem && (
+            <li><button onClick={() => { onDownloadShared(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Download size={16} /><span>Download</span></button></li>
+          )}
+          <li><button onClick={() => { onCopyPath(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Copy size={16} /><span>Copy Path(s)</span></button></li>
+          <li><button onClick={() => { onDelete(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md"><Trash2 size={16} /><span>Remove from list ({selectedCount})</span></button></li>
+        </ul>
       ) : (
         <ul className="space-y-1">
           {singleSelectedItem && singleSelectedItem.type === 'file' && (
             <li><button onClick={() => { onView(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Eye size={16} /><span>View</span></button></li>
           )}
           {selectedCount > 0 && (
-            <li><button onClick={() => { onShare(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Share2 size={16} /><span>Share ({selectedCount})</span></button></li>
+            <li><button onClick={() => { onSharePublic(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Share2 size={16} /><span>Share Public ({selectedCount})</span></button></li>
+          )}
+          {selectedCount > 0 && (
+            <li><button onClick={() => { onShareWithUsers(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Users size={16} /><span>Share with Users ({selectedCount})</span></button></li>
           )}
           <li><button onClick={() => { onCopyPath(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Copy size={16} /><span>Copy Path(s)</span></button></li>
           {singleSelectedItem && (

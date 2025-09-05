@@ -92,9 +92,18 @@ export const renameItem = (old_path, new_name) => api.post('/files/rename', { ol
 export const moveItems = (source_paths, destination_path) => api.post('/files/move', { source_paths, destination_path });
 export const viewFile = (path) => api.get(`/files/view?path=${encodeURIComponent(path)}`, { responseType: 'blob' });
 
-// Sharing
-export const createShare = (data) => api.post('/files/share', data); // Public link
-export const deleteShare = (token) => api.post('/files/unshare', { token }); // Public link
+// Sharing (Public Links)
+export const createShare = (data) => api.post('/files/share', data);
+export const deleteShare = (token) => api.post('/files/unshare', { token });
+
+// Sharing (User-to-User)
+export const shareFileWithUsers = (paths, recipient_user_ids) => api.post('/files/share-with-user', { paths, recipient_user_ids });
+export const unshareFileWithUsers = (share_ids) => api.post('/files/unshare-with-user', { share_ids });
+export const getSharedWithMeItems = () => api.get('/files/shared-with-me');
+export const viewSharedWithMeFile = (share_id) => api.get(`/files/shared-with-me/view?share_id=${share_id}`, { responseType: 'blob' });
+export const downloadSharedWithMeFile = (share_id) => api.get(`/files/shared-with-me/download?share_id=${share_id}`, { responseType: 'blob' });
+export const getSharedWithMeFileContent = (share_id) => api.get(`/files/shared-with-me/content?share_id=${share_id}`);
+
 
 // Trash
 export const getTrashItems = () => api.get('/files/trash');

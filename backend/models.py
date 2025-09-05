@@ -24,6 +24,11 @@ class User(db.Model):
     world_clocks = db.relationship('WorldClock', backref='user', lazy=True, cascade="all, delete-orphan")
     reset_token = db.Column(db.String(100), nullable=True, unique=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
+    # New relationship for files shared *with* this user
+    received_file_shares = db.relationship('UserFileShare', foreign_keys='UserFileShare.recipient_user_id', backref='recipient', lazy=True, cascade="all, delete-orphan")
+    # New relationship for files shared *by* this user
+    sent_file_shares = db.relationship('UserFileShare', foreign_keys='UserFileShare.sharer_user_id', backref='sharer', lazy=True, cascade="all, delete-orphan")
+
 
     def __init__(self, username, password, role='user'):
         self.username = username
@@ -89,6 +94,15 @@ class SharedItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     share_link_id = db.Column(db.Integer, db.ForeignKey('share_link.id'), nullable=False)
     path = db.Column(db.String(1024), nullable=False)
+
+class UserFileShare(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sharer_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    recipient_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    path = db.Column(db.String(1024), nullable=False) # Path relative to sharer's base path
+    shared_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+    __table_args__ = (db.UniqueConstraint('sharer_user_id', 'recipient_user_id', 'path', name='_user_file_share_uc'),)
 
 class Application(db.Model):
     id = db.Column(db.Integer, primary_key=True)

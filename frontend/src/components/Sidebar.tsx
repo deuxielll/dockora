@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Video, Music, FileText, Download, Image as GalleryIcon, Trash2 } from 'lucide-react';
+import { ChevronLeft, Video, Music, FileText, Download, Image as GalleryIcon, Trash2, Users } from 'lucide-react';
 import SidebarItem from './SidebarItem';
 
 const Sidebar = ({ onNavigate, currentUser }) => {
@@ -16,6 +16,7 @@ const Sidebar = ({ onNavigate, currentUser }) => {
     ];
 
     const specialSections = [
+        { name: 'Shared with me', icon: Users, path: 'shared-with-me' },
         { name: 'Trash', icon: Trash2, path: 'trash' },
     ];
 

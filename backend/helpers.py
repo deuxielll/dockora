@@ -75,3 +75,21 @@ def resolve_user_path(base_path, is_sandboxed, user_path):
             return None
     
     return real_path
+
+def resolve_path_for_user(target_user_id, user_path):
+    """
+    Resolves a file system path for a given user, based on their home directory.
+    This is used for shared files, where the path is relative to the sharer's home.
+    """
+    target_user = User.query.get(target_user_id)
+    if not target_user:
+        return None
+
+    if target_user.role == 'admin':
+        base_path = '/'
+        is_sandboxed = False
+    else:
+        base_path = os.path.join(USER_HOMES_BASE_DIR, target_user.username)
+        is_sandboxed = True
+    
+    return resolve_user_path(base_path, is_sandboxed, user_path)

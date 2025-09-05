@@ -9,8 +9,8 @@ import zipfile
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from decorators import login_required
-from helpers import get_user_and_base_path, resolve_user_path, cleanup_trash
-from models import ShareLink, User, SharedItem
+from helpers import get_user_and_base_path, resolve_user_path, cleanup_trash, resolve_path_for_user
+from models import ShareLink, User, SharedItem, UserFileShare
 from extensions import db
 
 files_bp = Blueprint('files', __name__)
@@ -404,3 +404,187 @@ def empty_trash():
             os.makedirs(user_trash_path)
         except Exception as e: return jsonify({"error": str(e)}), 500
     return jsonify({"success": True})
+
+@files_bp.route("/api/files/share-with-user", methods=["POST"])
+@login_required
+def share_file_with_users():
+    sharer_user_id = session.get('user_id')
+    if not sharer_user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
+    data = request.get_json()
+    paths = data.get('paths')
+    recipient_user_ids = data.get('recipient_user_ids')
+
+    if not paths or not isinstance(paths, list) or not recipient_user_ids or not isinstance(recipient_user_ids, list):
+        return jsonify({"error": "Paths and recipient user IDs are required"}), 400
+    
+    sharer_user, sharer_base_path, sharer_is_sandboxed = get_user_and_base_path()
+    if not sharer_user:
+        return jsonify({"error": "Sharer user not found"}), 404
+
+    errors = []
+    for path in paths:
+        real_path = resolve_user_path(sharer_base_path, sharer_is_sandboxed, path)
+        if not real_path or not os.path.exists(real_path):
+            errors.append(f"Item not found or inaccessible: {path}")
+            continue
+
+        for recipient_id in recipient_user_ids:
+            if recipient_id == sharer_user_id:
+                continue # Cannot share with self
+
+            existing_share = UserFileShare.query.filter_by(
+                sharer_user_id=sharer_user_id,
+                recipient_user_id=recipient_id,
+                path=path
+            ).first()
+
+            if not existing_share:
+                new_share = UserFileShare(
+                    sharer_user_id=sharer_user_id,
+                    recipient_user_id=recipient_id,
+                    path=path
+                )
+                db.session.add(new_share)
+    
+    if errors:
+        db.session.rollback()
+        return jsonify({"error": "\n".join(errors)}), 400
+    
+    db.session.commit()
+    return jsonify({"message": "Files shared successfully."}), 201
+
+@files_bp.route("/api/files/unshare-with-user", methods=["POST"])
+@login_required
+def unshare_file_with_users():
+    sharer_user_id = session.get('user_id')
+    if not sharer_user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
+    data = request.get_json()
+    share_ids = data.get('share_ids') # IDs of UserFileShare objects
+
+    if not share_ids or not isinstance(share_ids, list):
+        return jsonify({"error": "Share IDs are required"}), 400
+
+    try:
+        # Only allow a user to delete shares they created
+        UserFileShare.query.filter(
+            UserFileShare.id.in_(share_ids),
+            UserFileShare.sharer_user_id == sharer_user_id
+        ).delete(synchronize_session=False)
+        db.session.commit()
+        return jsonify({"message": "Shares removed successfully."}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@files_bp.route("/api/files/shared-with-me", methods=["GET"])
+@login_required
+def get_shared_with_me_items():
+    current_user_id = session.get('user_id')
+    if not current_user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
+    shared_items = UserFileShare.query.filter_by(recipient_user_id=current_user_id).all()
+    result = []
+
+    for share in shared_items:
+        real_path = resolve_path_for_user(share.sharer_user_id, share.path)
+        if not real_path or not os.path.exists(real_path):
+            # If the original file no longer exists or is inaccessible, skip it
+            continue
+        
+        try:
+            stat_info = os.stat(real_path)
+            item_type = 'dir' if stat.S_ISDIR(stat_info.st_mode) else 'file'
+            
+            # Get sharer's username for display
+            sharer = User.query.get(share.sharer_user_id)
+            sharer_name = sharer.username if sharer else "Unknown"
+
+            result.append({
+                "id": share.id, # The ID of the UserFileShare entry
+                "name": os.path.basename(real_path),
+                "path": share.path, # The original path relative to sharer
+                "type": item_type,
+                "size": stat_info.st_size,
+                "modified_at": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
+                "sharer_id": share.sharer_user_id,
+                "sharer_name": sharer_name,
+                "shared_at": share.shared_at.isoformat()
+            })
+        except (IOError, OSError):
+            continue # Skip if stat fails
+
+    return jsonify(result)
+
+@files_bp.route("/api/files/shared-with-me/view", methods=["GET"])
+@login_required
+def view_shared_with_me_file():
+    share_id = request.args.get('share_id')
+    if not share_id:
+        return jsonify({"error": "Share ID is required"}), 400
+
+    current_user_id = session.get('user_id')
+    share_entry = UserFileShare.query.filter_by(id=share_id, recipient_user_id=current_user_id).first()
+
+    if not share_entry:
+        return jsonify({"error": "Shared item not found or access denied"}), 404
+
+    real_path = resolve_path_for_user(share_entry.sharer_user_id, share_entry.path)
+    if not real_path or not os.path.isfile(real_path):
+        return jsonify({"error": "File not found or inaccessible"}), 404
+    
+    try:
+        return send_from_directory(os.path.dirname(real_path), os.path.basename(real_path))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@files_bp.route("/api/files/shared-with-me/download", methods=["GET"])
+@login_required
+def download_shared_with_me_file():
+    share_id = request.args.get('share_id')
+    if not share_id:
+        return jsonify({"error": "Share ID is required"}), 400
+
+    current_user_id = session.get('user_id')
+    share_entry = UserFileShare.query.filter_by(id=share_id, recipient_user_id=current_user_id).first()
+
+    if not share_entry:
+        return jsonify({"error": "Shared item not found or access denied"}), 404
+
+    real_path = resolve_path_for_user(share_entry.sharer_user_id, share_entry.path)
+    if not real_path or not os.path.exists(real_path):
+        return jsonify({"error": "File not found or inaccessible"}), 404
+    
+    try:
+        return send_file(real_path, as_attachment=True, download_name=os.path.basename(real_path))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@files_bp.route("/api/files/shared-with-me/content", methods=["GET"])
+@login_required
+def get_shared_with_me_file_content():
+    share_id = request.args.get('share_id')
+    if not share_id:
+        return jsonify({"error": "Share ID is required"}), 400
+
+    current_user_id = session.get('user_id')
+    share_entry = UserFileShare.query.filter_by(id=share_id, recipient_user_id=current_user_id).first()
+
+    if not share_entry:
+        return jsonify({"error": "Shared item not found or access denied"}), 404
+
+    real_path = resolve_path_for_user(share_entry.sharer_user_id, share_entry.path)
+    if not real_path or not os.path.isfile(real_path):
+        return jsonify({"error": "File not found or inaccessible"}), 404
+    
+    try:
+        if os.path.getsize(real_path) > 5 * 1024 * 1024:
+            return jsonify({"error": "File is too large to display."}), 400
+        with open(real_path, 'r', errors='ignore') as f:
+            return jsonify({"content": f.read()})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

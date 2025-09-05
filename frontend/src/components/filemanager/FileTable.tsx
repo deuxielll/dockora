@@ -1,5 +1,5 @@
 import React from 'react';
-import { Folder, FileText, Trash2 } from 'lucide-react';
+import { Folder, FileText, Trash2, Users } from 'lucide-react';
 import LoadingSpinner from '../LoadingSpinner';
 
 const FileTable = ({
@@ -7,6 +7,7 @@ const FileTable = ({
   isLoading,
   error,
   isTrashView,
+  isSharedWithMeView,
   selectedItems,
   draggedOverItem,
   onItemClick,
@@ -27,13 +28,24 @@ const FileTable = ({
 
   const formatDate = (isoString) => new Date(isoString).toLocaleString();
   
-  const getItemIdentifier = (item) => isTrashView ? item.trashed_name : item.path;
+  const getItemIdentifier = (item) => {
+    if (isTrashView) return item.trashed_name;
+    if (isSharedWithMeView) return item.id;
+    return item.path;
+  };
 
   if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingSpinner /></div>;
   if (error) return <div className="text-center py-12 text-red-500">{error}</div>;
   if (items.length === 0) {
-    const message = isTrashView ? 'Your trash is empty.' : 'This directory is empty.';
-    const Icon = isTrashView ? Trash2 : Folder;
+    let message = 'This directory is empty.';
+    let Icon = Folder;
+    if (isTrashView) {
+        message = 'Your trash is empty.';
+        Icon = Trash2;
+    } else if (isSharedWithMeView) {
+        message = 'No files or folders have been shared with you.';
+        Icon = Users;
+    }
     return (
       <div className="flex flex-col items-center justify-center h-full text-center text-gray-400">
         <Icon size={48} className="mb-4" />
@@ -48,15 +60,16 @@ const FileTable = ({
         <tr className="border-b border-gray-700/50">
           <th className="p-4 text-sm font-semibold tracking-wider text-gray-200">Name</th>
           {isTrashView && <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden lg:table-cell">Original Location</th>}
+          {isSharedWithMeView && <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden lg:table-cell">Shared By</th>}
           <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden md:table-cell">Size</th>
-          <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden sm:table-cell">{isTrashView ? 'Date Deleted' : 'Last Modified'}</th>
+          <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden sm:table-cell">{isTrashView ? 'Date Deleted' : isSharedWithMeView ? 'Date Shared' : 'Last Modified'}</th>
         </tr>
       </thead>
       <tbody>
         {items.map((item) => (
           <tr
             key={getItemIdentifier(item)}
-            draggable={!isTrashView}
+            draggable={!isTrashView && !isSharedWithMeView}
             onDragStart={(e) => onDragStart(e, item)}
             onDragEnter={(e) => onItemDragEnter(e, item)}
             onDragLeave={onItemDragLeave}
@@ -72,8 +85,9 @@ const FileTable = ({
               <span className="font-medium text-gray-200 truncate">{item.name}</span>
             </td>
             {isTrashView && <td className="p-4 text-sm hidden lg:table-cell truncate text-gray-300" title={item.original_path}>{item.original_path}</td>}
+            {isSharedWithMeView && <td className="p-4 text-sm hidden lg:table-cell truncate text-gray-300" title={item.sharer_name}>{item.sharer_name}</td>}
             <td className="p-4 text-sm hidden md:table-cell text-gray-300">{item.type === 'file' ? formatSize(item.size) : '-'}</td>
-            <td className="p-4 text-sm hidden sm:table-cell text-gray-300">{formatDate(isTrashView ? item.deleted_at : item.modified_at)}</td>
+            <td className="p-4 text-sm hidden sm:table-cell text-gray-300">{formatDate(isTrashView ? item.deleted_at : isSharedWithMeView ? item.shared_at : item.modified_at)}</td>
           </tr>
         ))}
       </tbody>

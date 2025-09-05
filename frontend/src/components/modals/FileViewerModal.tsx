@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Download } from 'lucide-react';
-import { getFileContent, viewFile } from '../../services/api';
+import { getFileContent, viewFile, getSharedWithMeFileContent, viewSharedWithMeFile } from '../../services/api';
 import SimpleCodeEditor from '../SimpleCodeEditor';
 import LoadingSpinner from '../LoadingSpinner';
 
@@ -34,7 +34,13 @@ const FileViewerModal = ({ item, onClose }) => {
     const [error, setError] = useState('');
 
     const fileType = getFileType(item.name);
-    const downloadUrl = `${API_BASE_URL}/files/view?path=${encodeURIComponent(item.path)}`;
+    
+    // Determine which API calls to use based on whether it's a shared item
+    const fetchContentApi = item.isShared ? getSharedWithMeFileContent : getFileContent;
+    const viewFileApi = item.isShared ? viewSharedWithMeFile : viewFile;
+    const downloadUrl = item.isShared 
+        ? `${API_BASE_URL}/files/shared-with-me/download?share_id=${item.path}`
+        : `${API_BASE_URL}/files/view?path=${encodeURIComponent(item.path)}`;
 
     useEffect(() => {
         let objectUrl = null;
@@ -43,10 +49,10 @@ const FileViewerModal = ({ item, onClose }) => {
             setError('');
             try {
                 if (fileType === 'code') {
-                    const res = await getFileContent(item.path);
+                    const res = await fetchContentApi(item.path);
                     setTextContent(res.data.content);
                 } else if (fileType === 'video' || fileType === 'audio' || fileType === 'image' || fileType === 'pdf') {
-                    const res = await viewFile(item.path);
+                    const res = await viewFileApi(item.path);
                     objectUrl = URL.createObjectURL(res.data);
                     setMediaUrl(objectUrl);
                 }
@@ -64,7 +70,7 @@ const FileViewerModal = ({ item, onClose }) => {
                 URL.revokeObjectURL(objectUrl);
             }
         };
-    }, [item.path, fileType]);
+    }, [item.path, fileType, fetchContentApi, viewFileApi]);
 
     const renderContent = () => {
         if (isLoading) return <div className="flex-grow flex items-center justify-center"><LoadingSpinner /></div>;
@@ -105,7 +111,7 @@ const FileViewerModal = ({ item, onClose }) => {
             <div className={`${modalBg} shadow-neo rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] flex flex-col`}>
                 <div className="flex justify-between items-center mb-4">
                     <h2 className={`font-bold text-lg ${textColor} truncate pr-4`}>
-                        {item.name}
+                        {item.name} {item.isShared && item.sharer_name && <span className="text-sm text-gray-400"> (Shared by {item.sharer_name})</span>}
                     </h2>
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-700/50 transition-colors"><X size={20} /></button>
                 </div>
