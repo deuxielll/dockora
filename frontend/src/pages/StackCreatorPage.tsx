@@ -294,21 +294,19 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
             </fieldset>
           </div>
           
-          {deploymentId && (
-            <div className="lg:sticky top-6 self-start max-h-[calc(100vh-4.5rem)] h-full flex flex-col gap-6">
-              <Suspense fallback={<div className="flex-shrink-0 h-40 flex items-center justify-center"><LoadingSpinner /></div>}>
-                <div className="flex-shrink-0">
-                  <SystemUsageWidget />
-                </div>
-                <div className="flex-shrink-0">
-                  <NetworkingWidget />
-                </div>
-              </Suspense>
-              <div className="flex-grow min-h-0">
-                <DeploymentLogViewer deploymentId={deploymentId} />
+          <div className="lg:sticky top-6 self-start max-h-[calc(100vh-4.5rem)] h-full flex flex-col gap-6">
+            <Suspense fallback={<div className="flex-shrink-0 h-40 flex items-center justify-center"><LoadingSpinner /></div>}>
+              <div className="flex-shrink-0">
+                <SystemUsageWidget />
               </div>
+              <div className="flex-shrink-0">
+                <NetworkingWidget />
+              </div>
+            </Suspense>
+            <div className="flex-grow min-h-0">
+              <DeploymentLogViewer deploymentId={deploymentId} />
             </div>
-          )}
+          </div>
         </div>
       </div>
 

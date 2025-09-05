@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { useDeployment } from '../../hooks/useDeployment';
-import { Loader, CheckCircle, XCircle } from 'lucide-react';
+import { Loader, CheckCircle, XCircle, Terminal } from 'lucide-react'; // Added Terminal icon
 
 const DeploymentLogViewer = ({ deploymentId }) => {
   const { deployments } = useDeployment();
@@ -13,11 +13,10 @@ const DeploymentLogViewer = ({ deploymentId }) => {
     }
   }, [deployment?.output]);
 
-  if (!deployment) {
-    return null;
-  }
-
   const getStatusInfo = () => {
+    if (!deployment) {
+      return { icon: <Terminal size={20} className="text-gray-400" />, text: 'Awaiting deployment...', color: 'text-gray-400' };
+    }
     switch (deployment.status) {
       case 'deploying':
         return { icon: <Loader size={20} className="animate-spin text-blue-500" />, text: 'Deploying...', color: 'text-blue-400' };
@@ -44,7 +43,7 @@ const DeploymentLogViewer = ({ deploymentId }) => {
         ref={logContainerRef}
         className="text-xs overflow-y-auto bg-gray-900 p-4 rounded-lg flex-grow whitespace-pre-wrap font-mono text-gray-300 shadow-neo-inset no-scrollbar"
       >
-        {deployment.output}
+        {deployment ? deployment.output : "Logs will appear here once a deployment starts."}
       </pre>
     </div>
   );
