@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wifi, Server, Globe, ArrowDown, ArrowUp, Loader, MapPin } from 'lucide-react';
+import { Wifi, Server, Globe, ArrowDown, ArrowUp, Loader, MapPin, Signal, WifiOff, Zap } from 'lucide-react';
 import { getNetworkStats } from '../../services/api';
 import { Line } from 'react-chartjs-2';
 import {
@@ -157,6 +157,21 @@ const NetworkingWidget = () => {
               <span>{stats.location}</span>
             </div>
           )}
+          {/* New network status details */}
+          <div className="flex justify-between items-center w-full mt-2">
+            <div className="flex items-center gap-2">
+              {stats.online_status ? <Signal size={16} className="text-green-500" /> : <WifiOff size={16} className="text-red-500" />}
+              <span className={stats.online_status ? "text-green-400" : "text-red-400"}>{stats.online_status ? "Online" : "Offline"}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Zap size={16} className="text-purple-400" />
+              <span>{typeof stats.ping_latency === 'number' ? `${stats.ping_latency.toFixed(1)} ms` : stats.ping_latency}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400">Loss:</span>
+              <span>{typeof stats.packet_loss === 'number' ? `${stats.packet_loss.toFixed(0)}%` : stats.packet_loss}</span>
+            </div>
+          </div>
         </div>
       </>
     );

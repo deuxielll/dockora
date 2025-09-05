@@ -8,6 +8,8 @@ from urllib.parse import urlparse
 from models import UserSetting, SystemSetting
 from decorators import login_required, admin_required
 from extensions import db
+import subprocess # Added for ping
+import re # Added for parsing ping output
 
 system_bp = Blueprint('system', __name__)
 
@@ -65,28 +67,63 @@ def network_stats():
     ip_address = "N/A"
     connection_type = "unknown"
     location = "N/A"
-    
+    online_status = False # New: Online/offline status
+    ping_latency = "N/A" # New: Latency
+    packet_loss = "N/A" # New: Packet loss
+
     try:
-        # Get public IP and location
+        # Check online status by trying to reach a reliable external server
         try:
-            geo_res = requests.get('http://ip-api.com/json/?fields=status,message,country,city,query', timeout=2)
-            geo_res.raise_for_status()
-            geo_data = geo_res.json()
-            if geo_data.get('status') == 'success':
-                ip_address = geo_data.get('query', 'N/A')
-                city = geo_data.get('city')
-                country = geo_data.get('country')
-                if city and country:
-                    location = f"{city}, {country}"
+            requests.get('http://www.google.com', timeout=1)
+            online_status = True
         except requests.RequestException:
-            # Fallback to local IP if geo lookup fails
+            online_status = False
+
+        # Get public IP and location
+        if online_status:
             try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                s.connect(("8.8.8.8", 80))
-                ip_address = s.getsockname()[0]
-                s.close()
-            except Exception:
-                pass
+                geo_res = requests.get('http://ip-api.com/json/?fields=status,message,country,city,query', timeout=2)
+                geo_res.raise_for_status()
+                geo_data = geo_res.json()
+                if geo_data.get('status') == 'success':
+                    ip_address = geo_data.get('query', 'N/A')
+                    city = geo_data.get('city')
+                    country = geo_data.get('country')
+                    if city and country:
+                        location = f"{city}, {country}"
+            except requests.RequestException:
+                # Fallback to local IP if geo lookup fails
+                try:
+                    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    s.connect(("8.8.8.8", 80))
+                    ip_address = s.getsockname()[0]
+                    s.close()
+                except Exception:
+                    pass
+
+            # New: Latency and Packet Loss using ping
+            try:
+                # Use -c for count, -W for timeout (seconds)
+                ping_output = subprocess.run(['ping', '-c', '4', '-W', '1', '8.8.8.8'], capture_output=True, text=True, check=True)
+                
+                # Parse latency (avg)
+                latency_match = re.search(r'min/avg/max/mdev = [\d.]+/([\d.]+)/[\d.]+/[\d.]+ ms', ping_output.stdout)
+                if latency_match:
+                    ping_latency = float(latency_match.group(1))
+
+                # Parse packet loss
+                loss_match = re.search(r'(\d+)% packet loss', ping_output.stdout)
+                if loss_match:
+                    packet_loss = float(loss_match.group(1))
+
+            except (subprocess.CalledProcessError, FileNotFoundError, AttributeError):
+                # Ping command failed or output not parsed
+                ping_latency = "N/A"
+                packet_loss = "N/A"
+            except Exception as e:
+                current_app.logger.error(f"Error during ping: {e}")
+                ping_latency = "N/A"
+                packet_loss = "N/A"
 
         # Get connection type
         stats = psutil.net_if_stats()
@@ -115,7 +152,10 @@ def network_stats():
         "download_speed": download_speed,
         "ip_address": ip_address,
         "connection_type": connection_type,
-        "location": location
+        "location": location,
+        "online_status": online_status, # New
+        "ping_latency": ping_latency, # New
+        "packet_loss": packet_loss # New
     })
 
 qbit_session = requests.Session()
