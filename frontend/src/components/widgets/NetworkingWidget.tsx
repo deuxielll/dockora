@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wifi, Server, Globe, ArrowDown, ArrowUp, Loader, MapPin, Signal, WifiOff, Zap, Clock, CalendarDays, Calendar, Network, Router, Dns } from 'lucide-react';
+import { Wifi, Server, Globe, ArrowDown, ArrowUp, Loader, MapPin, Signal, WifiOff, Zap, Clock, CalendarDays, Calendar, Network, Router } from 'lucide-react';
 import { getNetworkStats } from '../../services/api';
 import { Line } from 'react-chartjs-2';
 import {
@@ -205,7 +205,7 @@ const NetworkingWidget = () => {
             </div>
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-2">
-                <Dns size={16} />
+                <Network size={16} /> {/* Changed from Dns to Network */}
                 <span>DNS:</span>
               </div>
               <div className="text-right">

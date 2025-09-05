@@ -39,13 +39,12 @@ const iconMap = {
   bitwarden: LucideIcons.Lock,
   homeassistant: LucideIcons.Home,
   node: LucideIcons.SquareTerminal,
-  python: LucideIcons.Python,
+  python: LucideIcons.Code,
   php: LucideIcons.Code,
   java: LucideIcons.Coffee,
-  go: LucideIcons.Go,
-  rust: LucideIcons.Rust,
+  go: LucideIcons.Code,
+  rust: LucideIcons.Code,
   docker: LucideIcons.Container,
-  portainer: LucideIcons.Container,
   dockora: LucideIcons.Ship,
 };
 
