@@ -56,12 +56,9 @@ def get_user_and_base_path():
     if not user:
         return None, None, None
 
-    if user.role == 'admin':
-        base_path = '/'
-        is_sandboxed = False
-    else:
-        base_path = os.path.join(USER_HOMES_BASE_DIR, user.username)
-        is_sandboxed = True
+    # Admins will now also be sandboxed to their home directory for file management
+    base_path = os.path.join(USER_HOMES_BASE_DIR, user.username)
+    is_sandboxed = True # All users, including admins, are sandboxed to their home directory for file operations
     
     return user, base_path, is_sandboxed
 
@@ -85,11 +82,8 @@ def resolve_path_for_user(target_user_id, user_path):
     if not target_user:
         return None
 
-    if target_user.role == 'admin':
-        base_path = '/'
-        is_sandboxed = False
-    else:
-        base_path = os.path.join(USER_HOMES_BASE_DIR, target_user.username)
-        is_sandboxed = True
+    # All users, including admins, are sandboxed to their home directory for file operations
+    base_path = os.path.join(USER_HOMES_BASE_DIR, target_user.username)
+    is_sandboxed = True
     
     return resolve_user_path(base_path, is_sandboxed, user_path)
