@@ -71,9 +71,9 @@ const FileTable = ({
               {item.type === 'dir' ? <Folder size={20} className="text-blue-400" /> : <FileText size={20} className="text-gray-400" />}
               <span className="font-medium text-gray-200 truncate">{item.name}</span>
             </td>
-            {isTrashView && <td className="p-4 text-sm hidden lg:table-cell truncate" title={item.original_path}>{item.original_path}</td>}
-            <td className="p-4 text-sm hidden md:table-cell">{item.type === 'file' ? formatSize(item.size) : '-'}</td>
-            <td className="p-4 text-sm hidden sm:table-cell">{formatDate(isTrashView ? item.deleted_at : item.modified_at)}</td>
+            {isTrashView && <td className="p-4 text-sm hidden lg:table-cell truncate text-gray-300" title={item.original_path}>{item.original_path}</td>}
+            <td className="p-4 text-sm hidden md:table-cell text-gray-300">{item.type === 'file' ? formatSize(item.size) : '-'}</td>
+            <td className="p-4 text-sm hidden sm:table-cell text-gray-300">{formatDate(isTrashView ? item.deleted_at : item.modified_at)}</td>
           </tr>
         ))}
       </tbody>

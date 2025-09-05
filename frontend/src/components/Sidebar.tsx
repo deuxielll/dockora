@@ -24,7 +24,7 @@ const Sidebar = ({ onNavigate, currentUser }) => {
     return (
         <div className={`hidden md:flex flex-col h-full p-4 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} ${panelClasses} rounded-xl`}>
             <div className="flex items-center justify-between mb-6">
-                {!isCollapsed && <h2 className="font-bold text-xl">Files</h2>}
+                {!isCollapsed && <h2 className="font-bold text-xl text-gray-200">Files</h2>}
                 <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-2 rounded-full hover:bg-gray-500/20 transition-colors">
                     <ChevronLeft size={20} className={`transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
                 </button>
@@ -52,7 +52,7 @@ const Sidebar = ({ onNavigate, currentUser }) => {
                         className="flex items-center p-3 rounded-lg cursor-pointer hover:shadow-neo-inset"
                     >
                         <section.icon size={20} className="text-gray-300" />
-                        {!isCollapsed && <span className="ml-4 font-semibold">{section.name}</span>}
+                        {!isCollapsed && <span className="ml-4 font-semibold text-gray-200">{section.name}</span>}
                     </div>
                 ))}
             </div>

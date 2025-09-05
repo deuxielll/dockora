@@ -77,7 +77,7 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate }) => {
                 <Icon size={20} className="text-gray-300" />
                 {!isCollapsed && (
                     <>
-                        <span className="ml-4 font-semibold flex-grow">{name}</span>
+                        <span className="ml-4 font-semibold flex-grow text-gray-200">{name}</span>
                         {isLoading ? (
                             <div className="p-1">
                                 <Loader size={16} className="animate-spin" />
