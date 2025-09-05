@@ -35,7 +35,7 @@ const StatCircle = ({ percentage, label }) => {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-shadow-neo">
-        <span className="text-lg font-bold">{Math.round(percentage)}%</span>
+        <span className="text-lg font-bold text-gray-200">{Math.round(percentage)}%</span>
         <span className="text-xs text-gray-200">{label}</span>
       </div>
     </div>

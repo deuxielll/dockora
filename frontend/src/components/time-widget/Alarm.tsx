@@ -114,7 +114,7 @@ const Alarm = () => {
     return (
       <div className="text-center flex flex-col items-center justify-center h-full">
         <Bell size={48} className="text-yellow-500 animate-pulse mb-4" />
-        <p className="text-2xl font-bold">{ringingAlarm.time}</p>
+        <p className="text-2xl font-bold text-gray-200">{ringingAlarm.time}</p>
         <div className="flex gap-4 mt-6">
           <button onClick={handleSnooze} className="flex items-center gap-2 px-4 py-2 bg-dark-bg text-gray-300 rounded-lg shadow-neo active:shadow-neo-inset"><Timer size={16} /> Snooze</button>
           <button onClick={handleDismiss} className="px-4 py-2 bg-dark-bg text-accent rounded-lg shadow-neo active:shadow-neo-inset">Dismiss</button>
@@ -131,10 +131,10 @@ const Alarm = () => {
       </div>
       {showForm && (
         <div className="p-3 mb-2 bg-dark-bg-secondary rounded-lg shadow-neo-inset">
-          <input type="time" value={newAlarmTime} onChange={e => setNewAlarmTime(e.target.value)} className="w-full p-2 bg-dark-bg rounded-lg shadow-neo-inset mb-2" />
+          <input type="time" value={newAlarmTime} onChange={e => setNewAlarmTime(e.target.value)} className="w-full p-2 bg-dark-bg rounded-lg shadow-neo-inset text-gray-200 mb-2" />
           <div className="flex justify-center gap-1 mb-3">
             {dayLabels.map((label, index) => (
-              <button key={index} onClick={() => toggleDay((index + 7 - 1) % 7)} className={`w-7 h-7 text-xs rounded-full transition-all ${newAlarmDays.includes((index + 7 - 1) % 7) ? 'bg-accent text-white shadow-neo' : 'bg-dark-bg shadow-neo-inset'}`}>{label}</button>
+              <button key={index} onClick={() => toggleDay((index + 7 - 1) % 7)} className={`w-7 h-7 text-xs rounded-full transition-all ${newAlarmDays.includes((index + 7 - 1) % 7) ? 'bg-accent text-white shadow-neo' : 'bg-dark-bg shadow-neo-inset text-gray-200'}`}>{label}</button>
             ))}
           </div>
           <button onClick={handleAddAlarm} className="w-full px-4 py-2 bg-dark-bg text-accent rounded-lg shadow-neo active:shadow-neo-inset text-sm font-semibold">Add Alarm</button>
@@ -143,7 +143,7 @@ const Alarm = () => {
       <div className="flex-grow overflow-y-auto space-y-2 pr-1 no-scrollbar">
         {alarms.map(alarm => (
           <div key={alarm.id} className={`flex items-center justify-between p-2 rounded-lg ${alarm.enabled ? '' : 'opacity-50'}`}>
-            <span className="text-lg font-mono">{alarm.time}</span>
+            <span className="text-lg font-mono text-gray-200">{alarm.time}</span>
             <div>
               <button onClick={() => toggleAlarm(alarm.id)} className="p-2">{alarm.enabled ? <Bell size={18} /> : <BellOff size={18} />}</button>
               <button onClick={() => deleteAlarm(alarm.id)} className="p-2 text-red-500"><Trash2 size={18} /></button>

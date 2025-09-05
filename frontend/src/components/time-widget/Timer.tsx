@@ -57,11 +57,11 @@ const Timer = () => {
 
   return (
     <div className="text-center flex flex-col items-center justify-center h-full">
-      <div className={`font-mono text-5xl mb-4 text-shadow-neo ${isFinished ? 'animate-pulse text-red-500' : ''}`}>
+      <div className={`font-mono text-5xl mb-4 text-shadow-neo text-gray-200 ${isFinished ? 'animate-pulse text-red-500' : ''}`}>
         {formatTime(timeLeft)}
       </div>
       <div className="mb-6">
-        <select onChange={handleDurationChange} defaultValue={5} className="p-2 bg-dark-bg rounded-lg shadow-neo-inset">
+        <select onChange={handleDurationChange} defaultValue={5} className="p-2 bg-dark-bg rounded-lg shadow-neo-inset text-gray-200">
           <option value={1}>1 min</option>
           <option value={5}>5 min</option>
           <option value={10}>10 min</option>

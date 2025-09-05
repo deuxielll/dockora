@@ -42,12 +42,12 @@ const WorldClock = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search for a city or region..."
-            className="w-full p-2 bg-dark-bg rounded-lg shadow-neo-inset"
+            className="w-full p-2 bg-dark-bg rounded-lg shadow-neo-inset text-gray-200 placeholder:text-gray-400"
           />
           {search && (
             <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-dark-bg-secondary shadow-neo rounded-lg max-h-32 overflow-y-auto no-scrollbar">
               {filteredTimezones.slice(0, 50).map(tz => (
-                <button key={tz} onClick={() => addClock(tz)} className="block w-full text-left p-2 text-sm hover:bg-dark-bg hover:shadow-neo-inset rounded-md">
+                <button key={tz} onClick={() => addClock(tz)} className="block w-full text-left p-2 text-sm hover:bg-dark-bg hover:shadow-neo-inset rounded-md text-gray-200">
                   {tz.replace(/_/g, ' ')}
                 </button>
               ))}
@@ -59,11 +59,11 @@ const WorldClock = () => {
         {clocks.map(tz => (
           <div key={tz} className="flex items-center justify-between p-2 rounded-lg">
             <div>
-              <p className="text-sm">{tz.split('/').pop().replace(/_/g, ' ')}</p>
+              <p className="text-sm text-gray-200">{tz.split('/').pop().replace(/_/g, ' ')}</p>
               <p className="text-xs text-gray-400">{tz.split('/')[0].replace(/_/g, ' ')}</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-lg font-mono">
+              <span className="text-lg font-mono text-gray-200">
                 {time.toLocaleTimeString('en-US', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false })}
               </span>
               <button onClick={() => removeClock(tz)} className="text-red-500"><Trash2 size={16} /></button>

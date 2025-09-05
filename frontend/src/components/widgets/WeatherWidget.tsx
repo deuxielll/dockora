@@ -153,26 +153,26 @@ const WeatherWidget = () => {
           </div>
           <p className="text-xs text-gray-400 mb-4">Feels like {Math.round(current.apparent_temperature)}°C</p>
 
-          <div className="grid grid-cols-4 gap-2 text-xs mb-4 text-gray-300">
+          <div className="grid grid-cols-4 gap-2 text-xs mb-4">
             <div className="flex flex-col items-center">
               <Droplets size={16} className="text-blue-400 mb-1" />
-              <span>{current.relativehumidity_2m}%</span>
-              <span className="text-gray-500">Humidity</span>
+              <span className="text-gray-200">{current.relativehumidity_2m}%</span>
+              <span className="text-gray-400">Humidity</span>
             </div>
             <div className="flex flex-col items-center">
               <Wind size={16} className="text-gray-400 mb-1" />
-              <span>{Math.round(current.windspeed_10m)} km/h</span>
-              <span className="text-gray-500">Wind</span>
+              <span className="text-gray-200">{Math.round(current.windspeed_10m)} km/h</span>
+              <span className="text-gray-400">Wind</span>
             </div>
             <div className="flex flex-col items-center">
               <Umbrella size={16} className="text-cyan-400 mb-1" />
-              <span>{current.precipitation} mm</span>
-              <span className="text-gray-500">Precip.</span>
+              <span className="text-gray-200">{current.precipitation} mm</span>
+              <span className="text-gray-400">Precip.</span>
             </div>
             <div className="flex flex-col items-center">
               <Sun size={16} className="text-yellow-400 mb-1" />
-              <span>{Math.round(current.uv_index)}</span>
-              <span className="text-gray-500">UV Index</span>
+              <span className="text-gray-200">{Math.round(current.uv_index)}</span>
+              <span className="text-gray-400">UV Index</span>
             </div>
           </div>
 
@@ -184,18 +184,18 @@ const WeatherWidget = () => {
               
               return (
                 <div key={date} className="flex justify-between items-center">
-                  <span className="font-semibold w-10 text-left">{new Date(date).toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                  <span className="font-semibold w-10 text-left text-gray-200">{new Date(date).toLocaleDateString('en-US', { weekday: 'short' })}</span>
                   
                   <div className="flex items-center gap-2 text-cyan-400 w-20 justify-center">
                     {snowSum > 0 ? (
                       <>
                         <CloudSnow size={16} />
-                        <span>{snowSum.toFixed(1)} cm</span>
+                        <span className="text-gray-200">{snowSum.toFixed(1)} cm</span>
                       </>
                     ) : precipSum > 0 ? (
                       <>
                         <CloudRain size={16} />
-                        <span>{precipSum.toFixed(1)} mm</span>
+                        <span className="text-gray-200">{precipSum.toFixed(1)} mm</span>
                       </>
                     ) : (
                       <span className="w-16 h-4"></span>
@@ -208,7 +208,7 @@ const WeatherWidget = () => {
                     </div>
                     <span className="text-gray-200 w-8 text-right">{Math.round(daily.temperature_2m_min[i])}°</span>
                     <span className="text-gray-200">/</span>
-                    <span className="font-semibold w-8 text-right">{Math.round(daily.temperature_2m_max[i])}°</span>
+                    <span className="font-semibold w-8 text-right text-gray-200">{Math.round(daily.temperature_2m_max[i])}°</span>
                   </div>
                 </div>
               );
@@ -222,7 +222,7 @@ const WeatherWidget = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-end text-gray-400 -mt-2 mb-2 flex-shrink-0">
+      <div className="flex items-center justify-end text-gray-200 -mt-2 mb-2 flex-shrink-0">
         <p className="text-sm font-semibold">{weatherData?.isOwm ? weatherData.name : weatherData?.locationName}</p>
       </div>
       {renderContent()}

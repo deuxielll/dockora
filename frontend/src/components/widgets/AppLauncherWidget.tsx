@@ -296,7 +296,7 @@ const AppLauncherWidget = () => {
               placeholder="Search apps..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full p-3 pl-10 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition"
+              className="w-full p-3 pl-10 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition placeholder:text-gray-400"
             />
           </div>
           <button onClick={handleManualRefresh} disabled={isRefreshing} className="p-2 ml-2 rounded-full hover:shadow-neo-inset transition-all" title="Refresh Apps">

@@ -37,7 +37,7 @@ const Stopwatch = () => {
 
   return (
     <div className="text-center flex flex-col items-center justify-center h-full">
-      <div className="font-mono text-5xl mb-6 text-shadow-neo">{formatTime(time)}</div>
+      <div className="font-mono text-5xl mb-6 text-shadow-neo text-gray-200">{formatTime(time)}</div>
       <div className="flex gap-4 mb-4">
         <button onClick={handleStartPause} className={`${buttonClasses} ${isRunning ? 'text-yellow-500' : 'text-green-500'}`}>
           {isRunning ? <Pause size={24} /> : <Play size={24} />}
@@ -49,7 +49,7 @@ const Stopwatch = () => {
           <RotateCw size={24} />
         </button>
       </div>
-      <div className="w-full text-xs font-mono overflow-y-auto h-16 space-y-1 pr-1 no-scrollbar">
+      <div className="w-full text-xs font-mono overflow-y-auto h-16 space-y-1 pr-1 no-scrollbar text-gray-200">
         {laps.map((lap, i) => (
           <div key={i} className="flex justify-between">
             <span>Lap {laps.length - i}</span>
