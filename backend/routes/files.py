@@ -10,7 +10,7 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from decorators import login_required
 from helpers import get_user_and_base_path, resolve_user_path, cleanup_trash, resolve_path_for_user
-from models import ShareLink, User, SharedItem, UserFileShare, Notification # Import Notification
+from models import ShareLink, User, SharedItem, UserFileShare, Notification
 from extensions import db
 
 files_bp = Blueprint('files', __name__)
@@ -32,6 +32,11 @@ def browse_files():
         return jsonify({"error": "Invalid or inaccessible path"}), 400
     try:
         items = []
+        
+        # Fetch all shares created by the current user for quick lookup
+        user_shares = UserFileShare.query.filter_by(sharer_user_id=user.id).all()
+        shared_paths = {share.path for share in user_shares}
+
         for item_name in sorted(os.listdir(real_path), key=str.lower):
             full_item_path = os.path.join(real_path, item_name)
             try:
@@ -39,9 +44,13 @@ def browse_files():
                 item_type = 'dir' if stat.S_ISDIR(stat_info.st_mode) else 'file'
                 relative_path = '/' + os.path.relpath(full_item_path, base_path).replace('\\', '/')
                 if relative_path == '/.': relative_path = '/'
+
+                is_shared = relative_path in shared_paths
+
                 items.append({
                     "name": item_name, "path": relative_path, "type": item_type,
-                    "size": stat_info.st_size, "modified_at": datetime.fromtimestamp(stat_info.st_mtime).isoformat()
+                    "size": stat_info.st_size, "modified_at": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
+                    "is_shared": is_shared # Add sharing status
                 })
             except (IOError, OSError): continue
         return jsonify(items)

@@ -70,7 +70,7 @@ const FileTable = ({
           <tr
             key={getItemIdentifier(item)}
             draggable={!isTrashView && !isSharedWithMeView}
-            onDragStart={(e) => onDragStart(e, item)}
+            onDragStart={(e) => onItemDragStart(e, item)}
             onDragEnter={(e) => onItemDragEnter(e, item)}
             onDragLeave={onItemDragLeave}
             onDragOver={(e) => e.preventDefault()}
@@ -83,6 +83,9 @@ const FileTable = ({
             <td className="p-4 flex items-center gap-3">
               {item.type === 'dir' ? <Folder size={20} className="text-blue-400" /> : <FileText size={20} className="text-gray-400" />}
               <span className="font-medium text-gray-200 truncate">{item.name}</span>
+              {item.is_shared && !isTrashView && !isSharedWithMeView && (
+                <span className="w-2 h-2 bg-accent rounded-full ml-2" title="Shared"></span>
+              )}
             </td>
             {isTrashView && <td className="p-4 text-sm hidden lg:table-cell truncate text-gray-300" title={item.original_path}>{item.original_path}</td>}
             {isSharedWithMeView && <td className="p-4 text-sm hidden lg:table-cell truncate text-gray-300" title={item.sharer_name}>{item.sharer_name}</td>}
