@@ -201,13 +201,13 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
   const isFinished = deployment && (deployment.status === 'success' || deployment.status === 'error');
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
+    <div className="flex-1 flex flex-col">
+      <div className="flex justify-between items-center mb-6 flex-shrink-0">
         <h2 className="text-2xl font-bold text-gray-200">Create New Stack</h2>
       </div>
-      <div className={`p-6 rounded-xl ${panelClasses}`}>
-        <div className={`grid grid-cols-1 ${deploymentId ? 'lg:grid-cols-3' : ''} gap-8`}>
-          <div className={`space-y-8 ${deploymentId ? 'lg:col-span-2' : ''}`}>
+      <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col`}>
+        <div className={`grid grid-cols-1 ${deploymentId ? 'lg:grid-cols-3' : ''} gap-8 flex-1`}>
+          <div className={`space-y-8 ${deploymentId ? 'lg:col-span-2' : ''} flex-1 flex flex-col`}>
             <fieldset disabled={deploymentId !== null}>
               <div>
                 <label htmlFor="stack-name" className="block text-lg font-semibold mb-4 text-gray-200">Stack Name</label>
@@ -223,7 +223,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
               </div>
             </fieldset>
 
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center flex-shrink-0">
               <div className="flex gap-2">
                 <TabButton active={editorMode === 'visual'} onClick={() => handleTabSwitch('visual')} disabled={deploymentId !== null}>Visual Editor</TabButton>
                 <TabButton active={editorMode === 'yaml'} onClick={() => handleTabSwitch('yaml')} disabled={deploymentId !== null}>Paste YAML</TabButton>
@@ -252,7 +252,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
               </div>
             </div>
 
-            <fieldset disabled={deploymentId !== null}>
+            <fieldset disabled={deploymentId !== null} className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
               {editorMode === 'visual' ? (
                 <div>
                   <h3 className="text-lg font-semibold mb-4 text-gray-200">Services</h3>
@@ -280,7 +280,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
                   </div>
                 </div>
               ) : (
-                <div>
+                <div className="flex-1 flex flex-col">
                   <label htmlFor="yaml-input" className="block text-lg font-semibold mb-4 text-gray-200">Paste docker-compose.yml</label>
                   <SimpleCodeEditor
                     value={rawYaml}
@@ -307,7 +307,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
         </div>
       </div>
 
-      {error && !isFinished && <pre className="text-red-400 text-xs mt-6 bg-red-900/30 p-3 rounded-lg whitespace-pre-wrap">{error}</pre>}
+      {error && !isFinished && <pre className="text-red-400 text-xs mt-6 bg-red-900/30 p-3 rounded-lg whitespace-pre-wrap flex-shrink-0">{error}</pre>}
     </div>
   );
 };

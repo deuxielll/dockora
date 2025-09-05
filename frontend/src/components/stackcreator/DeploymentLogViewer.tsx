@@ -42,7 +42,7 @@ const DeploymentLogViewer = ({ deploymentId }) => {
       </div>
       <pre
         ref={logContainerRef}
-        className="text-xs overflow-y-auto bg-gray-900 p-4 rounded-lg flex-grow whitespace-pre-wrap font-mono text-gray-300 shadow-neo-inset min-h-[300px] no-scrollbar"
+        className="text-xs overflow-y-auto bg-gray-900 p-4 rounded-lg flex-grow whitespace-pre-wrap font-mono text-gray-300 shadow-neo-inset no-scrollbar"
       >
         {deployment.output}
       </pre>
