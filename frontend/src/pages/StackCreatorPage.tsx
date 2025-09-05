@@ -9,6 +9,7 @@ import yaml from 'js-yaml';
 import KeyValueEditor from '../components/stackcreator/KeyValueEditor';
 import toast from 'react-hot-toast';
 import SystemUsageWidget from '../components/widgets/SystemUsageWidget';
+import NetworkingWidget from '../components/widgets/NetworkingWidget'; // Import NetworkingWidget
 
 const StackCreatorPage = ({ onCancel, onSuccess }) => {
   const { deployments, addDeployment, updateDeployment } = useDeployment();
@@ -294,6 +295,9 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
             <div className="lg:sticky top-6 self-start max-h-[calc(100vh-4.5rem)] h-full flex flex-col gap-6">
               <div className="flex-shrink-0">
                 <SystemUsageWidget />
+              </div>
+              <div className="flex-shrink-0"> {/* Added NetworkingWidget here */}
+                <NetworkingWidget />
               </div>
               <div className="flex-grow min-h-0">
                 <DeploymentLogViewer deploymentId={deploymentId} />
