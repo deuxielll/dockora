@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSettings } from '../../hooks/useSettings';
 import SettingsCard from './SettingsCard';
 import { Search } from 'lucide-react';
@@ -18,17 +18,18 @@ const WIDGETS_CONFIG = {
 const WidgetSettings = () => {
   const { settings, setSetting, isLoading: isSettingsLoading } = useSettings();
   const [searchTerm, setSearchTerm] = useState('');
+  // Local states are now primarily for UI display and initial loading, changes directly trigger setSetting
   const [localWidgetVisibility, setLocalWidgetVisibility] = useState({});
-  const [weatherProvider, setWeatherProvider] = useState('openmeteo');
-  const [weatherApiKey, setWeatherApiKey] = useState('');
-  const [downloadClientConfig, setDownloadClientConfig] = useState({
+  const [weatherProvider, setLocalWeatherProvider] = useState('openmeteo');
+  const [weatherApiKey, setLocalWeatherApiKey] = useState('');
+  const [downloadClientConfig, setLocalDownloadClientConfig] = useState({
     type: 'none',
     url: '',
     username: '',
     password: ''
   });
-  const [isSaving, setIsSaving] = useState(false);
 
+  // Sync local states with global settings on load/change
   useEffect(() => {
     if (settings) {
       try {
@@ -36,12 +37,12 @@ const WidgetSettings = () => {
       } catch {
         setLocalWidgetVisibility({});
       }
-      setWeatherProvider(settings.weatherProvider || 'openmeteo');
-      setWeatherApiKey(settings.weatherApiKey || '');
+      setLocalWeatherProvider(settings.weatherProvider || 'openmeteo');
+      setLocalWeatherApiKey(settings.weatherApiKey || '');
       if (settings.downloadClientConfig) {
         try {
           const parsedConfig = JSON.parse(settings.downloadClientConfig);
-          setDownloadClientConfig(prev => ({...prev, ...parsedConfig}));
+          setLocalDownloadClientConfig(prev => ({...prev, ...parsedConfig}));
         } catch (e) {
           console.error("Failed to parse download client config", e);
         }
@@ -49,39 +50,57 @@ const WidgetSettings = () => {
     }
   }, [settings]);
 
-  const handleToggleVisibility = (widgetKey) => {
-    setLocalWidgetVisibility(prev => ({ ...prev, [widgetKey]: !prev[widgetKey] }));
-  };
-
-  const handleDownloadClientChange = (e) => {
-    const { name, value } = e.target;
-    setDownloadClientConfig(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSave = async (e) => {
-    e.preventDefault();
-    setIsSaving(true);
+  const handleToggleVisibility = useCallback(async (widgetKey) => {
+    const newVisibility = { ...localWidgetVisibility, [widgetKey]: !localWidgetVisibility[widgetKey] };
+    setLocalWidgetVisibility(newVisibility); // Optimistic UI update
     try {
-      const settingsPromises = [
-        setSetting('widgetVisibility', JSON.stringify(localWidgetVisibility)),
-        setSetting('weatherProvider', weatherProvider),
-        setSetting('weatherApiKey', weatherApiKey),
-        setSetting('downloadClientConfig', JSON.stringify(downloadClientConfig)),
-      ];
-      
-      await Promise.all(settingsPromises);
-      toast.success('Widget settings saved!');
+      await setSetting('widgetVisibility', JSON.stringify(newVisibility));
+      toast.success(`${WIDGETS_CONFIG[widgetKey].title} visibility updated.`);
     } catch (err) {
-      console.error("Failed to save widget settings", err);
-      toast.error('Failed to save widget settings.');
-    } finally {
-      setIsSaving(false);
+      toast.error(`Failed to update ${WIDGETS_CONFIG[widgetKey].title} visibility.`);
+      setLocalWidgetVisibility(settings.widgetVisibility ? JSON.parse(settings.widgetVisibility) : {}); // Revert on error
     }
-  };
+  }, [localWidgetVisibility, setSetting, settings.widgetVisibility]);
+
+  const handleWeatherProviderChange = useCallback(async (e) => {
+    const value = e.target.value;
+    setLocalWeatherProvider(value); // Optimistic UI update
+    try {
+      await setSetting('weatherProvider', value);
+      toast.success('Weather provider updated.');
+    } catch (err) {
+      toast.error('Failed to update weather provider.');
+      setLocalWeatherProvider(settings.weatherProvider || 'openmeteo'); // Revert on error
+    }
+  }, [setSetting, settings.weatherProvider]);
+
+  const handleWeatherApiKeyChange = useCallback(async (e) => {
+    const value = e.target.value;
+    setLocalWeatherApiKey(value); // Optimistic UI update
+    try {
+      await setSetting('weatherApiKey', value);
+      toast.success('Weather API key updated.');
+    } catch (err) {
+      toast.error('Failed to update weather API key.');
+      setLocalWeatherApiKey(settings.weatherApiKey || ''); // Revert on error
+    }
+  }, [setSetting, settings.weatherApiKey]);
+
+  const handleDownloadClientChange = useCallback(async (e) => {
+    const { name, value } = e.target;
+    const updatedConfig = { ...downloadClientConfig, [name]: value };
+    setLocalDownloadClientConfig(updatedConfig); // Optimistic UI update
+    try {
+      await setSetting('downloadClientConfig', JSON.stringify(updatedConfig));
+      toast.success('Download client settings updated.');
+    } catch (err) {
+      toast.error('Failed to update download client settings.');
+      setLocalDownloadClientConfig(settings.downloadClientConfig ? JSON.parse(settings.downloadClientConfig) : { type: 'none', url: '', username: '', password: '' }); // Revert on error
+    }
+  }, [downloadClientConfig, setSetting, settings.downloadClientConfig]);
 
   const handleReset = async () => {
     if (window.confirm('Are you sure you want to reset all widget settings to default?')) {
-      setIsSaving(true);
       try {
         const defaultVisibility = Object.fromEntries(
           Object.entries(WIDGETS_CONFIG).map(([key, config]) => [key, config.defaultVisible])
@@ -97,8 +116,6 @@ const WidgetSettings = () => {
       } catch (err) {
         console.error("Failed to reset widget settings", err);
         toast.error('Failed to reset widget settings.');
-      } finally {
-        setIsSaving(false);
       }
     }
   };
@@ -115,7 +132,6 @@ const WidgetSettings = () => {
 
   const showSearchBar = Object.keys(WIDGETS_CONFIG).length > 5; // Adjust threshold as needed
   const inputStyles = "w-full p-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition placeholder:text-gray-500";
-  const buttonStyles = "px-6 py-3 bg-dark-bg text-accent rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
   const secondaryButtonStyles = "px-6 py-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
 
   const isWeatherWidgetEnabled = localWidgetVisibility.weather !== false;
@@ -138,7 +154,7 @@ const WidgetSettings = () => {
         </div>
       )}
 
-      <form onSubmit={handleSave}>
+      <div> {/* Removed form tag */}
         <div className="space-y-4 mb-6">
           {filteredWidgets.map(([key, config]) => (
             <div key={key} className="flex items-center justify-between p-3 rounded-lg shadow-neo-inset">
@@ -162,7 +178,7 @@ const WidgetSettings = () => {
             <h4 className="text-lg font-semibold mb-4 text-gray-300">Weather Widget Settings</h4>
             <div className="mb-4">
               <label htmlFor="weatherProvider" className="block text-sm font-medium mb-2 text-gray-400">Weather Provider</label>
-              <select id="weatherProvider" value={weatherProvider} onChange={(e) => setWeatherProvider(e.target.value)} className={inputStyles}>
+              <select id="weatherProvider" value={weatherProvider} onChange={handleWeatherProviderChange} className={inputStyles}>
                 <option value="openmeteo">Open-Meteo (No API Key needed)</option>
                 <option value="openweathermap">OpenWeatherMap (API Key required)</option>
               </select>
@@ -172,7 +188,7 @@ const WidgetSettings = () => {
                 <p className="text-sm text-gray-400 mb-4">Get a free API key from <a href="https://openweathermap.org/api" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">OpenWeatherMap</a>.</p>
                 <div className="mb-6">
                   <label htmlFor="weatherApiKey" className="block text-sm font-medium mb-2 text-gray-400">API Key</label>
-                  <input type="text" id="weatherApiKey" value={weatherApiKey} onChange={(e) => setWeatherApiKey(e.target.value)} className={inputStyles} placeholder="Enter your OpenWeatherMap API key" />
+                  <input type="text" id="weatherApiKey" value={weatherApiKey} onChange={handleWeatherApiKeyChange} className={inputStyles} placeholder="Enter your OpenWeatherMap API key" />
                 </div>
               </>
             )}
@@ -211,14 +227,11 @@ const WidgetSettings = () => {
         )}
         
         <div className="flex justify-end gap-4 mt-8">
-          <button type="button" onClick={handleReset} disabled={isSaving || isSettingsLoading} className={secondaryButtonStyles}>
+          <button type="button" onClick={handleReset} disabled={isSettingsLoading} className={secondaryButtonStyles}>
             Reset to Default
           </button>
-          <button type="submit" disabled={isSaving || isSettingsLoading} className={buttonStyles}>
-            {isSaving ? 'Saving...' : 'Save Widget Settings'}
-          </button>
         </div>
-      </form>
+      </div>
     </SettingsCard>
   );
 };
