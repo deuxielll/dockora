@@ -86,7 +86,7 @@ const UserManagement = () => {
 
         {isAdding && (
           <form onSubmit={handleCreateUser} className="mb-6 p-4 rounded-lg shadow-neo-inset">
-            <h4 className="font-semibold mb-4">Add New User</h4>
+            <h4 className="font-semibold text-gray-200 mb-4">Add New User</h4>
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <label className="block text-sm font-medium mb-2 text-gray-400">First Name</label>
@@ -150,7 +150,7 @@ const UserManagement = () => {
             return (
               <div key={user.id} className={`flex justify-between items-center p-3 rounded-lg ${panelClasses}`}>
                 <div>
-                  <span className="font-medium">{displayName}</span>
+                  <span className="font-medium text-gray-200">{displayName}</span>
                   {user.email && <span className="text-sm text-gray-400 ml-2">({user.email})</span>}
                   <span className={`ml-3 text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded-full ${user.role === 'admin' ? 'bg-blue-900/50 text-blue-300' : 'bg-gray-700 text-gray-300'}`}>
                     {user.role}

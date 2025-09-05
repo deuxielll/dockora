@@ -28,8 +28,9 @@ const HomepageSettings = () => {
       <div className="space-y-4 mb-6">
         {Object.entries(WIDGETS).map(([key, title]) => (
           <div key={key} className="flex items-center justify-between p-3 rounded-lg shadow-neo-inset">
-            <span className="font-medium">{title}</span>
+            <span className="font-medium text-gray-200">{title}</span>
             <button
+              type="button"
               onClick={() => handleToggleVisibility(key)}
               className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors bg-dark-bg shadow-neo-inset`}
             >
