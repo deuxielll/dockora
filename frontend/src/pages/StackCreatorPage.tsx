@@ -10,7 +10,7 @@ import KeyValueEditor from '../components/stackcreator/KeyValueEditor';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 import NetworksEditorCard from '../components/stackcreator/NetworksEditorCard';
-import StackNameCard from '../components/stackcreator/StackNameCard'; // New import
+import StackNameCard from '../components/stackcreator/StackNameCard';
 
 // Lazy load widgets
 const SystemUsageWidget = lazy(() => import('../components/widgets/SystemUsageWidget'));
@@ -206,10 +206,10 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
   const isFinished = deployment && (deployment.status === 'success' || deployment.status === 'error');
 
   return (
-    <div className="flex-1 flex flex-col relative">
-      <div className="flex-1 flex flex-col lg:flex-row gap-8">
+    <div className="h-full flex flex-col overflow-y-auto"> {/* Make the page itself scrollable */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-8 p-4 sm:p-6"> {/* Added padding here */}
         {/* Left content area: Stack Name Card, Main Editor Panel, and Networks Card */}
-        <div className="flex-1 flex flex-col gap-8"> {/* Wrapper for left-side cards */}
+        <div className="flex-1 flex flex-col gap-8 overflow-y-auto no-scrollbar"> {/* Added overflow-y-auto here */}
           <StackNameCard
             stackName={stackName}
             setStackName={setStackName}
@@ -217,8 +217,6 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
           />
 
           <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col`}>
-            {/* Stack Name input removed from here */}
-
             <div className="flex justify-between items-center flex-shrink-0">
               <div className="flex gap-2">
                 <TabButton active={editorMode === 'visual'} onClick={() => handleTabSwitch('visual')} disabled={deploymentId !== null}>Visual Editor</TabButton>
@@ -278,7 +276,6 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
             </fieldset>
           </div>
 
-          {/* Networks Card - now a separate card on the left */}
           <NetworksEditorCard
             networks={networks}
             setNetworks={setNetworks}
