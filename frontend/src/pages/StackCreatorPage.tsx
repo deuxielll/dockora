@@ -224,7 +224,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
             rawYaml={rawYaml}
             setRawYaml={setRawYaml}
             disabled={deploymentId !== null}
-            className="flex-1" {/* This card will grow and scroll internally */}
+            className="flex-1" /* This card will grow and scroll internally */
           />
 
           <NetworksEditorCard
