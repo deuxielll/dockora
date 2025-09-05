@@ -60,7 +60,7 @@ const WorldClock = () => {
           <div key={tz} className="flex items-center justify-between p-2 rounded-lg">
             <div>
               <p className="text-sm text-gray-200">{tz.split('/').pop().replace(/_/g, ' ')}</p>
-              <p className="text-xs text-gray-400">{tz.split('/')[0].replace(/_/g, ' ')}</p>
+              <p className="text-xs text-gray-200">{tz.split('/')[0].replace(/_/g, ' ')}</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-lg font-mono text-gray-200">

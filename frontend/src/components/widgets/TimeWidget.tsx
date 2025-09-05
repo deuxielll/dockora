@@ -50,7 +50,7 @@ const TimeWidget = () => {
         >
             <button
                 title="World Clock"
-                className={`p-3 rounded-full transition-all text-gray-400 hover:text-gray-200`}
+                className={`p-3 rounded-full transition-all text-gray-200 hover:text-gray-200`}
             >
                 <Globe size={20} />
             </button>

@@ -290,7 +290,7 @@ const AppLauncherWidget = () => {
       <div className="flex flex-col h-full" onDragOver={handleDragOver}>
         <div className="flex justify-between items-center mb-4 flex-shrink-0">
           <div className="relative flex-grow">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-200" size={20} />
             <input
               type="text"
               placeholder="Search apps..."
@@ -299,7 +299,7 @@ const AppLauncherWidget = () => {
               className="w-full p-3 pl-10 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition placeholder:text-gray-400"
             />
           </div>
-          <button onClick={handleManualRefresh} disabled={isRefreshing} className="p-2 ml-2 rounded-full hover:shadow-neo-inset transition-all" title="Refresh Apps">
+          <button onClick={handleManualRefresh} disabled={isRefreshing} className="p-2 ml-2 rounded-full hover:shadow-neo-inset transition-all text-gray-200" title="Refresh Apps">
             <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
           </button>
         </div>

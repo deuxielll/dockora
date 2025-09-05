@@ -75,12 +75,12 @@ const DownloadClientWidget = () => {
 
   const renderContent = () => {
     if (isLoading) {
-      return <div className="flex-grow flex items-center justify-center"><Loader className="animate-spin text-blue-500" /></div>;
+      return <div className="flex-grow flex items-center justify-center"><Loader className="animate-spin text-gray-200" /></div>;
     }
     if (config.type === 'none') {
       return (
         <div className="flex-grow flex flex-col items-center justify-center text-center">
-          <Settings size={48} className="text-gray-400 mb-4" />
+          <Settings size={48} className="text-gray-200 mb-4" />
           <p className="font-semibold text-gray-200">Download Client</p>
           <p className="text-sm text-gray-400">No client configured in Settings.</p>
         </div>

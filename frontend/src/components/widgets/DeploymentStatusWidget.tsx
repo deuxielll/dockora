@@ -62,7 +62,7 @@ const DeploymentStatusWidget = () => {
 
   if (deployments.length === 0) {
     return (
-        <div className="flex-grow flex items-center justify-center text-center text-gray-400">
+        <div className="flex-grow flex items-center justify-center text-center text-gray-200">
             <p>No recent deployments.</p>
         </div>
     );

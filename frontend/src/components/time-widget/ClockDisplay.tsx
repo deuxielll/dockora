@@ -21,7 +21,7 @@ const ClockDisplay = () => {
       <p className="text-2xl sm:text-4xl font-bold text-gray-200 tracking-tight text-shadow-neo">
         {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
       </p>
-      <p className="text-xs text-gray-400 mt-1">{formatDate(time)}</p>
+      <p className="text-xs text-gray-200 mt-1">{formatDate(time)}</p>
     </div>
   );
 };

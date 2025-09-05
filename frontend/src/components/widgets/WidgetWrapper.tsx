@@ -10,7 +10,7 @@ const WidgetWrapper = ({ widgetId, title, onHide, children, isLocked }) => {
         <div className="flex items-center gap-2 text-gray-200">
           {!isLocked && (
             <div className="drag-handle cursor-move">
-              <GripVertical size={20} />
+              <GripVertical size={20} className="text-gray-200" />
             </div>
           )}
           <h3 className="font-semibold">{title}</h3>
@@ -20,10 +20,10 @@ const WidgetWrapper = ({ widgetId, title, onHide, children, isLocked }) => {
             e.stopPropagation();
             onHide(widgetId);
           }}
-          className="p-2 rounded-full hover:shadow-neo-inset transition-all"
+          className="p-2 rounded-full hover:shadow-neo-inset transition-all text-gray-200"
           title="Hide Widget"
         >
-          <EyeOff size={16} />
+          <EyeOff size={16} className="text-gray-200" />
         </button>
       </header>
       <div className="p-4 pt-2 flex-grow min-h-0">
