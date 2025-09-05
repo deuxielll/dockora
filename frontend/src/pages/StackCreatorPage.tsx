@@ -193,7 +193,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
     <div className="h-full flex flex-col overflow-y-auto"> {/* Make the page itself scrollable */}
       <div className="flex-1 flex flex-col lg:flex-row gap-8 p-4 sm:p-6"> {/* Added padding here */}
         {/* Left content area: Stack Name Card, Controls Card, Services Editor Card, and Networks Card */}
-        <div className="w-full lg:w-3/5 flex flex-col gap-8 overflow-y-auto no-scrollbar"> {/* Changed to lg:w-3/5 */}
+        <div className="w-full lg:w-3/5 flex flex-col gap-8"> {/* Removed overflow-y-auto here */}
           <StackNameCard
             stackName={stackName}
             setStackName={setStackName}
