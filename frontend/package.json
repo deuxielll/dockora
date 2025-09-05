@@ -18,7 +18,10 @@
     "react-grid-layout": "^1.5.2",
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^6.25.1",
-    "react-resizable": "^3.0.5"
+    "react-resizable": "^3.0.5",
+    "vite": "^5.4.6",
+    "xterm": "^5.5.0",
+    "xterm-addon-fit": "^0.9.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
@@ -26,7 +29,6 @@
     "postcss": "^8.4.47",
     "postcss-import": "^16.1.1",
     "tailwindcss": "^3.4.10",
-    "vite": "^5.4.6",
     "typescript": "^5.0.2",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11"
