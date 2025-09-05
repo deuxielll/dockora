@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useCallback } from 'react';
+import React, { useMemo, useEffect, useCallback, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useSettings } from '../hooks/useSettings';
 import TimeWidget from '../components/widgets/TimeWidget';
@@ -8,16 +8,20 @@ import AppLauncherWidget from '../components/widgets/AppLauncherWidget';
 import DeploymentStatusWidget from '../components/widgets/DeploymentStatusWidget';
 import DownloadClientWidget from '../components/widgets/DownloadClientWidget';
 import NetworkingWidget from '../components/widgets/NetworkingWidget';
-import FileActivityWidget from '../components/widgets/FileActivityWidget'; // New import
-import { Sun, Moon } from 'lucide-react';
+import FileActivityWidget from '../components/widgets/FileActivityWidget';
+import CustomCodeWidget from '../components/widgets/CustomCodeWidget'; // New import
+import { getCustomWidgets } from '../services/api'; // New import for fetching custom widgets
+import { Sun, Moon, Plus } from 'lucide-react';
 import LogoutButton from '../components/LogoutButton';
 import NotificationBell from '../components/NotificationBell';
 import WidgetWrapper from '../components/widgets/WidgetWrapper';
 import { Responsive, WidthProvider } from 'react-grid-layout';
+import LoadingSpinner from '../components/LoadingSpinner';
+import CreateEditCustomWidgetModal from '../components/modals/CreateEditCustomWidgetModal'; // New import
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-const WIDGETS = {
+const STATIC_WIDGETS = {
   appLauncher: { component: AppLauncherWidget, title: 'App Launcher', defaultVisible: true, defaultLayout: { h: 4, minH: 4, minW: 1 } },
   systemUsage: { component: SystemUsageWidget, title: 'System Usage', defaultVisible: true, defaultLayout: { h: 1.5, minH: 1.5, minW: 1 } },
   networking: { component: NetworkingWidget, title: 'Network Status', defaultVisible: true, defaultLayout: { h: 3, minH: 3, minW: 1 } },
@@ -25,12 +29,46 @@ const WIDGETS = {
   deploymentStatus: { component: DeploymentStatusWidget, title: 'Deployment Status', defaultVisible: true, defaultLayout: { h: 2.5, minH: 2, minW: 1 } },
   weather: { component: WeatherWidget, title: 'Weather', defaultVisible: true, defaultLayout: { h: 1.5, minH: 1.5, minW: 1 } },
   downloadClient: { component: DownloadClientWidget, title: 'Download Client', defaultVisible: true, defaultLayout: { h: 3.5, minH: 3, minW: 1 } },
-  fileActivity: { component: FileActivityWidget, title: 'File Activity', defaultVisible: true, defaultLayout: { h: 3, minH: 3, minW: 1 } }, // New widget
+  fileActivity: { component: FileActivityWidget, title: 'File Activity', defaultVisible: true, defaultLayout: { h: 3, minH: 3, minW: 1 } },
 };
 
 const HomePage = () => {
   const { currentUser } = useAuth();
   const { settings, setSetting, isLoading: isSettingsLoading } = useSettings();
+  const [customWidgets, setCustomWidgets] = useState([]);
+  const [isCustomWidgetsLoading, setIsCustomWidgetsLoading] = useState(true);
+  const [showCreateCustomWidgetModal, setShowCreateCustomWidgetModal] = useState(false);
+
+  const fetchCustomWidgets = useCallback(async () => {
+    setIsCustomWidgetsLoading(true);
+    try {
+      const res = await getCustomWidgets();
+      setCustomWidgets(res.data);
+    } catch (error) {
+      console.error("Failed to fetch custom widgets:", error);
+      setCustomWidgets([]);
+    } finally {
+      setIsCustomWidgetsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCustomWidgets();
+  }, [fetchCustomWidgets]);
+
+  const ALL_WIDGETS = useMemo(() => {
+    const dynamicWidgets = customWidgets.reduce((acc, widget) => {
+      acc[`customCode-${widget.id}`] = {
+        component: CustomCodeWidget,
+        title: widget.name,
+        defaultVisible: true,
+        defaultLayout: { h: 3, minH: 2, minW: 1 },
+        props: { widgetId: widget.id },
+      };
+      return acc;
+    }, {});
+    return { ...STATIC_WIDGETS, ...dynamicWidgets };
+  }, [customWidgets]);
 
   const isLayoutLocked = useMemo(() => {
     return settings.lockWidgetLayout === 'true';
@@ -56,10 +94,11 @@ const HomePage = () => {
     } catch (e) { return false; }
   }, [settings.downloadClientConfig]);
 
-  const visibleWidgets = useMemo(() => Object.keys(WIDGETS).filter(key => {
-    if (key === 'downloadClient' && !isDownloadClientConfigured) return false;
+  const visibleWidgets = useMemo(() => Object.keys(ALL_WIDGETS).filter(key => {
+    if (key === 'downloadClient' && !ALL_WIDGETS[key].props && !isDownloadClientConfigured) return false; // Check for static downloadClient
+    if (key === 'downloadClient' && ALL_WIDGETS[key].props && !isDownloadClientConfigured) return false; // Check for dynamic downloadClient (if it ever becomes dynamic)
     return widgetVisibility[key] !== false;
-  }), [widgetVisibility, isDownloadClientConfigured]);
+  }), [widgetVisibility, isDownloadClientConfigured, ALL_WIDGETS]);
 
   const generateDefaultLayouts = useCallback(() => {
     const breakpoints = { lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 };
@@ -68,7 +107,7 @@ const HomePage = () => {
       newLayouts[breakpoint] = [];
       const colY = Array(cols).fill(0);
       visibleWidgets.forEach((key) => {
-        const widgetConfig = WIDGETS[key];
+        const widgetConfig = ALL_WIDGETS[key];
         if (!widgetConfig) return;
         const col = colY.indexOf(Math.min(...colY));
         const layoutItem = {
@@ -82,13 +121,13 @@ const HomePage = () => {
       });
     }
     return newLayouts;
-  }, [visibleWidgets]);
+  }, [visibleWidgets, ALL_WIDGETS]);
 
   useEffect(() => {
-    if (!isSettingsLoading && !layouts && visibleWidgets.length > 0) {
+    if (!isSettingsLoading && !isCustomWidgetsLoading && !layouts && visibleWidgets.length > 0) {
       setSetting('widgetLayouts', JSON.stringify(generateDefaultLayouts()));
     }
-  }, [layouts, visibleWidgets, generateDefaultLayouts, setSetting, isSettingsLoading]);
+  }, [layouts, visibleWidgets, generateDefaultLayouts, setSetting, isSettingsLoading, isCustomWidgetsLoading]);
 
   useEffect(() => {
     if (layouts) {
@@ -133,6 +172,14 @@ const HomePage = () => {
 
   const displayName = currentUser?.first_name || currentUser?.username || 'User';
 
+  if (isSettingsLoading || isCustomWidgetsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
@@ -146,6 +193,15 @@ const HomePage = () => {
           <NotificationBell />
           <LogoutButton />
         </div>
+      </div>
+
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => setShowCreateCustomWidgetModal(true)}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none bg-dark-bg text-accent shadow-neo active:shadow-neo-inset"
+        >
+          <Plus size={16} /> Create Custom Widget
+        </button>
       </div>
 
       {layouts ? (
@@ -162,22 +218,36 @@ const HomePage = () => {
           isResizable={!isLayoutLocked}
         >
           {visibleWidgets.map(key => {
-            const WidgetComponent = WIDGETS[key].component;
+            const WidgetConfig = ALL_WIDGETS[key];
+            if (!WidgetConfig) return null; // Should not happen if visibleWidgets is correctly filtered
+            const WidgetComponent = WidgetConfig.component;
             return (
               <div key={key}>
                 <WidgetWrapper
                   widgetId={key}
-                  title={WIDGETS[key].title}
+                  title={WidgetConfig.title}
                   onHide={handleHideWidget}
                   isLocked={isLayoutLocked}
                 >
-                  <WidgetComponent />
+                  <WidgetComponent {...WidgetConfig.props} />
                 </WidgetWrapper>
               </div>
             );
           })}
         </ResponsiveGridLayout>
       ) : null}
+
+      {showCreateCustomWidgetModal && (
+        <CreateEditCustomWidgetModal
+          onClose={() => setShowCreateCustomWidgetModal(false)}
+          onSuccess={() => {
+            setShowCreateCustomWidgetModal(false);
+            fetchCustomWidgets(); // Refresh custom widgets list
+            // Force a re-render of the layout to include the new widget
+            setSetting('widgetLayouts', null); // Clear layout to trigger default layout generation
+          }}
+        />
+      )}
     </div>
   );
 };

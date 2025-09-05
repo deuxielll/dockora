@@ -28,6 +28,7 @@ class User(db.Model):
     received_file_shares = db.relationship('UserFileShare', foreign_keys='UserFileShare.recipient_user_id', backref='recipient', lazy=True, cascade="all, delete-orphan")
     # New relationship for files shared *by* this user
     sent_file_shares = db.relationship('UserFileShare', foreign_keys='UserFileShare.sharer_user_id', backref='sharer', lazy=True, cascade="all, delete-orphan")
+    custom_widgets = db.relationship('CustomWidget', backref='user', lazy=True, cascade="all, delete-orphan")
 
 
     def __init__(self, username, password, role='user'):
@@ -123,3 +124,12 @@ class SystemSetting(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.String(100), unique=True, nullable=False)
     value = db.Column(db.Text, nullable=True)
+
+class CustomWidget(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    code = db.Column(db.Text, nullable=False)
+    language = db.Column(db.String(50), nullable=False, default='html') # html, css, javascript, react, vue, svelte
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())

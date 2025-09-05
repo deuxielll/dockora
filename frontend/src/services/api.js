@@ -85,7 +85,7 @@ export const browseFiles = (path) => api.get(`/files/browse?path=${encodeURIComp
 export const getFileContent = (path) => api.get(`/files/content?path=${encodeURIComponent(path)}`);
 export const createItem = (data) => api.post('/files/create', data);
 export const uploadFile = (formData) => api.post('/files/upload', formData, {
-  headers: { 'Content-Type': 'multipart/form-data' }
+  headers: { 'Content-Type': 'multipart/form-Type' }
 });
 export const deleteItem = (paths) => api.post('/files/delete', { paths });
 export const renameItem = (old_path, new_name) => api.post('/files/rename', { old_path, new_name });
@@ -132,5 +132,12 @@ export const getSmtpStatus = () => api.get("/system/smtp-status");
 export const getDownloadClientStats = () => api.get("/download-client/stats");
 export const getTorrents = () => api.get("/download-client/torrents");
 export const torrentAction = (hash, action) => api.post("/download-client/action", { hash, action });
+
+// Custom Widgets
+export const createCustomWidget = (data) => api.post("/custom-widgets", data);
+export const getCustomWidgets = () => api.get("/custom-widgets");
+export const getCustomWidget = (id) => api.get(`/custom-widgets/${id}`);
+export const updateCustomWidget = (id, data) => api.put(`/custom-widgets/${id}`, data);
+export const deleteCustomWidget = (id) => api.delete(`/custom-widgets/${id}`);
 
 export default api;
