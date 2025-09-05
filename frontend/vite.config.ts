@@ -8,7 +8,8 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: ['xterm', 'xterm-addon-fit'],
+      // Removed 'xterm' and 'xterm-addon-fit' from external to ensure they are bundled.
+      // external: ['xterm', 'xterm-addon-fit'], 
     },
   },
 });
