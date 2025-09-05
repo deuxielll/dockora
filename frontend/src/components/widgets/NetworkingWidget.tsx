@@ -161,40 +161,40 @@ const NetworkingWidget = () => {
           </div>
         </div>
         <div className="mt-4 pt-4 border-t border-gray-700/50 flex flex-col gap-2 text-sm text-gray-400">
-          <div className="flex justify-between items-center w-full">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center w-full">
             <div className="flex items-center gap-2">
               <Globe size={16} />
               <span>{stats.public_ip}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mt-1 sm:mt-0">
               {stats.connection_type === 'wifi' && <Wifi size={16} />}
               {stats.connection_type === 'lan' && <Server size={16} />}
               <span className="capitalize">{stats.connection_type}</span>
             </div>
           </div>
           {stats.location && stats.location !== 'N/A' && (
-            <div className="flex items-center gap-2 text-xs self-start">
+            <div className="flex items-center gap-2 text-xs self-start md:self-auto md:justify-start">
               <MapPin size={14} />
-              <span>{stats.location}</span>
+              <span className="hidden sm:block">{stats.location}</span>
             </div>
           )}
           {/* Network status details */}
-          <div className="flex justify-between items-center w-full mt-2">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-wrap justify-between items-center w-full mt-2 gap-y-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               {stats.online_status ? <Signal size={16} className="text-green-500" /> : <WifiOff size={16} className="text-red-500" />}
               <span className={stats.online_status ? "text-green-400" : "text-red-400"}>{stats.online_status ? "Online" : "Offline"}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Zap size={16} className="text-purple-400" />
               <span>{typeof stats.ping_latency === 'number' ? `${stats.ping_latency.toFixed(1)} ms` : stats.ping_latency}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <span className="text-gray-400">Loss:</span>
               <span>{typeof stats.packet_loss === 'number' ? `${stats.packet_loss.toFixed(0)}%` : stats.packet_loss}</span>
             </div>
           </div>
           {/* IP Addresses and DNS */}
-          <div className="mt-4 pt-4 border-t border-gray-700/50 flex flex-col gap-2 text-sm text-gray-400">
+          <div className="mt-4 pt-4 border-t border-gray-700/50 flex flex-col gap-2 text-sm text-gray-400 hidden md:flex transition-all duration-300">
             <p className="font-semibold text-gray-200 mb-2">IP Details:</p>
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -234,7 +234,7 @@ const NetworkingWidget = () => {
             </div>
           </div>
           {/* Data Usage */}
-          <div className="mt-4 pt-4 border-t border-gray-700/50 flex flex-col gap-2 text-sm text-gray-400">
+          <div className="mt-4 pt-4 border-t border-gray-700/50 flex flex-col gap-2 text-sm text-gray-400 hidden md:flex transition-all duration-300">
             <p className="font-semibold text-gray-200 mb-2">Data Usage:</p>
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
