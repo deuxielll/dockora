@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wifi, Server, Globe, ArrowDown, ArrowUp, Loader, MapPin, Signal, WifiOff, Zap, Clock, CalendarDays, Calendar, Network, Router, Maximize2, Minimize2 } from 'lucide-react';
+import { Wifi, Server, Globe, ArrowDown, ArrowUp, Loader, MapPin, Signal, WifiOff, Zap, Clock, CalendarDays, Calendar, Network, Router } from 'lucide-react';
 import { getNetworkStats } from '../../services/api';
 import { Line } from 'react-chartjs-2';
 import {
@@ -44,7 +44,6 @@ const NetworkingWidget = () => {
     download: Array(MAX_DATA_POINTS).fill(0),
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [isMaximized, setIsMaximized] = useState(false); // New state for maximizing
 
   useEffect(() => {
     const fetchData = async () => {
@@ -148,11 +147,9 @@ const NetworkingWidget = () => {
 
     return (
       <>
-        {isMaximized && (
-          <div className="h-24 mb-4">
-            <Line options={chartOptions} data={chartData} />
-          </div>
-        )}
+        <div className="h-24 mb-4">
+          <Line options={chartOptions} data={chartData} />
+        </div>
         <div className="flex justify-between items-center text-sm">
           <div className="flex items-center gap-2 text-blue-400">
             <ArrowDown size={16} />
@@ -196,108 +193,94 @@ const NetworkingWidget = () => {
               <span>{typeof stats.packet_loss === 'number' ? `${stats.packet_loss.toFixed(0)}%` : stats.packet_loss}</span>
             </div>
           </div>
-
-          {isMaximized && (
-            <>
-              {/* IP Addresses and DNS */}
-              <div className="mt-4 pt-4 border-t border-gray-700/50 flex flex-col gap-2 text-sm text-gray-400">
-                <p className="font-semibold text-gray-200 mb-2">IP Details:</p>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <Network size={16} />
-                    <span>Local IP:</span>
-                  </div>
-                  <span>{stats.local_ip}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <Network size={16} />
-                    <span>Subnet:</span>
-                  </div>
-                  <span>{stats.subnet_mask}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <Router size={16} />
-                    <span>Gateway:</span>
-                  </div>
-                  <span>{stats.gateway}</span>
-                </div>
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-2">
-                    <Network size={16} />
-                    <span>DNS:</span>
-                  </div>
-                  <div className="text-right">
-                    {stats.dns_servers && stats.dns_servers.length > 0 ? (
-                      stats.dns_servers.map((dns, index) => (
-                        <span key={index} className="block">{dns}</span>
-                      ))
-                    ) : (
-                      <span>N/A</span>
-                    )}
-                  </div>
-                </div>
+          {/* IP Addresses and DNS */}
+          <div className="mt-4 pt-4 border-t border-gray-700/50 flex flex-col gap-2 text-sm text-gray-400">
+            <p className="font-semibold text-gray-200 mb-2">IP Details:</p>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Network size={16} />
+                <span>Local IP:</span>
               </div>
-              {/* Data Usage */}
-              <div className="mt-4 pt-4 border-t border-gray-700/50 flex flex-col gap-2 text-sm text-gray-400">
-                <p className="font-semibold text-gray-200 mb-2">Data Usage:</p>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <Clock size={16} />
-                    <span>Session:</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <ArrowDown size={14} className="text-blue-400" />
-                    <span>{formatBytes(stats.session_download_total)}</span>
-                    <ArrowUp size={14} className="text-green-400" />
-                    <span>{formatBytes(stats.session_upload_total)}</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <CalendarDays size={16} />
-                    <span>Daily:</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <ArrowDown size={14} className="text-blue-400" />
-                    <span>{formatBytes(stats.daily_download_total)}</span>
-                    <ArrowUp size={14} className="text-green-400" />
-                    <span>{formatBytes(stats.daily_upload_total)}</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <Calendar size={16} />
-                    <span>Monthly:</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <ArrowDown size={14} className="text-blue-400" />
-                    <span>{formatBytes(stats.monthly_download_total)}</span>
-                    <ArrowUp size={14} className="text-green-400" />
-                    <span>{formatBytes(stats.monthly_upload_total)}</span>
-                  </div>
-                </div>
+              <span>{stats.local_ip}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Network size={16} />
+                <span>Subnet:</span>
               </div>
-            </>
-          )}
+              <span>{stats.subnet_mask}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Router size={16} />
+                <span>Gateway:</span>
+              </div>
+              <span>{stats.gateway}</span>
+            </div>
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-2">
+                <Network size={16} />
+                <span>DNS:</span>
+              </div>
+              <div className="text-right">
+                {stats.dns_servers && stats.dns_servers.length > 0 ? (
+                  stats.dns_servers.map((dns, index) => (
+                    <span key={index} className="block">{dns}</span>
+                  ))
+                ) : (
+                  <span>N/A</span>
+                )}
+              </div>
+            </div>
+          </div>
+          {/* Data Usage */}
+          <div className="mt-4 pt-4 border-t border-gray-700/50 flex flex-col gap-2 text-sm text-gray-400">
+            <p className="font-semibold text-gray-200 mb-2">Data Usage:</p>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Clock size={16} />
+                <span>Session:</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ArrowDown size={14} className="text-blue-400" />
+                <span>{formatBytes(stats.session_download_total)}</span>
+                <ArrowUp size={14} className="text-green-400" />
+                <span>{formatBytes(stats.session_upload_total)}</span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <CalendarDays size={16} />
+                <span>Daily:</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ArrowDown size={14} className="text-blue-400" />
+                <span>{formatBytes(stats.daily_download_total)}</span>
+                <ArrowUp size={14} className="text-green-400" />
+                <span>{formatBytes(stats.daily_upload_total)}</span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Calendar size={16} />
+                <span>Monthly:</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ArrowDown size={14} className="text-blue-400" />
+                <span>{formatBytes(stats.monthly_download_total)}</span>
+                <ArrowUp size={14} className="text-green-400" />
+                <span>{formatBytes(stats.monthly_upload_total)}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </>
     );
   };
 
   return (
-    <div className="h-full flex flex-col relative">
-      <button
-        onClick={() => setIsMaximized(!isMaximized)}
-        className="absolute top-2 right-2 p-2 rounded-full hover:shadow-neo-inset transition-all text-gray-400 z-10"
-        title={isMaximized ? "Minimize" : "Maximize"}
-      >
-        {isMaximized ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-      </button>
-      <div className="flex-grow min-h-0 pt-8"> {/* Added pt-8 to make space for the button */}
-        {renderContent()}
-      </div>
+    <div className="h-full flex flex-col">
+      {renderContent()}
     </div>
   );
 };
