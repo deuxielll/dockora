@@ -8,8 +8,8 @@ from urllib.parse import urlparse
 from models import UserSetting, SystemSetting, NetworkUsage
 from decorators import login_required, admin_required
 from extensions import db
-import subprocess # Added for ping
-import re # Added for parsing ping output
+import subprocess
+import re
 from datetime import datetime, date, timedelta
 from sqlalchemy import func
 
@@ -89,7 +89,8 @@ def network_stats():
         try:
             requests.get('http://www.google.com', timeout=1)
             online_status = True
-        except requests.RequestException:
+        except requests.RequestException as e:
+            current_app.logger.warning(f"Online status check failed: {e}")
             online_status = False
 
         # Get public IP and location
@@ -104,8 +105,17 @@ def network_stats():
                     country = geo_data.get('country')
                     if city and country:
                         location = f"{city}, {country}"
-            except requests.RequestException:
-                pass # Public IP lookup failed, continue with other checks
+            except requests.RequestException as e:
+                current_app.logger.warning(f"Public IP/location lookup failed: {e}")
+                # Fallback to local IP if geo lookup fails
+                try:
+                    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    s.connect(("8.8.8.8", 80))
+                    public_ip = s.getsockname()[0] # Use local IP as a fallback for 'public' if external fails
+                    s.close()
+                except Exception as e:
+                    current_app.logger.warning(f"Local IP fallback failed: {e}")
+                    pass
 
             # Latency and Packet Loss using ping
             try:
@@ -119,7 +129,8 @@ def network_stats():
                 if loss_match:
                     packet_loss = float(loss_match.group(1))
 
-            except (subprocess.CalledProcessError, FileNotFoundError, AttributeError):
+            except (subprocess.CalledProcessError, FileNotFoundError, AttributeError) as e:
+                current_app.logger.warning(f"Ping command failed or output not parsed: {e}")
                 ping_latency = "N/A"
                 packet_loss = "N/A"
             except Exception as e:
@@ -154,19 +165,25 @@ def network_stats():
                 gateways = psutil.net_if_gateways()
                 if 'default' in gateways and socket.AF_INET in gateways['default']:
                     gateway = gateways['default'][socket.AF_INET][0]
-            except Exception:
+            except Exception as e:
+                current_app.logger.warning(f"Failed to get gateway: {e}")
                 pass
 
         # Get DNS servers from /etc/resolv.conf (Linux-specific)
         if os.path.exists('/etc/resolv.conf'):
-            with open('/etc/resolv.conf', 'r') as f:
-                for line in f:
-                    if line.startswith('nameserver'):
-                        parts = line.split()
-                        if len(parts) > 1:
-                            dns_servers.append(parts[1])
+            try:
+                with open('/etc/resolv.conf', 'r') as f:
+                    for line in f:
+                        if line.startswith('nameserver'):
+                            parts = line.split()
+                            if len(parts) > 1:
+                                dns_servers.append(parts[1])
+            except Exception as e:
+                current_app.logger.warning(f"Failed to read DNS servers from resolv.conf: {e}")
+                pass
     except Exception as e:
-        current_app.logger.error(f"General network stats error: {e}")
+        current_app.logger.error(f"General network stats collection error: {e}")
+        # If a critical error occurs, ensure default values are returned
         pass
 
     # --- Daily/Monthly Usage Tracking ---
@@ -206,11 +223,11 @@ def network_stats():
     return jsonify({
         "upload_speed": upload_speed,
         "download_speed": download_speed,
-        "public_ip": public_ip, # New
-        "local_ip": local_ip, # New
-        "subnet_mask": subnet_mask, # New
-        "gateway": gateway, # New
-        "dns_servers": dns_servers, # New
+        "public_ip": public_ip,
+        "local_ip": local_ip,
+        "subnet_mask": subnet_mask,
+        "gateway": gateway,
+        "dns_servers": dns_servers,
         "connection_type": connection_type,
         "location": location,
         "online_status": online_status,
