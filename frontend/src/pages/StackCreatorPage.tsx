@@ -296,7 +296,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
               <div className="flex-shrink-0">
                 <SystemUsageWidget />
               </div>
-              <div className="flex-shrink-0"> {/* Added NetworkingWidget here */}
+              <div className="flex-shrink-0">
                 <NetworkingWidget />
               </div>
               <div className="flex-grow min-h-0">
