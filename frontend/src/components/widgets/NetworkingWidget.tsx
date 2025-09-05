@@ -131,6 +131,20 @@ const NetworkingWidget = () => {
     if (!stats) {
       return <div className="flex-grow flex items-center justify-center text-sm text-gray-500">Could not load network data.</div>;
     }
+
+    // Display detailed errors if present
+    if (stats.errors && stats.errors.length > 0) {
+      return (
+        <div className="flex-grow flex flex-col items-center justify-center text-center text-red-500 text-sm p-4">
+          <p className="font-bold mb-2">Network Data Errors:</p>
+          {stats.errors.map((err, index) => (
+            <p key={index} className="text-xs mb-1">{err}</p>
+          ))}
+          <p className="mt-4 text-gray-400">Some network data could not be loaded. Check backend logs for more details.</p>
+        </div>
+      );
+    }
+
     return (
       <>
         <div className="h-24 mb-4">
@@ -205,7 +219,7 @@ const NetworkingWidget = () => {
             </div>
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-2">
-                <Network size={16} /> {/* Changed from Dns to Network */}
+                <Network size={16} />
                 <span>DNS:</span>
               </div>
               <div className="text-right">

@@ -83,62 +83,73 @@ def network_stats():
     online_status = False
     ping_latency = "N/A"
     packet_loss = "N/A"
+    errors = [] # List to collect detailed errors
 
+    # Check online status
     try:
-        # Check online status by trying to reach a reliable external server
+        requests.get('http://www.google.com', timeout=1)
+        online_status = True
+    except requests.RequestException as e:
+        current_app.logger.warning(f"Online status check failed: {e}")
+        errors.append(f"Online check failed: {e}")
+        online_status = False
+
+    # Get public IP and location
+    if online_status:
         try:
-            requests.get('http://www.google.com', timeout=1)
-            online_status = True
+            geo_res = requests.get('http://ip-api.com/json/?fields=status,message,country,city,query', timeout=2)
+            geo_res.raise_for_status()
+            geo_data = geo_res.json()
+            if geo_data.get('status') == 'success':
+                public_ip = geo_data.get('query', 'N/A')
+                city = geo_data.get('city')
+                country = geo_data.get('country')
+                if city and country:
+                    location = f"{city}, {country}"
+            else:
+                errors.append(f"Public IP/location API returned status: {geo_data.get('status')}")
         except requests.RequestException as e:
-            current_app.logger.warning(f"Online status check failed: {e}")
-            online_status = False
-
-        # Get public IP and location
-        if online_status:
+            current_app.logger.warning(f"Public IP/location lookup failed: {e}")
+            errors.append(f"Public IP/location lookup failed: {e}")
+            # Fallback to local IP as 'public' if external fails
             try:
-                geo_res = requests.get('http://ip-api.com/json/?fields=status,message,country,city,query', timeout=2)
-                geo_res.raise_for_status()
-                geo_data = geo_res.json()
-                if geo_data.get('status') == 'success':
-                    public_ip = geo_data.get('query', 'N/A')
-                    city = geo_data.get('city')
-                    country = geo_data.get('country')
-                    if city and country:
-                        location = f"{city}, {country}"
-            except requests.RequestException as e:
-                current_app.logger.warning(f"Public IP/location lookup failed: {e}")
-                # Fallback to local IP if geo lookup fails
-                try:
-                    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    s.connect(("8.8.8.8", 80))
-                    public_ip = s.getsockname()[0] # Use local IP as a fallback for 'public' if external fails
-                    s.close()
-                except Exception as e:
-                    current_app.logger.warning(f"Local IP fallback failed: {e}")
-                    pass
-
-            # Latency and Packet Loss using ping
-            try:
-                ping_output = subprocess.run(['ping', '-c', '4', '-W', '1', '8.8.8.8'], capture_output=True, text=True, check=True)
-                
-                latency_match = re.search(r'min/avg/max/mdev = [\d.]+/([\d.]+)/[\d.]+/[\d.]+ ms', ping_output.stdout)
-                if latency_match:
-                    ping_latency = float(latency_match.group(1))
-
-                loss_match = re.search(r'(\d+)% packet loss', ping_output.stdout)
-                if loss_match:
-                    packet_loss = float(loss_match.group(1))
-
-            except (subprocess.CalledProcessError, FileNotFoundError, AttributeError) as e:
-                current_app.logger.warning(f"Ping command failed or output not parsed: {e}")
-                ping_latency = "N/A"
-                packet_loss = "N/A"
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.connect(("8.8.8.8", 80))
+                public_ip = s.getsockname()[0]
+                s.close()
             except Exception as e:
-                current_app.logger.error(f"Error during ping: {e}")
-                ping_latency = "N/A"
-                packet_loss = "N/A"
+                current_app.logger.warning(f"Local IP fallback failed: {e}")
+                errors.append(f"Local IP fallback failed: {e}")
 
-        # Get local IP, subnet, gateway, connection type
+        # Latency and Packet Loss using ping
+        try:
+            ping_output = subprocess.run(['ping', '-c', '4', '-W', '1', '8.8.8.8'], capture_output=True, text=True, check=True)
+            
+            latency_match = re.search(r'min/avg/max/mdev = [\d.]+/([\d.]+)/[\d.]+/[\d.]+ ms', ping_output.stdout)
+            if latency_match:
+                ping_latency = float(latency_match.group(1))
+            else:
+                errors.append("Ping latency not found in output.")
+
+            loss_match = re.search(r'(\d+)% packet loss', ping_output.stdout)
+            if loss_match:
+                packet_loss = float(loss_match.group(1))
+            else:
+                errors.append("Ping packet loss not found in output.")
+
+        except (subprocess.CalledProcessError, FileNotFoundError, AttributeError) as e:
+            current_app.logger.warning(f"Ping command failed or output not parsed: {e}")
+            errors.append(f"Ping command failed: {e}")
+            ping_latency = "N/A"
+            packet_loss = "N/A"
+        except Exception as e:
+            current_app.logger.error(f"Error during ping: {e}")
+            errors.append(f"Error during ping: {e}")
+            ping_latency = "N/A"
+            packet_loss = "N/A"
+
+    # Get local IP, subnet, gateway, connection type
+    try:
         stats_if = psutil.net_if_stats()
         addrs = psutil.net_if_addrs()
         active_interface = None
@@ -167,7 +178,7 @@ def network_stats():
                     gateway = gateways['default'][socket.AF_INET][0]
             except Exception as e:
                 current_app.logger.warning(f"Failed to get gateway: {e}")
-                pass
+                errors.append(f"Failed to get gateway: {e}")
 
         # Get DNS servers from /etc/resolv.conf (Linux-specific)
         if os.path.exists('/etc/resolv.conf'):
@@ -180,11 +191,10 @@ def network_stats():
                                 dns_servers.append(parts[1])
             except Exception as e:
                 current_app.logger.warning(f"Failed to read DNS servers from resolv.conf: {e}")
-                pass
+                errors.append(f"Failed to read DNS servers: {e}")
     except Exception as e:
         current_app.logger.error(f"General network stats collection error: {e}")
-        # If a critical error occurs, ensure default values are returned
-        pass
+        errors.append(f"General network stats collection error: {e}")
 
     # --- Daily/Monthly Usage Tracking ---
     user_id = session.get('user_id')
@@ -239,6 +249,7 @@ def network_stats():
         "daily_download_total": daily_download_total,
         "monthly_upload_total": monthly_upload_total,
         "monthly_download_total": monthly_download_total,
+        "errors": errors # Include collected errors
     })
 
 qbit_session = requests.Session()
