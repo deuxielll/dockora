@@ -15,10 +15,9 @@ RUN echo \
   $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 RUN apt-get update && apt-get install -y \
     docker-ce-cli \
-    docker-compose-plugin
-
-# Install ping utility
-RUN apt-get update && apt-get install -y iputils-ping
+    docker-compose-plugin \
+    iputils-ping \
+    iproute2 # <--- ADDED: Install iproute2 for the 'ip' command
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
