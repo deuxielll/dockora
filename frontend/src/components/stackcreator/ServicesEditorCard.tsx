@@ -18,9 +18,9 @@ const ServicesEditorCard = ({
 
   return (
     <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col ${className}`}>
-      <fieldset disabled={disabled} className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
+      <fieldset disabled={disabled} className="flex-1 flex flex-col overflow-y-auto"> {/* Removed no-scrollbar */}
         {editorMode === 'visual' ? (
-          <div className="p-4"> {/* Added padding here for visual editor content */}
+          <div className="p-4">
             <div className="space-y-6">
               {services.map(service => (
                 <ServiceEditor
@@ -36,7 +36,7 @@ const ServicesEditorCard = ({
             </button>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col p-4"> {/* Added padding here for YAML editor content */}
+          <div className="flex-1 flex flex-col p-4">
             <label htmlFor="yaml-input" className="block text-lg font-semibold mb-4 text-gray-200">Paste docker-compose.yml</label>
             <SimpleCodeEditor
               value={rawYaml}
