@@ -10,3 +10,4 @@ gevent
 PyYAML
 paramiko
 Flask-Cors
+psycopg2-binary
