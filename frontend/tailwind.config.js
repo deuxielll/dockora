@@ -11,15 +11,15 @@ module.exports = {
         'neo-inset': 'inset 8px 8px 16px rgba(0,0,0,0.4), inset -8px -8px 16px rgba(255,255,255,0.05)',
       },
       colors: {
-        'dark-bg': '#1a1a1a', // Slightly darker for better contrast
-        'dark-bg-secondary': '#202020', // Adjusted for contrast
+        'dark-bg': '#1a1a1a', // Base background
+        'dark-bg-secondary': '#202020', // Slightly lighter for raised/inset elements
         'accent': '#3b82f6',
         'accent-hover': '#2563eb',
-        // Redefining gray shades to ensure white text and visible secondary text
-        'gray-200': '#ffffff', 
-        'gray-300': '#ffffff',
-        'gray-400': '#e0e0e0',
-        'gray-500': '#c0c0c0',
+        // Adjusted gray shades for better neomorphism contrast
+        'gray-200': '#d1d5db', // Tailwind's default gray-300, good for primary text
+        'gray-300': '#9ca3af', // Tailwind's default gray-400, good for secondary text
+        'gray-400': '#6b7280', // Tailwind's default gray-500, good for tertiary text/placeholders
+        'gray-500': '#4b5563', // Tailwind's default gray-600
       },
       textShadow: {
         'neo': '1px 1px 2px rgba(0,0,0,0.7), -1px -1px 2px rgba(255,255,255,0.1)',

@@ -6,7 +6,7 @@
 @tailwind utilities;
 
 body {
-  @apply bg-dark-bg text-white; /* Changed to text-white */
+  @apply bg-dark-bg text-gray-200; /* Changed to text-gray-200 */
 }
 
 /* Disable default browser animation for view transitions */
@@ -23,7 +23,7 @@ body.grabbing, body.grabbing * {
 #drag-preview {
   position: absolute;
   top: -1000px; /* Position off-screen */
-  @apply bg-dark-bg shadow-neo text-white;
+  @apply bg-dark-bg shadow-neo text-gray-200; /* Changed to text-gray-200 */
   padding: 8px 12px;
   border-radius: 8px;
   display: flex;
