@@ -1,35 +1,15 @@
-# Use an official Node.js runtime as a parent image
-FROM node:18-alpine as builder
-
-# Set the working directory in the container
+# Stage 1: Builder
+FROM node:18-alpine AS builder
 WORKDIR /app
-
-# Copy package.json and pnpm-lock.yaml (if exists) from the frontend context
-COPY package.json pnpm-lock.yaml ./
-
-# Install pnpm globally
+COPY package.json ./
 RUN npm install -g pnpm
-
-# Install dependencies
-RUN pnpm install --frozen-lockfile
-
-# Copy the rest of the application code from the frontend context
+RUN pnpm install
 COPY . .
-
-# Build the React app
 RUN pnpm run build
 
-# Stage 2: Serve the app with Nginx
+# Stage 2: Production
 FROM nginx:alpine
-
-# Copy the built React app from the builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy custom Nginx configuration (if any)
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port 80
-EXPOSE 80
-
-# Start Nginx
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 3000
 CMD ["nginx", "-g", "daemon off;"]
