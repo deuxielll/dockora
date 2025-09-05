@@ -7,19 +7,21 @@ module.exports = {
   theme: {
     extend: {
       boxShadow: {
-        'neo': '8px 8px 16px rgba(0,0,0,0.4), -8px -8px 16px rgba(255,255,255,0.05)',
-        'neo-inset': 'inset 8px 8px 16px rgba(0,0,0,0.4), inset -8px -8px 16px rgba(255,255,255,0.05)',
+        // Adjusted blur and light shadow opacity for a more pronounced effect
+        'neo': '8px 8px 20px rgba(0,0,0,0.6), -8px -8px 20px rgba(255,255,255,0.15)',
+        'neo-inset': 'inset 8px 8px 20px rgba(0,0,0,0.6), inset -8px -8px 20px rgba(255,255,255,0.15)',
       },
       colors: {
-        'dark-bg': '#1a1a1a', // Base background
-        'dark-bg-secondary': '#202020', // Slightly lighter for raised/inset elements
+        // Adjusted background shades for better contrast with shadows
+        'dark-bg': '#1e1e1e', // Slightly lighter base background
+        'dark-bg-secondary': '#252526', // Slightly lighter for raised/inset elements
         'accent': '#3b82f6',
         'accent-hover': '#2563eb',
-        // Adjusted gray shades for better neomorphism contrast
-        'gray-200': '#d1d5db', // Tailwind's default gray-300, good for primary text
-        'gray-300': '#9ca3af', // Tailwind's default gray-400, good for secondary text
-        'gray-400': '#6b7280', // Tailwind's default gray-500, good for tertiary text/placeholders
-        'gray-500': '#4b5563', // Tailwind's default gray-600
+        // Gray shades remain as previously defined for text readability
+        'gray-200': '#d1d5db',
+        'gray-300': '#9ca3af',
+        'gray-400': '#6b7280',
+        'gray-500': '#4b5563',
       },
       textShadow: {
         'neo': '1px 1px 2px rgba(0,0,0,0.7), -1px -1px 2px rgba(255,255,255,0.1)',
