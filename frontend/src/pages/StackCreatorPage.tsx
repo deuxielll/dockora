@@ -208,7 +208,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
       <div className="flex-1 flex flex-col lg:flex-row gap-8"> {/* New wrapper for the two main content areas */}
         {/* Left content area (Stack Editor) */}
         <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col`}>
-          <fieldset disabled={deploymentId !== null} className="flex-shrink-0"> {/* Stack Name is fixed */}
+          <fieldset disabled={deploymentId !== null}>
             <div>
               <label htmlFor="stack-name" className="block text-lg font-semibold mb-4 text-gray-200">Stack Name</label>
               <input
@@ -223,7 +223,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
             </div>
           </fieldset>
 
-          <div className="flex justify-between items-center flex-shrink-0 mt-8"> {/* Tab and action buttons are fixed */}
+          <div className="flex justify-between items-center flex-shrink-0">
             <div className="flex gap-2">
               <TabButton active={editorMode === 'visual'} onClick={() => handleTabSwitch('visual')} disabled={deploymentId !== null}>Visual Editor</TabButton>
               <TabButton active={editorMode === 'yaml'} onClick={() => handleTabSwitch('yaml')} disabled={deploymentId !== null}>Paste YAML</TabButton>
@@ -252,13 +252,11 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
             </div>
           </div>
 
-          <fieldset disabled={deploymentId !== null} className="flex-1 flex flex-col mt-8"> {/* This fieldset now manages its children's height */}
+          <fieldset disabled={deploymentId !== null} className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
             {editorMode === 'visual' ? (
-              <div className="flex-1 flex flex-col"> {/* This div needs to manage its children's height */}
-                <div className="flex-shrink-0"> {/* Header for services */}
-                  <h3 className="text-lg font-semibold mb-4 text-gray-200">Services</h3>
-                </div>
-                <div className="flex-grow overflow-y-auto space-y-6 pr-2 no-scrollbar"> {/* THIS IS THE NEW SCROLLABLE AREA */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-200">Services</h3>
+                <div className="space-y-6">
                   {services.map(service => (
                     <ServiceEditor
                       key={service.id}
@@ -267,11 +265,11 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
                       removeService={removeService}
                     />
                   ))}
-                  <button onClick={addService} className="mt-6 flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none bg-dark-bg text-gray-300 shadow-neo active:shadow-neo-inset">
-                    <Plus size={16} /> Add Service
-                  </button>
                 </div>
-                <div className="mt-8 flex-shrink-0"> {/* Networks section, fixed at bottom */}
+                <button onClick={addService} className="mt-6 flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none bg-dark-bg text-gray-300 shadow-neo active:shadow-neo-inset">
+                  <Plus size={16} /> Add Service
+                </button>
+                <div className="mt-8">
                   <h3 className="text-lg font-semibold mb-4 text-gray-200">Networks</h3>
                   <p className="text-sm text-gray-400 mb-4">Define top-level networks here. You can then assign services to these networks in the service editor.</p>
                   <KeyValueEditor
