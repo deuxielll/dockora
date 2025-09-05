@@ -11,6 +11,7 @@ const StackControlsCard = ({
   onDeploy,
   onSuccess,
   setError, // Passed down to handle potential errors from buttons
+  className = ''
 }) => {
   const panelClasses = "bg-dark-bg shadow-neo";
   const primaryButtonStyles = "px-6 py-3 bg-dark-bg text-accent rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
@@ -32,7 +33,7 @@ const StackControlsCard = ({
   );
 
   return (
-    <div className={`p-6 rounded-xl ${panelClasses} flex-shrink-0`}>
+    <div className={`p-6 rounded-xl ${panelClasses} flex-shrink-0 ${className}`}>
       <div className="flex justify-between items-center">
         <div className="flex gap-2">
           <TabButton active={editorMode === 'visual'} onClick={() => handleTabSwitch('visual')} disabled={deploymentId !== null}>Visual Editor</TabButton>

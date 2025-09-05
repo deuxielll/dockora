@@ -12,11 +12,12 @@ const ServicesEditorCard = ({
   rawYaml,
   setRawYaml,
   disabled,
+  className = '',
 }) => {
   const panelClasses = "bg-dark-bg shadow-neo";
 
   return (
-    <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col`}>
+    <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col ${className}`}>
       <fieldset disabled={disabled} className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
         {editorMode === 'visual' ? (
           <div>

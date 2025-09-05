@@ -193,11 +193,12 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
     <div className="h-full flex flex-col overflow-y-auto"> {/* Make the page itself scrollable */}
       <div className="flex-1 flex flex-col lg:flex-row gap-8 p-4 sm:p-6"> {/* Added padding here */}
         {/* Left content area: Stack Name Card, Controls Card, Services Editor Card, and Networks Card */}
-        <div className="w-full lg:w-3/5 flex flex-col gap-8"> {/* Removed overflow-y-auto here */}
+        <div className="w-full lg:w-3/5 flex flex-col gap-8 h-full"> {/* Left column container, now h-full */}
           <StackNameCard
             stackName={stackName}
             setStackName={setStackName}
             disabled={deploymentId !== null}
+            className="flex-shrink-0"
           />
 
           <StackControlsCard
@@ -208,9 +209,10 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
             isFinished={isFinished}
             deployment={deployment}
             onCancel={onCancel}
-            onDeploy={handleDeploy} // Pass handleDeploy directly
+            onDeploy={handleDeploy}
             onSuccess={onSuccess}
-            setError={setError} // Pass setError
+            setError={setError}
+            className="flex-shrink-0"
           />
 
           <ServicesEditorCard
@@ -222,17 +224,19 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
             rawYaml={rawYaml}
             setRawYaml={setRawYaml}
             disabled={deploymentId !== null}
+            className="flex-1" {/* This card will grow and scroll internally */}
           />
 
           <NetworksEditorCard
             networks={networks}
             setNetworks={setNetworks}
             disabled={deploymentId !== null}
+            className="flex-shrink-0"
           />
         </div>
 
         {/* Right content area (Widgets and Logs) */}
-        <div className="w-full lg:w-2/5 lg:sticky top-6 max-h-[calc(100vh-4.5rem)] h-full flex flex-col gap-6"> {/* Changed to lg:w-2/5 */}
+        <div className="w-full lg:w-2/5 lg:sticky top-6 max-h-[calc(100vh-4.5rem)] h-full flex flex-col gap-6">
           <Suspense fallback={<div className="flex-shrink-0 h-40 flex items-center justify-center"><LoadingSpinner /></div>}>
             <div className="flex-shrink-0">
               <SystemUsageWidget />
