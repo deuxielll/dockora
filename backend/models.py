@@ -1,6 +1,7 @@
 from extensions import db, bcrypt
 import uuid
 from datetime import datetime
+import json
 
 app_user_share = db.Table('app_user_share',
     db.Column('application_id', db.Integer, db.ForeignKey('application.id'), primary_key=True),
@@ -19,6 +20,8 @@ class User(db.Model):
     settings = db.relationship('UserSetting', backref='user', lazy=True, cascade="all, delete-orphan")
     notifications = db.relationship('Notification', backref='user', lazy=True, cascade="all, delete-orphan")
     shares = db.relationship('ShareLink', backref='user', lazy=True, cascade="all, delete-orphan")
+    alarms = db.relationship('Alarm', backref='user', lazy=True, cascade="all, delete-orphan")
+    world_clocks = db.relationship('WorldClock', backref='user', lazy=True, cascade="all, delete-orphan")
     reset_token = db.Column(db.String(100), nullable=True, unique=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
 
@@ -36,6 +39,27 @@ class UserSetting(db.Model):
     key = db.Column(db.String(100), nullable=False)
     value = db.Column(db.Text, nullable=True)
     __table_args__ = (db.UniqueConstraint('user_id', 'key', name='_user_key_uc'),)
+
+class Alarm(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    time = db.Column(db.String(5), nullable=False) # e.g., "07:00"
+    _days = db.Column('days', db.Text, nullable=False, default='[]') # Stored as JSON string
+    enabled = db.Column(db.Boolean, default=True, nullable=False)
+    snoozed_until = db.Column(db.DateTime, nullable=True)
+
+    @property
+    def days(self):
+        return json.loads(self._days)
+
+    @days.setter
+    def days(self, value):
+        self._days = json.dumps(value)
+
+class WorldClock(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    timezone = db.Column(db.String(100), nullable=False) # e.g., "America/New_York"
 
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
