@@ -33,7 +33,7 @@ const WorldClock = () => {
     <div className="h-full flex flex-col">
       <div className="flex justify-between items-center mb-2">
         <h4 className="font-semibold text-gray-200">World Clock</h4>
-        <button onClick={() => setShowAdd(!showAdd)} className="p-2 bg-dark-bg rounded-full shadow-neo active:shadow-neo-inset"><Plus size={16} /></button>
+        <button onClick={() => setShowAdd(!showAdd)} className="p-2 bg-dark-bg rounded-full shadow-neo active:shadow-neo-inset text-gray-200"><Plus size={16} /></button>
       </div>
       {showAdd && (
         <div className="mb-2 relative">
