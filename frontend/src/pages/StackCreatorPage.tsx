@@ -204,11 +204,11 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
   const isFinished = deployment && (deployment.status === 'success' || deployment.status === 'error');
 
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="flex-1 flex flex-col lg:flex-row gap-8"> {/* New wrapper for the two main content areas */}
+    <div className="flex-1 flex flex-col h-full"> {/* Added h-full here */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-8">
         {/* Left content area (Stack Editor) */}
-        <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col`}>
-          <fieldset disabled={deploymentId !== null}>
+        <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col h-full`}> {/* Added h-full here */}
+          <fieldset disabled={deploymentId !== null} className="flex-shrink-0">
             <div>
               <label htmlFor="stack-name" className="block text-lg font-semibold mb-4 text-gray-200">Stack Name</label>
               <input
@@ -223,7 +223,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
             </div>
           </fieldset>
 
-          <div className="flex justify-between items-center flex-shrink-0">
+          <div className="flex justify-between items-center flex-shrink-0 mt-8"> {/* Added mt-8 for spacing */}
             <div className="flex gap-2">
               <TabButton active={editorMode === 'visual'} onClick={() => handleTabSwitch('visual')} disabled={deploymentId !== null}>Visual Editor</TabButton>
               <TabButton active={editorMode === 'yaml'} onClick={() => handleTabSwitch('yaml')} disabled={deploymentId !== null}>Paste YAML</TabButton>
@@ -252,24 +252,26 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
             </div>
           </div>
 
-          <fieldset disabled={deploymentId !== null} className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
+          <fieldset disabled={deploymentId !== null} className="flex-1 flex flex-col mt-8"> {/* Added mt-8 for spacing */}
             {editorMode === 'visual' ? (
-              <div>
-                <h3 className="text-lg font-semibold mb-4 text-gray-200">Services</h3>
-                <div className="space-y-6">
-                  {services.map(service => (
-                    <ServiceEditor
-                      key={service.id}
-                      service={service}
-                      updateService={updateService}
-                      removeService={removeService}
-                    />
-                  ))}
+              <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar"> {/* This div manages scrolling for visual editor content */}
+                <h3 className="text-lg font-semibold mb-4 text-gray-200 flex-shrink-0">Services</h3>
+                <div className="flex-1 overflow-y-auto no-scrollbar"> {/* This is the specific scrollable area for services */}
+                  <div className="space-y-6">
+                    {services.map(service => (
+                      <ServiceEditor
+                        key={service.id}
+                        service={service}
+                        updateService={updateService}
+                        removeService={removeService}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <button onClick={addService} className="mt-6 flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none bg-dark-bg text-gray-300 shadow-neo active:shadow-neo-inset">
+                <button onClick={addService} className="mt-6 flex-shrink-0 flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none bg-dark-bg text-gray-300 shadow-neo active:shadow-neo-inset">
                   <Plus size={16} /> Add Service
                 </button>
-                <div className="mt-8">
+                <div className="mt-8 flex-shrink-0">
                   <h3 className="text-lg font-semibold mb-4 text-gray-200">Networks</h3>
                   <p className="text-sm text-gray-400 mb-4">Define top-level networks here. You can then assign services to these networks in the service editor.</p>
                   <KeyValueEditor
@@ -292,7 +294,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
         </div>
 
         {/* Right content area (Widgets and Logs) */}
-        <div className="lg:w-1/3 lg:sticky top-6 max-h-[calc(100vh-4.5rem)] h-full flex flex-col gap-6">
+        <div className="lg:w-1/3 lg:sticky top-6 max-h-[calc(100vh-9.5rem)] h-full flex flex-col gap-6"> {/* Adjusted max-h */}
           <Suspense fallback={<div className="flex-shrink-0 h-40 flex items-center justify-center"><LoadingSpinner /></div>}>
             <div className="flex-shrink-0">
               <SystemUsageWidget />
