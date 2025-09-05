@@ -7,12 +7,17 @@
     "skipLibCheck": true,
 
     /* Bundler mode */
-    "moduleResolution": "bundler",
+    "moduleResolution": "node", // Changed from "bundler" to "node"
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+
+    /* Interop and Casing */
+    "esModuleInterop": true, // Added for better module interop
+    "allowSyntheticDefaultImports": true, // Added for better module interop
+    "forceConsistentCasingInFileNames": true, // Added for consistent casing
 
     /* Linting */
     "strict": true,
