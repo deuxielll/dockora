@@ -10,6 +10,7 @@ import KeyValueEditor from '../components/stackcreator/KeyValueEditor';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 import NetworksEditorCard from '../components/stackcreator/NetworksEditorCard';
+import StackNameCard from '../components/stackcreator/StackNameCard'; // New import
 
 // Lazy load widgets
 const SystemUsageWidget = lazy(() => import('../components/widgets/SystemUsageWidget'));
@@ -207,23 +208,16 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
   return (
     <div className="flex-1 flex flex-col relative">
       <div className="flex-1 flex flex-col lg:flex-row gap-8">
-        {/* Left content area: Main Editor Panel and Networks Card */}
-        <div className="flex-1 flex flex-col gap-8"> {/* New wrapper for left-side cards */}
+        {/* Left content area: Stack Name Card, Main Editor Panel, and Networks Card */}
+        <div className="flex-1 flex flex-col gap-8"> {/* Wrapper for left-side cards */}
+          <StackNameCard
+            stackName={stackName}
+            setStackName={setStackName}
+            disabled={deploymentId !== null}
+          />
+
           <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col`}>
-            <fieldset disabled={deploymentId !== null}>
-              <div>
-                <label htmlFor="stack-name" className="block text-lg font-semibold mb-4 text-gray-200">Stack Name</label>
-                <input
-                  id="stack-name"
-                  type="text"
-                  value={stackName}
-                  onChange={(e) => setStackName(e.target.value)}
-                  className={inputStyles}
-                  placeholder="my-awesome-app"
-                  required
-                />
-              </div>
-            </fieldset>
+            {/* Stack Name input removed from here */}
 
             <div className="flex justify-between items-center flex-shrink-0">
               <div className="flex gap-2">
