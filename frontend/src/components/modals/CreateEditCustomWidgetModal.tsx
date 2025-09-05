@@ -119,7 +119,7 @@ const CreateEditCustomWidgetModal = ({ widgetId, onClose, onSuccess }) => {
             </select>
             <p className="text-xs text-gray-400 mt-1">
               For React, Vue, Svelte: Your code should be a JavaScript snippet that defines and mounts your component to a <code>&lt;div id="root"&gt;&lt;/div&gt;</code>.
-              Framework libraries are loaded from CDN. Example for React: <code dangerouslySetInnerHTML={{ __html: 'const MyComponent = () => <h1>Hello</h1>;' }} />
+              Framework libraries are loaded from CDN. Example for React: <code>const MyComponent = () => &lt;h1&gt;Hello&lt;/h1&gt;;</code>
             </p>
           </div>
           <div className="mb-6 flex-grow flex flex-col">
