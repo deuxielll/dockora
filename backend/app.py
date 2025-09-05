@@ -30,7 +30,10 @@ def create_app():
 
     # Initialize extensions
     db.init_app(app)
-    bcrypt.init_app(app)
+    
+    # Create database tables within the app context
+    with app.app_context():
+        db.create_all()
 
     # Register Blueprints
     app.register_blueprint(auth_bp, url_prefix='/api')
@@ -66,7 +69,7 @@ if __name__ == "__main__":
         exit(1)
 
     with app.app_context():
-        db.create_all()
+        # db.create_all() # Moved to create_app function
         os.makedirs(os.path.realpath('/data/home'), exist_ok=True)
         os.makedirs('/data/.trash', exist_ok=True)
         os.makedirs('/data/avatars', exist_ok=True)
