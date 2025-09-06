@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request, send_from_directory, render_template, send_file, session
 import os
 import io
-import zipfile
+import zipfile # New import
 import json
 import uuid
 from decorators import login_required
@@ -226,6 +226,24 @@ def get_shared_file_content(token):
     if not real_target_path or not os.path.isfile(real_target_path):
         return jsonify({"error": "File not found or access denied."}), 404
     
+    # Check if it's a ZIP file
+    if real_target_path.lower().endswith('.zip'):
+        try:
+            with zipfile.ZipFile(real_target_path, 'r') as zf:
+                zip_contents = []
+                for member in zf.infolist():
+                    zip_contents.append({
+                        "name": member.filename,
+                        "size": member.file_size,
+                        "is_dir": member.is_dir()
+                    })
+                return jsonify({"type": "zip_contents", "contents": zip_contents})
+        except zipfile.BadZipFile:
+            return jsonify({"error": "Bad ZIP file or not a ZIP file."}), 400
+        except Exception as e:
+            return jsonify({"error": f"Failed to read ZIP file: {str(e)}"}), 500
+
+    # Existing logic for other file types
     try:
         if os.path.getsize(real_target_path) > 5 * 1024 * 1024:
             return jsonify({"error": "File is too large to display."}), 400

@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { X, Download } from 'lucide-react';
+import { X, Download, Folder, FileText } from 'lucide-react'; // Added Folder and FileText icons
 import { getFileContent, viewFile, getSharedWithMeFileContent, viewSharedWithMeFile } from '../../services/api';
 import SimpleCodeEditor from '../SimpleCodeEditor';
 import LoadingSpinner from '../LoadingSpinner';
 
 const API_BASE_URL = `http://${window.location.hostname}:5000/api`;
+
+const formatSize = (bytes) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+};
 
 const getFileType = (filename) => {
     const extension = filename.split('.').pop().toLowerCase();
@@ -12,6 +20,7 @@ const getFileType = (filename) => {
     if (['mp3', 'wav', 'ogg', 'flac', 'm4a'].includes(extension)) return 'audio';
     if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp'].includes(extension)) return 'image';
     if (['pdf'].includes(extension)) return 'pdf';
+    if (['zip'].includes(extension)) return 'zip'; // New: Recognize ZIP files
     
     const textBasedExtensions = [
         // Documents
@@ -29,6 +38,7 @@ const getFileType = (filename) => {
 
 const FileViewerModal = ({ item, onClose }) => {
     const [textContent, setTextContent] = useState('');
+    const [zipContents, setZipContents] = useState([]); // New state for ZIP contents
     const [mediaUrl, setMediaUrl] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -48,9 +58,15 @@ const FileViewerModal = ({ item, onClose }) => {
             setIsLoading(true);
             setError('');
             try {
-                if (fileType === 'code') {
+                if (fileType === 'code' || fileType === 'zip') { // Handle ZIP files here
                     const res = await fetchContentApi(item.path);
-                    setTextContent(res.data.content);
+                    if (res.data.type === 'zip_contents') {
+                        setZipContents(res.data.contents);
+                        setTextContent(''); // Clear text content if it's a zip
+                    } else {
+                        setTextContent(res.data.content);
+                        setZipContents([]); // Clear zip contents if it's a text file
+                    }
                 } else if (fileType === 'video' || fileType === 'audio' || fileType === 'image' || fileType === 'pdf') {
                     const res = await viewFileApi(item.path);
                     objectUrl = URL.createObjectURL(res.data);
@@ -106,6 +122,30 @@ const FileViewerModal = ({ item, onClose }) => {
                 return (
                     <div className="rounded-lg flex-grow w-full h-full overflow-hidden">
                         <SimpleCodeEditor value={textContent} onChange={() => {}} />
+                    </div>
+                );
+            case 'zip': // New: Render ZIP contents
+                return (
+                    <div className="flex-grow w-full h-full overflow-y-auto no-scrollbar p-2">
+                        <h3 className="font-bold text-lg text-gray-200 mb-4">Contents of {item.name}</h3>
+                        {zipContents.length > 0 ? (
+                            <ul className="space-y-2">
+                                {zipContents.map((zipItem, index) => (
+                                    <li key={index} className="flex items-center gap-3 p-2 rounded-lg bg-dark-bg-secondary shadow-neo-inset">
+                                        {zipItem.is_dir ? <Folder size={20} className="text-blue-400" /> : <FileText size={20} className="text-gray-400" />}
+                                        <span className="font-medium text-gray-200 truncate">{zipItem.name}</span>
+                                        {!zipItem.is_dir && <span className="text-sm text-gray-400 ml-auto">{formatSize(zipItem.size)}</span>}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-center text-gray-400 py-8">This ZIP file is empty or could not be read.</p>
+                        )}
+                        <div className="text-center mt-6">
+                            <a href={downloadUrl} download={item.name} className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors">
+                                <Download size={16} /> Download ZIP
+                            </a>
+                        </div>
                     </div>
                 );
             default:

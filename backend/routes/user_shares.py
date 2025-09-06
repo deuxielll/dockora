@@ -6,6 +6,7 @@ from helpers import get_user_and_base_path, resolve_user_path, resolve_path_for_
 from models import User, UserFileShare, Notification
 from extensions import db
 from datetime import datetime # Import datetime for error logging
+import zipfile # New import
 
 user_shares_bp = Blueprint('user_shares', __name__)
 
@@ -250,6 +251,24 @@ def get_shared_with_me_file_content():
     if not real_path or not os.path.isfile(real_path):
         return jsonify({"error": "File not found or inaccessible"}), 404
     
+    # Check if it's a ZIP file
+    if real_path.lower().endswith('.zip'):
+        try:
+            with zipfile.ZipFile(real_path, 'r') as zf:
+                zip_contents = []
+                for member in zf.infolist():
+                    zip_contents.append({
+                        "name": member.filename,
+                        "size": member.file_size,
+                        "is_dir": member.is_dir()
+                    })
+                return jsonify({"type": "zip_contents", "contents": zip_contents})
+        except zipfile.BadZipFile:
+            return jsonify({"error": "Bad ZIP file or not a ZIP file."}), 400
+        except Exception as e:
+            return jsonify({"error": f"Failed to read ZIP file: {str(e)}"}), 500
+
+    # Existing logic for other file types
     try:
         if os.path.getsize(real_path) > 5 * 1024 * 1024:
             return jsonify({"error": "File is too large to display."}), 400

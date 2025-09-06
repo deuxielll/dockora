@@ -8,6 +8,7 @@ from werkzeug.utils import secure_filename
 from decorators import login_required
 from helpers import get_user_and_base_path, resolve_user_path
 from models import UserFileShare # Used for checking if a file is shared
+import zipfile # New import
 
 file_operations_bp = Blueprint('file_operations', __name__)
 
@@ -72,6 +73,27 @@ def get_file_content():
     real_path = resolve_user_path(base_path, is_sandboxed, user_path)
     if not real_path or not os.path.exists(real_path) or not os.path.isfile(real_path):
         return jsonify({"error": "Invalid or inaccessible file path"}), 400
+    
+    # Check if it's a ZIP file
+    if real_path.lower().endswith('.zip'):
+        try:
+            with zipfile.ZipFile(real_path, 'r') as zf:
+                # Get a list of all members (files and directories) in the archive
+                # Filter out directories if you only want files, or process them differently
+                zip_contents = []
+                for member in zf.infolist():
+                    zip_contents.append({
+                        "name": member.filename,
+                        "size": member.file_size,
+                        "is_dir": member.is_dir()
+                    })
+                return jsonify({"type": "zip_contents", "contents": zip_contents})
+        except zipfile.BadZipFile:
+            return jsonify({"error": "Bad ZIP file or not a ZIP file."}), 400
+        except Exception as e:
+            return jsonify({"error": f"Failed to read ZIP file: {str(e)}"}), 500
+
+    # Existing logic for other file types
     try:
         if os.path.getsize(real_path) > 5 * 1024 * 1024:
             return jsonify({"error": "File is too large to display (> 5MB)"}), 400
