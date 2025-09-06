@@ -116,21 +116,7 @@ const FileManagerContent = ({
 
       <div className="overflow-y-auto flex-grow no-scrollbar" onClick={(e) => e.stopPropagation()}>
         {isMySharesView ? (
-          <MySharesView
-            items={items}
-            isLoading={isLoading}
-            error={error}
-            selectedItems={selectedItems}
-            onItemClick={onItemClick}
-            onItemDoubleClick={onItemDoubleClick}
-            onItemContextMenu={onItemContextMenu}
-            onDeleteSelected={onDeletePermanently} // Pass the delete handler for unsharing
-            onRefreshFileManager={onRefreshMyShares}
-            searchTerm={searchTerm}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
-            onSort={onSort}
-          />
+          <MySharesView onRefreshFileManager={onRefreshMyShares} />
         ) : (
           <FileTable
             items={items}
@@ -147,10 +133,10 @@ const FileManagerContent = ({
             onItemDragEnter={onItemDragEnter}
             onItemDragLeave={onItemDragLeave}
             onDropOnItem={onDropOnItem}
-            searchTerm={searchTerm}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
-            onSort={onSort}
+            searchTerm={searchTerm} // Pass search term
+            sortColumn={sortColumn} // Pass sort column
+            sortDirection={sortDirection} // Pass sort direction
+            onSort={onSort} // Pass sort handler
           />
         )}
       </div>
