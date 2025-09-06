@@ -20,7 +20,7 @@ const SshTerminalSettings = () => {
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionStatus, setExecutionStatus] = useState(null); // 'success', 'error', 'info'
   const [error, setError] = useState('');
-  const [isTerminalOpen, setIsTerminalOpen] = useState(false); // New state for terminal visibility
+  const [isSettingsExpanded, setIsSettingsExpanded] = useState(false); // Controls visibility of entire SSH section
 
   const terminalRef = useRef(null);
   const xtermInstance = useRef(null);
@@ -43,7 +43,7 @@ const SshTerminalSettings = () => {
   }, []);
 
   useEffect(() => {
-    if (isTerminalOpen && terminalRef.current && !xtermInstance.current) {
+    if (isSettingsExpanded && terminalRef.current && !xtermInstance.current) {
       xtermInstance.current = new Terminal({
         convertEol: true,
         fontFamily: `'Fira Mono', monospace`,
@@ -86,12 +86,12 @@ const SshTerminalSettings = () => {
         xtermInstance.current = null;
         resizeObserver.disconnect();
       };
-    } else if (!isTerminalOpen && xtermInstance.current) {
+    } else if (!isSettingsExpanded && xtermInstance.current) {
       // Dispose xterm when terminal is closed
       xtermInstance.current?.dispose();
       xtermInstance.current = null;
     }
-  }, [isTerminalOpen]);
+  }, [isSettingsExpanded]);
 
   useEffect(() => {
     if (xtermInstance.current) {
@@ -171,56 +171,57 @@ const SshTerminalSettings = () => {
   const secondaryButtonStyles = "px-6 py-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
 
   return (
-    <SettingsCard title="SSH Terminal (Admin)">
-      <p className="text-sm text-gray-400 mb-6">Configure connection details for a remote server via SSH.</p>
-      <form onSubmit={handleSaveSettings} className="space-y-4 mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-400">Host</label>
-            <input type="text" name="ssh_host" value={settings.ssh_host} onChange={handleChange} className={inputStyles} placeholder="e.g., 192.168.1.100" required />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-400">Port</label>
-            <input type="number" name="ssh_port" value={settings.ssh_port} onChange={handleChange} className={inputStyles} placeholder="22" required />
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-2 text-gray-400">Username</label>
-          <input type="text" name="ssh_username" value={settings.ssh_username} onChange={handleChange} className={inputStyles} placeholder="e.g., root" required />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-2 text-gray-400">Password</label>
-          <input type="password" name="ssh_password" value={settings.ssh_password} onChange={handleChange} className={inputStyles} />
-        </div>
-        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-        <div className="flex justify-end pt-2">
-          <button type="submit" className={buttonStyles} disabled={isSaving}>
-            {isSaving ? 'Saving...' : <><Save size={16} className="mr-2" /> Save SSH Settings</>}
-          </button>
-        </div>
-      </form>
-
-      <hr className="my-8 border-gray-700/50" />
-
+    <SettingsCard title={
       <div
         className="flex justify-between items-center cursor-pointer"
-        onClick={() => setIsTerminalOpen(!isTerminalOpen)}
-        aria-expanded={isTerminalOpen}
+        onClick={() => setIsSettingsExpanded(!isSettingsExpanded)}
+        aria-expanded={isSettingsExpanded}
       >
-        <h4 className="text-lg font-semibold text-gray-300">SSH Terminal</h4>
+        <h3 className="text-xl font-semibold text-gray-200">SSH Terminal (Admin)</h3>
         <button
           type="button"
           className="p-2 rounded-full hover:shadow-neo-inset transition-all"
         >
           <ChevronDown
             size={20}
-            className={`transition-transform duration-300 ${isTerminalOpen ? 'rotate-180' : ''}`}
+            className={`transition-transform duration-300 ${isSettingsExpanded ? 'rotate-180' : ''}`}
           />
         </button>
       </div>
+    }>
+      {isSettingsExpanded && (
+        <>
+          <p className="text-sm text-gray-400 mb-6">Configure connection details for a remote server via SSH.</p>
+          <form onSubmit={handleSaveSettings} className="space-y-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-400">Host</label>
+                <input type="text" name="ssh_host" value={settings.ssh_host} onChange={handleChange} className={inputStyles} placeholder="e.g., 192.168.1.100" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-400">Port</label>
+                <input type="number" name="ssh_port" value={settings.ssh_port} onChange={handleChange} className={inputStyles} placeholder="22" required />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-400">Username</label>
+              <input type="text" name="ssh_username" value={settings.ssh_username} onChange={handleChange} className={inputStyles} placeholder="e.g., root" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-400">Password</label>
+              <input type="password" name="ssh_password" value={settings.ssh_password} onChange={handleChange} className={inputStyles} />
+            </div>
+            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+            <div className="flex justify-end pt-2">
+              <button type="submit" className={buttonStyles} disabled={isSaving}>
+                {isSaving ? 'Saving...' : <><Save size={16} className="mr-2" /> Save SSH Settings</>}
+              </button>
+            </div>
+          </form>
 
-      {isTerminalOpen && (
-        <div className="mt-6">
+          <hr className="my-8 border-gray-700/50" />
+
+          <h4 className="text-lg font-semibold text-gray-300 mb-4">SSH Terminal</h4>
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2 text-gray-400">Command</label>
             <input type="text" value={command} onChange={(e) => setCommand(e.target.value)} className={inputStyles} placeholder="e.g., ls -la /" />
@@ -242,7 +243,7 @@ const SshTerminalSettings = () => {
             </div>
             <div ref={terminalRef} className="flex-grow" />
           </div>
-        </div>
+        </>
       )}
     </SettingsCard>
   );
