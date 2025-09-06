@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, Share2, Copy, Edit, Trash2, RotateCcw, Users, Download, ClipboardPaste, Scissors } from 'lucide-react';
+import { Eye, Share2, Copy, Edit, Trash2, RotateCcw, Users, Download, ClipboardPaste, Scissors, LinkOff } from 'lucide-react'; // Import LinkOff icon
 
 const ItemContextMenu = ({
   contextMenu,
@@ -22,10 +22,12 @@ const ItemContextMenu = ({
   onPaste, // New prop
   hasCopiedItems, // New prop
   hasCutItems, // New prop
+  onStopSharing, // New prop
 }) => {
   if (!contextMenu || selectedCount === 0) return null;
 
   const canPaste = (hasCopiedItems || hasCutItems) && !isTrashView && !isSharedWithMeView && !isMySharesView;
+  const isShared = singleSelectedItem?.is_shared; // Check if the single selected item is shared
 
   return (
     <div
@@ -72,6 +74,13 @@ const ItemContextMenu = ({
           )}
           {singleSelectedItem && (
             <li><button onClick={() => { onRename(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Edit size={16} /><span>Rename</span></button></li>
+          )}
+          {isShared && (
+            <li>
+              <button onClick={() => { onStopSharing(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md">
+                <LinkOff size={16} /><span>Stop Sharing ({selectedCount})</span>
+              </button>
+            </li>
           )}
           <li><button onClick={() => { onDelete(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md"><Trash2 size={16} /><span>Delete ({selectedCount})</span></button></li>
         </ul>
