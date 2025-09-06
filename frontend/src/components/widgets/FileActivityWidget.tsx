@@ -5,6 +5,7 @@ import { useInterval } from '../../hooks/useInterval';
 import LoadingSpinner from '../LoadingSpinner';
 import { useNavigate } from 'react-router-dom';
 import FileViewerModal from '../modals/FileViewerModal';
+import FileActivityWidgetSkeleton from './skeletons/FileActivityWidgetSkeleton';
 
 const FileActivityWidget = () => {
   const [recentFiles, setRecentFiles] = useState([]);
@@ -66,7 +67,7 @@ const FileActivityWidget = () => {
 
   const renderContent = () => {
     if (isLoading) {
-      return <div className="flex-grow flex items-center justify-center"><LoadingSpinner /></div>;
+      return <FileActivityWidgetSkeleton />;
     }
     if (error) {
       return <div className="flex-grow flex items-center justify-center text-center text-red-500 text-sm">{error}</div>;

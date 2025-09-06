@@ -9,8 +9,9 @@ import ShareAppModal from '../modals/ShareAppModal';
 import AppContextMenu from './AppContextMenu';
 import EditAppModal from '../modals/EditAppModal';
 import toast from 'react-hot-toast';
+import AppLauncherWidgetSkeleton from './skeletons/AppLauncherWidgetSkeleton';
 
-const AppLauncherWidget = ({ isInteracting }) => {
+const AppLauncherWidget = () => {
   const { settings, setSetting } = useSettings();
   const { currentUser } = useAuth();
   const [apps, setApps] = useState([]);
@@ -31,9 +32,6 @@ const AppLauncherWidget = ({ isInteracting }) => {
   }, [settings.appLauncherConfig]);
 
   const fetchApps = useCallback(async () => {
-    // Only fetch apps if not interacting
-    if (isInteracting) return;
-
     try {
       const res = await getApps();
       const installedApps = res.data
@@ -57,7 +55,7 @@ const AppLauncherWidget = ({ isInteracting }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [isInteracting]);
+  }, []);
 
   useEffect(() => {
     fetchApps();
@@ -238,8 +236,8 @@ const AppLauncherWidget = ({ isInteracting }) => {
     return launcherItems.filter(item => item.app.name.toLowerCase().includes(lowerSearch));
   }, [launcherItems, searchTerm]);
 
-  if (isLoading || isInteracting) {
-    return <div className="flex-grow flex items-center justify-center"><LoadingSpinner /></div>;
+  if (isLoading) {
+    return <AppLauncherWidgetSkeleton />;
   }
 
   const AppItem = ({ item }) => {

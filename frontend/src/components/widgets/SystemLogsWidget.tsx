@@ -4,6 +4,7 @@ import { getContainers, streamContainerLogs } from '../../services/api';
 import { useSettings } from '../../hooks/useSettings';
 import LoadingSpinner from '../LoadingSpinner';
 import toast from 'react-hot-toast';
+import SystemLogsWidgetSkeleton from './skeletons/SystemLogsWidgetSkeleton';
 
 const SystemLogsWidget = () => {
   const { settings, setSetting } = useSettings();
@@ -100,7 +101,7 @@ const SystemLogsWidget = () => {
 
   const renderContent = () => {
     if (isLoading) {
-      return <div className="flex-grow flex items-center justify-center"><LoadingSpinner /></div>;
+      return <SystemLogsWidgetSkeleton />;
     }
     if (error && !selectedContainerId) {
       return (

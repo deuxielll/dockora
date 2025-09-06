@@ -12,6 +12,7 @@ import {
   Filler,
 } from 'chart.js';
 import LoadingSpinner from '../LoadingSpinner';
+import NetworkingWidgetSkeleton from './skeletons/NetworkingWidgetSkeleton';
 
 ChartJS.register(
   CategoryScale,
@@ -127,7 +128,7 @@ const NetworkingWidget = () => {
 
   const renderContent = () => {
     if (isLoading) {
-      return <div className="flex-grow flex items-center justify-center"><Loader className="animate-spin text-blue-500" /></div>;
+      return <NetworkingWidgetSkeleton />;
     }
     if (!stats) {
       return <div className="flex-grow flex items-center justify-center text-sm text-gray-500">Could not load network data.</div>;

@@ -1,13 +1,14 @@
 import React from 'react';
 import { GripVertical } from 'lucide-react';
 
-const WidgetWrapper = ({ widgetId, title, onHide, children, isLocked, isInteracting }) => {
+const WidgetWrapper = ({ widgetId, title, onHide, children, isLocked }) => {
   const panelClasses = "bg-dark-bg shadow-neo";
 
   // Clone children to inject isInteracting prop
   const childrenWithProps = React.Children.map(children, child => {
     if (React.isValidElement(child)) {
-      return React.cloneElement(child, { isInteracting });
+      // Removed isInteracting prop from here
+      return React.cloneElement(child, {});
     }
     return child;
   });

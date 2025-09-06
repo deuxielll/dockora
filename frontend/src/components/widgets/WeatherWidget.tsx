@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useSettings } from '../../hooks/useSettings';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import LoadingSpinner from '../LoadingSpinner';
+import WeatherWidgetSkeleton from './skeletons/WeatherWidgetSkeleton';
 
 const OwmWeatherIcon = ({ code, ...props }) => {
   if (!code) return <CloudSun {...props} />;
@@ -39,7 +40,7 @@ const getWeatherDescription = (code) => {
   return codes[code] || 'Unknown';
 };
 
-const WeatherWidget = ({ isInteracting }) => {
+const WeatherWidget = () => {
   const [weatherData, setWeatherData] = useLocalStorage('dockora-weather-data', null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,8 +79,6 @@ const WeatherWidget = ({ isInteracting }) => {
   useEffect(() => {
     if (!coords) return;
     if (provider === 'openweathermap' && !apiKey) return;
-    // Only fetch weather if not interacting
-    if (isInteracting) return;
 
     const fetchWeather = async () => {
       setIsFetchingNew(true);
@@ -121,11 +120,11 @@ const WeatherWidget = ({ isInteracting }) => {
     fetchWeather();
     const interval = setInterval(fetchWeather, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [apiKey, coords, provider, setWeatherData, isInteracting]);
+  }, [apiKey, coords, provider, setWeatherData]);
 
   const renderContent = () => {
     if (isLoading && !weatherData) { // Only show full loading spinner if no cached data
-      return <div className="flex-grow flex items-center justify-center"><Loader className="animate-spin text-blue-500" /></div>;
+      return <WeatherWidgetSkeleton />;
     }
     if (error && error.includes("Location access denied")) {
       return (
@@ -265,9 +264,6 @@ const WeatherWidget = ({ isInteracting }) => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-end text-gray-200 -mt-2 mb-2 flex-shrink-0">
-        <p className="text-sm font-semibold">{weatherData?.isOwm ? weatherData.name : weatherData?.locationName}</p>
-      </div>
       {renderContent()}
     </div>
   );

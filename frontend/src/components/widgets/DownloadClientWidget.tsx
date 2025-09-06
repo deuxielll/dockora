@@ -6,6 +6,7 @@ import TorrentItem from './download-client/TorrentItem';
 import TorrentContextMenu from './download-client/TorrentContextMenu';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../LoadingSpinner';
+import DownloadClientWidgetSkeleton from './skeletons/DownloadClientWidgetSkeleton';
 
 const formatSpeed = (bytes) => {
   if (bytes < 1024) return `${bytes} B/s`;
@@ -13,7 +14,7 @@ const formatSpeed = (bytes) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB/s`;
 };
 
-const DownloadClientWidget = ({ isInteracting }) => {
+const DownloadClientWidget = () => {
   const [stats, setStats] = useState(null);
   const [torrents, setTorrents] = useState([]);
   const [error, setError] = useState(null);
@@ -31,8 +32,6 @@ const DownloadClientWidget = ({ isInteracting }) => {
       setError(null); // Clear any previous errors
       return;
     }
-    // Only fetch data if not interacting
-    if (isInteracting) return;
 
     try {
       const [statsRes, torrentsRes] = await Promise.all([
@@ -49,7 +48,7 @@ const DownloadClientWidget = ({ isInteracting }) => {
     } finally {
       if (isLoading) setIsLoading(false);
     }
-  }, [config.type, isLoading, settings.downloadClientConfig, isInteracting]);
+  }, [config.type, isLoading, settings.downloadClientConfig]);
 
   useEffect(() => {
     fetchData();
@@ -81,7 +80,7 @@ const DownloadClientWidget = ({ isInteracting }) => {
 
   const renderContent = () => {
     if (isLoading) {
-      return <div className="flex-grow flex items-center justify-center"><Loader className="animate-spin text-gray-200" /></div>;
+      return <DownloadClientWidgetSkeleton />;
     }
     if (config.type === 'none') {
       return (

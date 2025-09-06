@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, AlarmClock, Timer, Globe } from 'lucide-react';
 import ClockDisplay from '../time-widget/ClockDisplay';
 import Alarm from '../time-widget/Alarm';
@@ -6,9 +6,16 @@ import TimerComponent from '../time-widget/Timer';
 import Stopwatch from '../time-widget/Stopwatch';
 import WorldClock from '../time-widget/WorldClock';
 import LoadingSpinner from '../LoadingSpinner';
+import TimeWidgetSkeleton from './skeletons/TimeWidgetSkeleton';
 
-const TimeWidget = ({ isInteracting }) => {
+const TimeWidget = () => {
   const [activeTab, setActiveTab] = useState('clock');
+  const [isLoading, setIsLoading] = useState(true); // Add isLoading state
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 500); // Simulate loading
+    return () => clearTimeout(timer);
+  }, []);
 
   const tabs = [
     { id: 'clock', icon: Clock, label: 'Clock' },
@@ -18,9 +25,6 @@ const TimeWidget = ({ isInteracting }) => {
   ];
 
   const renderContent = () => {
-    if (isInteracting) {
-      return <div className="flex-grow flex items-center justify-center"><LoadingSpinner size={32} /></div>;
-    }
     switch (activeTab) {
       case 'alarm': return <Alarm />;
       case 'timer': return <TimerComponent />;
@@ -30,6 +34,10 @@ const TimeWidget = ({ isInteracting }) => {
   };
   
   const [isWorldClockOpen, setIsWorldClockOpen] = useState(false);
+
+  if (isLoading) {
+    return <TimeWidgetSkeleton />;
+  }
 
   return (
     <div className="h-full flex flex-col relative">
@@ -43,7 +51,6 @@ const TimeWidget = ({ isInteracting }) => {
             onClick={() => setActiveTab(tab.id)}
             title={tab.label}
             className={`p-3 rounded-full transition-all ${activeTab === tab.id ? 'text-accent shadow-neo-inset' : 'text-gray-200 hover:text-gray-200'}`}
-            disabled={isInteracting}
           >
             <tab.icon size={20} />
           </button>
@@ -56,11 +63,10 @@ const TimeWidget = ({ isInteracting }) => {
             <button
                 title="World Clock"
                 className={`p-3 rounded-full transition-all text-gray-200 hover:text-gray-200`}
-                disabled={isInteracting}
             >
                 <Globe size={20} />
             </button>
-            {isWorldClockOpen && !isInteracting && (
+            {isWorldClockOpen && (
                 <div 
                     className="absolute bottom-full right-0 mb-2 w-72 p-4 bg-dark-bg-secondary shadow-neo rounded-lg z-20 h-64"
                 >
