@@ -1,6 +1,7 @@
 import React from 'react';
 import { Folder, FileText, Trash2, Users, ArrowUp, ArrowDown } from 'lucide-react';
 import LoadingSpinner from '../LoadingSpinner';
+import FileTableSkeleton from '../skeletons/FileTableSkeleton'; // Import the new skeleton
 
 const FileTable = ({
   items,
@@ -77,7 +78,7 @@ const FileTable = ({
     return null;
   };
 
-  if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingSpinner /></div>;
+  if (isLoading) return <FileTableSkeleton />; // Use the new skeleton here
   if (error) return <div className="text-center py-12 text-red-500">{error}</div>;
   if (sortedItems.length === 0) {
     let message = 'This directory is empty.';
