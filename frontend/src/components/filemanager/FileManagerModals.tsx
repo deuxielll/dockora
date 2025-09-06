@@ -5,9 +5,9 @@ import FileViewerModal from '../modals/FileViewerModal';
 import CreateItemModal from '../modals/CreateItemModal';
 import RenameItemModal from '../modals/RenameItemModal';
 import ShareModal from '../modals/ShareModal';
-import ShareWithUsersModal from '../modals/ShareWithUsersModal';
-import MoveItemModal from '../modals/MoveItemModal'; // New import
-import { getSharedWithMeFileContent, viewSharedWithMeFile } from '../../services/api';
+// Removed ShareWithUsersModal import
+import MoveItemModal from '../modals/MoveItemModal';
+import { getFileContent, viewFile } from '../../services/api'; // Adjusted imports
 
 const FileManagerModals = ({
   viewingFile,
@@ -20,12 +20,10 @@ const FileManagerModals = ({
   onRename,
   itemsToSharePublic,
   setItemsToSharePublic,
-  itemsToShareWithUsers,
-  setItemsToShareWithUsers,
-  onShareWithUsersSuccess,
-  itemsToMove, // New prop
-  setItemsToMove, // New prop
-  onMove, // New prop
+  // Removed itemsToShareWithUsers, setItemsToShareWithUsers, onShareWithUsersSuccess
+  itemsToMove,
+  setItemsToMove,
+  onMove,
 }) => {
   return (
     <>
@@ -33,21 +31,14 @@ const FileManagerModals = ({
         <FileViewerModal
           item={viewingFile}
           onClose={() => setViewingFile(null)}
-          getSharedFileContent={getSharedWithMeFileContent}
-          viewSharedFile={viewSharedWithMeFile}
+          // Removed getSharedFileContent and viewSharedFile props
         />
       )}
       {showCreateModal && <CreateItemModal type={showCreateModal.type} onClose={() => setShowCreateModal(null)} onCreate={onCreate} />}
       {itemToRename && <RenameItemModal item={itemToRename} onClose={() => setItemToRename(null)} onRename={onRename} />}
       {itemsToSharePublic && <ShareModal items={itemsToSharePublic} onClose={() => setItemsToSharePublic(null)} />}
-      {itemsToShareWithUsers && (
-        <ShareWithUsersModal
-          itemsToShare={itemsToShareWithUsers}
-          onClose={() => setItemsToShareWithUsers(null)}
-          onSuccess={onShareWithUsersSuccess}
-        />
-      )}
-      {itemsToMove && ( // Render new MoveItemModal
+      {/* Removed ShareWithUsersModal rendering */}
+      {itemsToMove && (
         <MoveItemModal
           items={itemsToMove}
           onClose={() => setItemsToMove(null)}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Folder, FileText, Trash2, Users, ArrowUp, ArrowDown } from 'lucide-react';
+import { Folder, FileText, Trash2, ArrowUp, ArrowDown } from 'lucide-react'; // Removed Users
 import LoadingSpinner from '../LoadingSpinner';
 import FileTableSkeleton from '../skeletons/FileTableSkeleton'; // Import the new skeleton
 
@@ -8,13 +8,13 @@ const FileTable = ({
   isLoading,
   error,
   isTrashView,
-  isSharedWithMeView,
+  isSharedWithMeView, // Still passed, but will be false
   selectedItems,
   draggedOverItem,
   onItemClick,
   onItemDoubleClick,
   onItemContextMenu,
-  onDragStart, // This prop is now correctly named and passed
+  onDragStart,
   onItemDragEnter,
   onItemDragLeave,
   onDropOnItem,
@@ -35,8 +35,7 @@ const FileTable = ({
   
   const getItemIdentifier = (item) => {
     if (isTrashView) return item.trashed_name;
-    if (isSharedWithMeView) return item.id;
-    return item.path;
+    return item.path; // Simplified: no isSharedWithMeView
   };
 
   // Filter items based on search term
@@ -58,8 +57,8 @@ const FileTable = ({
         bValue = b.type === 'file' ? b.size : (b.type === 'dir' ? -1 : 0);
         break;
       case 'modified_at':
-        aValue = new Date(isTrashView ? a.deleted_at : isSharedWithMeView ? a.shared_at : a.modified_at).getTime();
-        bValue = new Date(isTrashView ? b.deleted_at : isSharedWithMeView ? b.shared_at : b.modified_at).getTime();
+        aValue = new Date(isTrashView ? a.deleted_at : a.modified_at).getTime(); // Simplified: no isSharedWithMeView
+        bValue = new Date(isTrashView ? b.deleted_at : b.modified_at).getTime(); // Simplified: no isSharedWithMeView
         break;
       default:
         aValue = a.name.toLowerCase();
@@ -86,10 +85,7 @@ const FileTable = ({
     if (isTrashView) {
         message = 'Your trash is empty.';
         Icon = Trash2;
-    } else if (isSharedWithMeView) {
-        message = 'No files or folders have been shared with you.';
-        Icon = Users;
-    } else if (searchTerm) {
+    } else if (searchTerm) { // Simplified: no isSharedWithMeView
         message = `No items found matching "${searchTerm}".`;
     }
     return (
@@ -110,7 +106,7 @@ const FileTable = ({
             </div>
           </th>
           {isTrashView && <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden lg:table-cell">Original Location</th>}
-          {isSharedWithMeView && <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden lg:table-cell">Shared By</th>}
+          {/* Removed Shared By column */}
           <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden md:table-cell cursor-pointer hover:text-accent transition-colors" onClick={() => onSort('size')}>
             <div className="flex items-center">
               Size {renderSortIcon('size')}
@@ -118,7 +114,7 @@ const FileTable = ({
           </th>
           <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden sm:table-cell cursor-pointer hover:text-accent transition-colors" onClick={() => onSort('modified_at')}>
             <div className="flex items-center">
-              {isTrashView ? 'Date Deleted' : isSharedWithMeView ? 'Date Shared' : 'Last Modified'} {renderSortIcon('modified_at')}
+              {isTrashView ? 'Date Deleted' : 'Last Modified'} {renderSortIcon('modified_at')} {/* Simplified: no isSharedWithMeView */}
             </div>
           </th>
         </tr>
@@ -127,7 +123,7 @@ const FileTable = ({
         {sortedItems.map((item) => (
           <tr
             key={getItemIdentifier(item)}
-            draggable={!isTrashView && !isSharedWithMeView}
+            draggable={!isTrashView} // Simplified: no isSharedWithMeView
             onDragStart={(e) => onDragStart(e, item)}
             onDragEnter={(e) => onItemDragEnter(e, item)}
             onDragLeave={onItemDragLeave}
@@ -141,14 +137,14 @@ const FileTable = ({
             <td className="p-4 flex items-center gap-3">
               {item.type === 'dir' ? <Folder size={20} className="text-blue-400" /> : <FileText size={20} className="text-gray-400" />}
               <span className="font-medium text-gray-200 truncate">{item.name}</span>
-              {item.is_shared && !isTrashView && !isSharedWithMeView && (
+              {item.is_shared && !isTrashView && ( // Simplified: no isSharedWithMeView
                 <span className="w-2 h-2 bg-accent rounded-full ml-2" title="Shared by you"></span>
               )}
             </td>
             {isTrashView && <td className="p-4 text-sm hidden lg:table-cell truncate text-gray-300" title={item.original_path}>{item.original_path}</td>}
-            {isSharedWithMeView && <td className="p-4 text-sm hidden lg:table-cell truncate text-gray-300" title={item.sharer_name}>{item.sharer_name}</td>}
+            {/* Removed Shared By cell */}
             <td className="p-4 text-sm hidden md:table-cell text-gray-300">{item.type === 'file' ? formatSize(item.size) : '-'}</td>
-            <td className="p-4 text-sm hidden sm:table-cell text-gray-300">{formatDate(isTrashView ? item.deleted_at : isSharedWithMeView ? item.shared_at : item.modified_at)}</td>
+            <td className="p-4 text-sm hidden sm:table-cell text-gray-300">{formatDate(isTrashView ? item.deleted_at : item.modified_at)}</td> {/* Simplified: no isSharedWithMeView */}
           </tr>
         ))}
       </tbody>

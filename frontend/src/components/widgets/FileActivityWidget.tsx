@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FileText, Folder, Share2, Clock, CheckCircle, Loader } from 'lucide-react';
-import { getRecentFileActivity, getNewSharedFilesCount } from '../../services/api';
+import { FileText, Folder, Clock, CheckCircle, Loader } from 'lucide-react'; // Removed Share2
+import { getRecentFileActivity } from '../../services/api'; // Removed getNewSharedFilesCount
 import { useInterval } from '../../hooks/useInterval';
 import LoadingSpinner from '../LoadingSpinner';
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +9,7 @@ import FileActivitySkeleton from '../skeletons/FileActivitySkeleton'; // Import 
 
 const FileActivityWidget = () => {
   const [recentFiles, setRecentFiles] = useState([]);
-  const [newSharedCount, setNewSharedCount] = useState(0);
+  // Removed newSharedCount state
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewingFile, setViewingFile] = useState(null);
@@ -19,12 +19,9 @@ const FileActivityWidget = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [recentRes, sharedRes] = await Promise.all([
-        getRecentFileActivity(),
-        getNewSharedFilesCount()
-      ]);
+      const recentRes = await getRecentFileActivity(); // Removed sharedRes
       setRecentFiles(recentRes.data);
-      setNewSharedCount(sharedRes.data.count);
+      // Removed setNewSharedCount(sharedRes.data.count);
     } catch (err) {
       setError("Failed to fetch file activity.");
       console.error("File activity fetch error:", err);
@@ -73,26 +70,21 @@ const FileActivityWidget = () => {
       return <div className="flex-grow flex items-center justify-center text-center text-red-500 text-sm">{error}</div>;
     }
 
-    const hasActivity = recentFiles.length > 0 || newSharedCount > 0;
+    const hasActivity = recentFiles.length > 0; // Removed newSharedCount > 0
 
     if (!hasActivity) {
       return (
         <div className="flex-grow flex flex-col items-center justify-center text-center text-gray-400 p-4">
           <CheckCircle size={48} className="mb-4 text-green-500" />
           <p className="font-semibold text-gray-200">You're all caught up!</p>
-          <p className="text-sm">No recent file activity or new shares.</p>
+          <p className="text-sm">No recent file activity.</p> {/* Adjusted message */}
         </div>
       );
     }
 
     return (
       <div className="flex-grow flex flex-col overflow-y-auto no-scrollbar pr-2">
-        {newSharedCount > 0 && (
-          <div className="flex items-center gap-3 p-3 mb-3 rounded-lg bg-blue-900/30 shadow-neo-inset text-blue-300">
-            <Share2 size={20} />
-            <p className="font-semibold">{newSharedCount} new file(s) shared with you!</p>
-          </div>
-        )}
+        {/* Removed newSharedCount banner */}
 
         {recentFiles.length > 0 && (
           <div className="space-y-2">

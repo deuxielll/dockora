@@ -4,7 +4,6 @@ import stat
 from datetime import datetime
 from decorators import login_required
 from helpers import get_user_and_base_path, resolve_user_path
-from models import UserSetting, UserFileShare
 from extensions import db
 
 file_activity_bp = Blueprint('file_activity', __name__)
@@ -57,37 +56,3 @@ def get_recent_file_activity():
     # Sort by modified_at descending and take the top 5
     recent_items.sort(key=lambda x: x['modified_at'], reverse=True)
     return jsonify(recent_items[:5])
-
-@file_activity_bp.route("/files/new-shared-count", methods=["GET"])
-@login_required
-def get_new_shared_files_count():
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({"error": "Authentication required"}), 401
-
-    last_viewed_setting = UserSetting.query.filter_by(user_id=user_id, key='lastViewedSharedFilesTimestamp').first()
-    last_viewed_timestamp = datetime.fromisoformat(last_viewed_setting.value) if last_viewed_setting and last_viewed_setting.value else datetime.min
-
-    new_shares_count = UserFileShare.query.filter(
-        UserFileShare.recipient_user_id == user_id,
-        UserFileShare.shared_at > last_viewed_timestamp
-    ).count()
-
-    return jsonify({"count": new_shares_count})
-
-@file_activity_bp.route("/files/update-last-viewed-shared", methods=["POST"])
-@login_required
-def update_last_viewed_shared_files_timestamp():
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({"error": "Authentication required"}), 401
-
-    setting = UserSetting.query.filter_by(user_id=user_id, key='lastViewedSharedFilesTimestamp').first()
-    if setting:
-        setting.value = datetime.utcnow().isoformat()
-    else:
-        setting = UserSetting(user_id=user_id, key='lastViewedSharedFilesTimestamp', value=datetime.utcnow().isoformat())
-        db.session.add(setting)
-    
-    db.session.commit()
-    return jsonify({"success": True})

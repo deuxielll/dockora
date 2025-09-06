@@ -121,19 +121,8 @@ export const viewFile = (path) => api.get(`/files/view?path=${encodeURIComponent
 export const createShare = (data) => api.post('/files/share', data);
 export const deleteShare = (token) => api.post('/files/unshare', { token });
 
-// Sharing (User-to-User)
-export const shareFileWithUsers = (paths, recipient_user_ids) => api.post('/files/share-with-user', { paths, recipient_user_ids });
-export const unshareFileWithUsers = (share_ids) => api.post('/files/unshare-with-user', { share_ids });
-export const getSharedWithMeItems = () => api.get('/files/shared-with-me');
-export const viewSharedWithMeFile = (share_id) => api.get(`/files/shared-with-me/view?share_id=${share_id}`, { responseType: 'blob' });
-export const downloadSharedWithMeFile = (share_id) => api.get(`/files/shared-with-me/download?share_id=${share_id}`, { responseType: 'blob' });
-export const getSharedWithMeFileContent = (share_id) => api.get(`/files/shared-with-me/content?share_id=${share_id}`);
-export const getSharedByMeItems = () => api.get('/files/shared-by-me');
-
-// New File Manager Activity APIs
-export const getRecentFileActivity = () => api.get('/files/recent-activity');
-export const getNewSharedFilesCount = () => api.get('/files/new-shared-count');
-export const updateLastViewedSharedFilesTimestamp = () => api.post('/files/update-last-viewed-shared');
+// Removed Sharing (User-to-User) APIs
+// Removed New File Manager Activity APIs (except recent activity)
 
 // Trash
 export const getTrashItems = () => api.get('/files/trash');

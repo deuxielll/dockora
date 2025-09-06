@@ -9,18 +9,18 @@ const FileManagerContextMenus = ({
   emptySpaceContextMenu,
   closeAllContextMenus,
   isTrashView,
-  isSharedWithMeView,
-  isMySharesView,
+  isSharedWithMeView, // Still passed, but will be false
+  isMySharesView, // Still passed, but will be false
   selectedCount,
   singleSelectedItem,
   onView,
   onSharePublic,
-  onShareWithUsers,
+  // Removed onShareWithUsers
   onCopyPath,
   onRename,
   onDelete,
   onRestore,
-  onDownloadShared,
+  // Removed onDownloadShared
   onCopy,
   onCut,
   onPaste,
@@ -40,13 +40,13 @@ const FileManagerContextMenus = ({
         singleSelectedItem={singleSelectedItem}
         onView={onView}
         onSharePublic={onSharePublic}
-        onShareWithUsers={onShareWithUsers}
+        // Removed onShareWithUsers
         onCopyPath={onCopyPath}
         onRename={onRename}
         onDelete={onDelete}
         onRestore={onRestore}
         onClose={closeAllContextMenus}
-        onDownloadShared={onDownloadShared}
+        // Removed onDownloadShared
         onCopy={onCopy}
         onCut={onCut}
         onPaste={onPaste}
