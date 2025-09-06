@@ -1,93 +1,27 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { getContainers, manageContainer, getContainerLogs } from "../services/api";
-import LogModal from "./modals/LogModal";
-import RenameContainerModal from "./modals/RenameContainerModal";
+import React, { useState, useCallback, useMemo } from "react";
+import { getContainerLogs } from "../services/api";
 import FloatingActionButton from "./FloatingActionButton";
-import EditContainerResourcesModal from "./modals/EditContainerResourcesModal";
 import ContainerCardSkeleton from "./skeletons/ContainerCardSkeleton";
-import StackCard from "./containers/StackCard"; // New import
-import MiniContainerCard from "./containers/MiniContainerCard"; // New import
+import StackCard from "./containers/StackCard";
 import toast from 'react-hot-toast';
+import useContainerManagement from '../hooks/useContainerManagement'; // New import
+import ContainerModals from './containers/ContainerModals'; // New import
 
 const ContainerView = ({ onCreateStack }) => {
-  const [containers, setContainers] = useState([]);
+  const {
+    containers,
+    filter,
+    setFilter,
+    isLoading,
+    actionLoadingStates,
+    fetchContainers,
+    handleAction,
+  } = useContainerManagement(); // Use the new hook
+
   const [logs, setLogs] = useState("");
   const [selectedContainer, setSelectedContainer] = useState(null);
   const [containerToRename, setContainerToRename] = useState(null);
   const [containerToEdit, setContainerToEdit] = useState(null);
-  const [filter, setFilter] = useState("all");
-  const [isLoading, setIsLoading] = useState(true);
-  const [actionLoadingStates, setActionLoadingStates] = useState({}); // { containerId: boolean }
-
-  const fetchContainers = useCallback(async () => {
-    try {
-      const res = await getContainers();
-      // Only update state if the data has actually changed
-      if (JSON.stringify(res.data) !== JSON.stringify(containers)) {
-        setContainers(res.data);
-      }
-    } catch (err) {
-      console.error("Error fetching containers:", err);
-    }
-  }, [containers]); // Include containers in dependency array for comparison
-
-  const handleAction = async (id, act) => {
-    setActionLoadingStates(prev => ({ ...prev, [id]: true })); // Set loading for this container
-    const toastId = toast.loading(`Sending '${act}' command...`);
-    
-    const originalContainer = containers.find(c => c.id === id);
-    if (!originalContainer) {
-      setActionLoadingStates(prev => { const newState = { ...prev }; delete newState[id]; return newState; });
-      return;
-    }
-    const originalStatus = originalContainer.status;
-
-    // Optimistic update
-    const getOptimisticStatus = (action) => {
-      if (action === 'start' || action === 'unpause' || action === 'restart') return 'running (optimistic)';
-      if (action === 'stop') return 'exited (optimistic)';
-      if (action === 'pause') return 'paused (optimistic)';
-      return 'updating...';
-    };
-    setContainers(prev => prev.map(c => c.id === id ? { ...c, status: getOptimisticStatus(act) } : c));
-
-    try {
-        await manageContainer(id, act);
-        toast.success(`'${act}' command sent. Verifying status...`, { id: toastId });
-
-        // Poll for status change
-        let attempts = 0;
-        const maxAttempts = 10; // 10 attempts over 10 seconds
-        const pollInterval = 1000; // 1 second
-
-        const poll = setInterval(async () => {
-            attempts++;
-            try {
-                const res = await getContainers();
-                const updatedContainer = res.data.find(c => c.id === id);
-                if (updatedContainer && updatedContainer.status !== originalStatus) {
-                    clearInterval(poll);
-                    toast.success(`Status for ${updatedContainer.name} updated.`, { id: toastId });
-                    setContainers(res.data); // Update with the fresh full list
-                    setActionLoadingStates(prev => { const newState = { ...prev }; delete newState[id]; return newState; });
-                } else if (attempts >= maxAttempts) {
-                    clearInterval(poll);
-                    toast.warn(`Could not verify status change for ${originalContainer.name}. Refreshing list.`, { id: toastId });
-                    fetchContainers(); // Fallback to a final fetch
-                    setActionLoadingStates(prev => { const newState = { ...prev }; delete newState[id]; return newState; });
-                }
-            } catch (pollErr) {
-                // Ignore poll errors, the main error is already caught
-            }
-        }, pollInterval);
-
-    } catch (err) {
-        toast.error(err.response?.data?.error || `Failed to send '${act}' command.`, { id: toastId });
-        // Revert on failure by fetching the real state
-        fetchContainers();
-        setActionLoadingStates(prev => { const newState = { ...prev }; delete newState[id]; return newState; });
-    }
-  };
 
   const handleViewLogs = async (container) => {
     setActionLoadingStates(prev => ({ ...prev, [container.id]: true }));
@@ -102,17 +36,6 @@ const ContainerView = ({ onCreateStack }) => {
       setActionLoadingStates(prev => { const newState = { ...prev }; delete newState[container.id]; return newState; });
     }
   };
-
-  useEffect(() => {
-    const initialFetch = async () => {
-      await fetchContainers();
-      setIsLoading(false);
-    };
-    initialFetch();
-
-    const interval = setInterval(fetchContainers, 5000);
-    return () => clearInterval(interval);
-  }, [fetchContainers]);
 
   const filteredAndGroupedContainers = useMemo(() => {
     const grouped = new Map();
@@ -226,30 +149,16 @@ const ContainerView = ({ onCreateStack }) => {
 
       <FloatingActionButton onClick={onCreateStack} />
 
-      {containerToEdit && (
-        <EditContainerResourcesModal
-          container={containerToEdit}
-          onClose={() => setContainerToEdit(null)}
-          onSuccess={() => {
-            fetchContainers();
-            setContainerToEdit(null);
-          }}
-        />
-      )}
-      {containerToRename && (
-        <RenameContainerModal 
-          container={containerToRename}
-          onClose={() => setContainerToRename(null)}
-          onSuccess={fetchContainers}
-        />
-      )}
-      {selectedContainer && (
-        <LogModal 
-          container={selectedContainer} 
-          logs={logs} 
-          onClose={() => setSelectedContainer(null)} 
-        />
-      )}
+      <ContainerModals
+        selectedContainer={selectedContainer}
+        logs={logs}
+        containerToRename={containerToRename}
+        containerToEdit={containerToEdit}
+        setSelectedContainer={setSelectedContainer}
+        setContainerToRename={setContainerToRename}
+        setContainerToEdit={setContainerToEdit}
+        fetchContainers={fetchContainers}
+      />
     </div>
   );
 };

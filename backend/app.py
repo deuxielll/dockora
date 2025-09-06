@@ -7,7 +7,7 @@ from sqlalchemy import text
 import threading
 
 from extensions import db, bcrypt
-from models import User, SystemSetting # Import at least one model to ensure tables are created
+from models import User, SystemSetting
 
 # Import Blueprints
 from routes.auth import auth_bp
@@ -16,32 +16,31 @@ from routes.containers import containers_bp
 from routes.files import files_bp
 from routes.system import system_bp
 from routes.apps import apps_bp, start_app_refresh_scheduler
+from routes.download_client import download_client_bp # New import
+from routes.ssh import ssh_bp # New import
 
 def create_app():
     app = Flask(__name__, template_folder='templates')
     
-    # Configuration
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a_super_secret_key_for_development')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
-    # CORS
     CORS(app, supports_credentials=True, origins=[r"http://.*"])
 
-    # Initialize extensions
     db.init_app(app)
     
-    # Create database tables within the app context
     with app.app_context():
         db.create_all()
 
-    # Register Blueprints
     app.register_blueprint(auth_bp, url_prefix='/api')
     app.register_blueprint(users_bp, url_prefix='/api')
     app.register_blueprint(containers_bp, url_prefix='/api')
-    app.register_blueprint(files_bp) # Has /api and /shares prefixes
+    app.register_blueprint(files_bp)
     app.register_blueprint(system_bp, url_prefix='/api')
     app.register_blueprint(apps_bp, url_prefix='/api')
+    app.register_blueprint(download_client_bp, url_prefix='/api') # Register new blueprint
+    app.register_blueprint(ssh_bp, url_prefix='/api') # Register new blueprint
 
     return app
 
@@ -69,7 +68,6 @@ if __name__ == "__main__":
         exit(1)
 
     with app.app_context():
-        # db.create_all() # Moved to create_app function
         os.makedirs(os.path.realpath('/data/home'), exist_ok=True)
         os.makedirs('/data/.trash', exist_ok=True)
         os.makedirs('/data/avatars', exist_ok=True)

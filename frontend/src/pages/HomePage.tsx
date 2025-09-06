@@ -1,4 +1,6 @@
-import React, { useMemo, useEffect, useCallback, useState } from 'react';
+"use client";
+
+import React, { useMemo, useEffect, useCallback, useState, lazy } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useSettings } from '../hooks/useSettings';
 import TimeWidget from '../components/widgets/TimeWidget';
@@ -9,17 +11,14 @@ import DeploymentStatusWidget from '../components/widgets/DeploymentStatusWidget
 import DownloadClientWidget from '../components/widgets/DownloadClientWidget';
 import NetworkingWidget from '../components/widgets/NetworkingWidget';
 import FileActivityWidget from '../components/widgets/FileActivityWidget';
-import SystemLogsWidget from '../components/widgets/SystemLogsWidget'; // New import
+import SystemLogsWidget from '../components/widgets/SystemLogsWidget';
 import { Sun, Moon } from 'lucide-react';
 import LogoutButton from '../components/LogoutButton';
 import NotificationBell from '../components/NotificationBell';
-import WidgetWrapper from '../components/widgets/WidgetWrapper';
-import { Responsive, WidthProvider } from 'react-grid-layout';
-
-const ResponsiveGridLayout = WidthProvider(Responsive);
+import WidgetGrid from '../components/home/WidgetGrid'; // New import
 
 // Define WIDGETS_CONFIG here, consistent with WidgetSettings.tsx
-const WIDGETS_CONFIG = {
+export const WIDGETS_CONFIG = { // Exported for use in WidgetGrid
   deploymentStatus: { component: DeploymentStatusWidget, title: 'Deployment Status', defaultVisible: true, defaultLayout: { h: 2, minH: 2, minW: 1 } },
   systemUsage: { component: SystemUsageWidget, title: 'System Usage', defaultVisible: true, defaultLayout: { h: 1.5, minH: 1.5, minW: 1 } },
   weather: { component: WeatherWidget, title: 'Weather', defaultVisible: true, defaultLayout: { h: 1.5, minH: 1.5, minW: 1 } },
@@ -28,13 +27,13 @@ const WIDGETS_CONFIG = {
   downloadClient: { component: DownloadClientWidget, title: 'Download Client', defaultVisible: true, defaultLayout: { h: 3.5, minH: 3, minW: 1 } },
   appLauncher: { component: AppLauncherWidget, title: 'App Launcher', defaultVisible: true, defaultLayout: { h: 4, minH: 4, minW: 1 } },
   fileActivity: { component: FileActivityWidget, title: 'File Activity', defaultVisible: true, defaultLayout: { h: 3, minH: 3, minW: 1 } },
-  systemLogs: { component: SystemLogsWidget, title: 'System Logs', defaultVisible: true, defaultLayout: { h: 4, minH: 3, minW: 1 } }, // New widget
+  systemLogs: { component: SystemLogsWidget, title: 'System Logs', defaultVisible: true, defaultLayout: { h: 4, minH: 3, minW: 1 } },
 };
 
 const HomePage = () => {
   const { currentUser } = useAuth();
   const { settings, setSetting, isLoading: isSettingsLoading } = useSettings();
-  const [isInteracting, setIsInteracting] = useState(false); // New state for drag/resize interaction
+  const [isInteracting, setIsInteracting] = useState(false);
 
   const isLayoutLocked = useMemo(() => {
     return settings.lockWidgetLayout === 'true';
@@ -123,14 +122,14 @@ const HomePage = () => {
   const handleDragResizeStart = () => {
     if (!isLayoutLocked) {
       setIsInteracting(true);
-      document.body.classList.add('grabbing'); // Add grabbing cursor globally
+      document.body.classList.add('grabbing');
     }
   };
 
   const handleDragResizeStop = () => {
     if (!isLayoutLocked) {
       setIsInteracting(false);
-      document.body.classList.remove('grabbing'); // Remove grabbing cursor globally
+      document.body.classList.remove('grabbing');
     }
   };
 
@@ -167,39 +166,16 @@ const HomePage = () => {
       </div>
 
       {layouts ? (
-        <ResponsiveGridLayout
+        <WidgetGrid
           layouts={layouts}
-          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-          cols={{ lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 }}
-          rowHeight={100}
-          margin={[24, 24]}
-          containerPadding={[0, 0]}
-          onLayoutChange={handleLayoutChange}
-          onDragStart={handleDragResizeStart}
-          onDragStop={handleDragResizeStop}
-          onResizeStart={handleDragResizeStart}
-          onResizeStop={handleDragResizeStop}
-          draggableHandle=".drag-handle"
-          isDraggable={!isLayoutLocked}
-          isResizable={!isLayoutLocked}
-        >
-          {visibleWidgets.map(key => {
-            const WidgetComponent = WIDGETS_CONFIG[key].component;
-            return (
-              <div key={key}>
-                <WidgetWrapper
-                  widgetId={key}
-                  title={WIDGETS_CONFIG[key].title}
-                  onHide={handleHideWidget}
-                  isLocked={isLayoutLocked}
-                  isInteracting={isInteracting}
-                >
-                  <WidgetComponent />
-                </WidgetWrapper>
-              </div>
-            );
-          })}
-        </ResponsiveGridLayout>
+          handleLayoutChange={handleLayoutChange}
+          handleDragResizeStart={handleDragResizeStart}
+          handleDragResizeStop={handleDragResizeStop}
+          isLayoutLocked={isLayoutLocked}
+          isInteracting={isInteracting}
+          visibleWidgets={visibleWidgets}
+          handleHideWidget={handleHideWidget}
+        />
       ) : null}
     </div>
   );

@@ -4,7 +4,7 @@ const API_URL = `http://${window.location.hostname}:5000/api`;
 
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // Send cookies with requests
+  withCredentials: true,
 });
 
 // Auth
@@ -114,7 +114,7 @@ export const uploadFile = (formData) => api.post('/files/upload', formData, {
 export const deleteItem = (paths) => api.post('/files/delete', { paths });
 export const renameItem = (old_path, new_name) => api.post('/files/rename', { old_path, new_name });
 export const moveItems = (source_paths, destination_path) => api.post('/files/move', { source_paths, destination_path });
-export const copyItems = (source_paths, destination_path) => api.post('/files/copy', { source_paths, destination_path }); // New API call
+export const copyItems = (source_paths, destination_path) => api.post('/files/copy', { source_paths, destination_path });
 export const viewFile = (path) => api.get(`/files/view?path=${encodeURIComponent(path)}`, { responseType: 'blob' });
 
 // Sharing (Public Links)
@@ -134,7 +134,6 @@ export const getSharedByMeItems = () => api.get('/files/shared-by-me');
 export const getRecentFileActivity = () => api.get('/files/recent-activity');
 export const getNewSharedFilesCount = () => api.get('/files/new-shared-count');
 export const updateLastViewedSharedFilesTimestamp = () => api.post('/files/update-last-viewed-shared');
-
 
 // Trash
 export const getTrashItems = () => api.get('/files/trash');
@@ -182,7 +181,6 @@ export const executeSshCommand = async (data, onChunk) => {
     throw new Error(`SSH command failed with status: ${response.status}`);
   }
 };
-
 
 // Download Client
 export const getDownloadClientStats = () => api.get("/download-client/stats");

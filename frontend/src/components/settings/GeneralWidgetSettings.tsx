@@ -5,19 +5,7 @@ import { useSettings } from '../../hooks/useSettings';
 import SettingsCard from './SettingsCard';
 import { Search } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-// Define WIDGETS_CONFIG here, consistent with HomePage.tsx
-const WIDGETS_CONFIG = {
-  deploymentStatus: { title: 'Deployment Status', defaultVisible: true },
-  systemUsage: { title: 'System Usage', defaultVisible: true },
-  weather: { title: 'Weather', defaultVisible: true },
-  time: { title: 'Time & Date', defaultVisible: true },
-  networking: { title: 'Network Status', defaultVisible: true },
-  downloadClient: { title: 'Download Client', defaultVisible: true },
-  appLauncher: { title: 'App Launcher', defaultVisible: true },
-  fileActivity: { title: 'File Activity', defaultVisible: true },
-  systemLogs: { title: 'System Logs', defaultVisible: true },
-};
+import { WIDGETS_CONFIG } from '../../pages/HomePage'; // Import WIDGETS_CONFIG from HomePage
 
 const GeneralWidgetSettings = () => {
   const { settings, setSetting, isLoading: isSettingsLoading } = useSettings();
