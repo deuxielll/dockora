@@ -5,7 +5,7 @@ import LogModal from "./modals/LogModal";
 import ActionDropdown from "./ActionDropdown";
 import RenameContainerModal from "./modals/RenameContainerModal";
 import FloatingActionButton from "./FloatingActionButton";
-import EditContainerModal from "./modals/EditContainerModal";
+import EditContainerResourcesModal from "./modals/EditContainerResourcesModal"; // Updated import
 import ContainerCardSkeleton from "./skeletons/ContainerCardSkeleton";
 import toast from 'react-hot-toast';
 
@@ -230,7 +230,7 @@ const ContainerView = ({ onCreateStack }) => {
       <FloatingActionButton onClick={onCreateStack} />
 
       {containerToEdit && (
-        <EditContainerModal
+        <EditContainerResourcesModal
           container={containerToEdit}
           onClose={() => setContainerToEdit(null)}
           onSuccess={() => {
