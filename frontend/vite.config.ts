@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
-    include: ['xterm', 'xterm-addon-fit'],
+    include: ['xterm', 'xterm-addon-fit', 'simple-icons'], // Added 'simple-icons'
   },
   build: {
     rollupOptions: {
