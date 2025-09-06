@@ -1,8 +1,8 @@
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import { Share2, Play, Pause, Square, Edit } from 'lucide-react';
+import { Share2, Play, Pause, Square, Edit, Trash2 } from 'lucide-react';
 
-const AppContextMenu = ({ x, y, app, onShare, onAction, onRename }) => {
+const AppContextMenu = ({ x, y, app, onShare, onAction, onRename, onDelete }) => {
   const menuRef = useRef(null);
   const [position, setPosition] = useState({ top: y, left: x });
 
@@ -97,6 +97,15 @@ const AppContextMenu = ({ x, y, app, onShare, onAction, onRename }) => {
           >
             <Share2 size={16} />
             <span>Share...</span>
+          </button>
+        </li>
+        <li>
+          <button
+            onClick={onDelete}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md"
+          >
+            <Trash2 size={16} />
+            <span>Delete</span>
           </button>
         </li>
       </ul>

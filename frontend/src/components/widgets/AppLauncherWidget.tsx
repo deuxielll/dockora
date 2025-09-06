@@ -174,6 +174,21 @@ const AppLauncherWidget = ({ isInteracting }) => {
     }
   };
 
+  const handleDeleteApp = async (appId, appName) => {
+    if (!window.confirm(`Are you sure you want to delete the application "${appName}"? This will remove all associated containers and data (if not using external volumes). This action cannot be undone.`)) {
+      return;
+    }
+
+    const toastId = toast.loading(`Deleting application "${appName}"...`);
+    try {
+      await manageContainer(appId, 'remove');
+      toast.success(`Application "${appName}" deleted successfully.`, { id: toastId });
+      fetchApps(); // Refresh the list after deletion
+    } catch (err) {
+      toast.error(err.response?.data?.error || `Failed to delete application "${appName}".`, { id: toastId });
+    }
+  };
+
   const handleDragStart = (e, item) => {
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = 'move';
@@ -336,6 +351,10 @@ const AppLauncherWidget = ({ isInteracting }) => {
           }}
           onRename={() => {
             setAppToEdit(contextMenu.app);
+            setContextMenu(null);
+          }}
+          onDelete={() => {
+            handleDeleteApp(contextMenu.app.id, contextMenu.app.name);
             setContextMenu(null);
           }}
         />
