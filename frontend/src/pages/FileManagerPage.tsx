@@ -327,7 +327,7 @@ const FileManagerPage = () => {
   };
 
   const handleEmptySpaceContextMenu = (event) => {
-    if (event.target !== event.currentTarget) return;
+    // Removed the check: if (event.target !== event.currentTarget) return;
     event.preventDefault();
     closeAllContextMenus();
     setSelectedItems(new Set()); // Clear selection when right-clicking empty space
