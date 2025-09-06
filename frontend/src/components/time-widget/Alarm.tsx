@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { useInterval } from '../../hooks/useInterval';
@@ -8,16 +10,21 @@ let audioContext;
 let oscillator;
 
 const playAlarmSound = () => {
-  if (oscillator) return;
-  audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
-  oscillator.type = 'square';
-  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-  oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
-  oscillator.start();
+  if (oscillator) return; // Prevent multiple oscillators
+  try {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.type = 'square'; // A simple, noticeable sound
+    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime); // Soften the volume
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // High pitch
+    oscillator.start();
+  } catch (e) {
+    console.error("Failed to play alarm sound:", e);
+    toast.error("Failed to play alarm sound. Ensure browser allows audio playback.");
+  }
 };
 
 const stopAlarmSound = () => {
@@ -43,7 +50,8 @@ const Alarm = () => {
 
   useEffect(() => {
     if (ringingAlarm) {
-      const interval = setInterval(playAlarmSound, 600);
+      // Start playing sound when an alarm is ringing
+      const interval = setInterval(playAlarmSound, 600); // Loop sound
       return () => {
         clearInterval(interval);
         stopAlarmSound();
@@ -52,13 +60,13 @@ const Alarm = () => {
   }, [ringingAlarm]);
 
   useInterval(() => {
-    if (ringingAlarm) return;
+    if (ringingAlarm) return; // Don't check for new alarms if one is already ringing
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    const currentDay = now.getDay();
+    const currentDay = now.getDay(); // 0 for Sunday, 1 for Monday, etc.
 
     alarms.forEach(alarm => {
-      const isSnoozed = alarm.snoozedUntil && alarm.snoozedUntil > now.getTime();
+      const isSnoozed = alarm.snoozedUntil && new Date(alarm.snoozedUntil) > now;
       if (alarm.enabled && !isSnoozed && alarm.time === currentTime) {
         const repeatsToday = alarm.days.length === 0 || alarm.days.includes(currentDay);
         if (repeatsToday) {
@@ -66,7 +74,7 @@ const Alarm = () => {
         }
       }
     });
-  }, 1000);
+  }, 1000); // Check every second
 
   const handleAddAlarm = () => {
     const newAlarm = {
@@ -92,23 +100,28 @@ const Alarm = () => {
   };
 
   const handleSnooze = () => {
-    const snoozedUntil = new Date().getTime() + 5 * 60 * 1000; // 5 minutes
-    setAlarms(alarms.map(a => a.id === ringingAlarm.id ? { ...a, snoozedUntil } : a));
+    const snoozedUntil = new Date(new Date().getTime() + 5 * 60 * 1000); // 5 minutes from now
+    setAlarms(alarms.map(a => a.id === ringingAlarm.id ? { ...a, snoozedUntil: snoozedUntil.toISOString() } : a));
     setRingingAlarm(null);
+    stopAlarmSound();
+    toast.success("Alarm snoozed for 5 minutes.");
   };
 
   const handleDismiss = () => {
     if (ringingAlarm.days.length === 0) {
-      toggleAlarm(ringingAlarm.id); // Disable one-time alarms
+      // If it's a one-time alarm, disable it
+      setAlarms(alarms.map(a => a.id === ringingAlarm.id ? { ...a, enabled: false } : a));
     }
     setRingingAlarm(null);
+    stopAlarmSound();
+    toast.success("Alarm dismissed.");
   };
 
   const toggleDay = (day) => {
     setNewAlarmDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
   };
 
-  const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']; // 0-indexed for Sunday, Monday, etc.
 
   if (ringingAlarm) {
     return (
@@ -134,22 +147,37 @@ const Alarm = () => {
           <input type="time" value={newAlarmTime} onChange={e => setNewAlarmTime(e.target.value)} className="w-full p-2 bg-dark-bg rounded-lg shadow-neo-inset text-gray-200 mb-2" />
           <div className="flex justify-center gap-1 mb-3">
             {dayLabels.map((label, index) => (
-              <button key={index} onClick={() => toggleDay((index + 7 - 1) % 7)} className={`w-7 h-7 text-xs rounded-full transition-all ${newAlarmDays.includes((index + 7 - 1) % 7) ? 'bg-accent text-white shadow-neo' : 'bg-dark-bg shadow-neo-inset text-gray-200'}`}>{label}</button>
+              <button key={index} onClick={() => toggleDay(index)} className={`w-7 h-7 text-xs rounded-full transition-all ${newAlarmDays.includes(index) ? 'bg-accent text-white shadow-neo' : 'bg-dark-bg shadow-neo-inset text-gray-200'}`}>{label}</button>
             ))}
           </div>
           <button onClick={handleAddAlarm} className="w-full px-4 py-2 bg-dark-bg text-accent rounded-lg shadow-neo active:shadow-neo-inset text-sm font-semibold">Add Alarm</button>
         </div>
       )}
       <div className="flex-grow overflow-y-auto space-y-2 pr-1 no-scrollbar">
-        {alarms.map(alarm => (
-          <div key={alarm.id} className={`flex items-center justify-between p-2 rounded-lg ${alarm.enabled ? '' : 'opacity-50'}`}>
-            <span className="text-lg font-mono text-gray-200">{alarm.time}</span>
-            <div>
-              <button onClick={() => toggleAlarm(alarm.id)} className="p-2 text-gray-200">{alarm.enabled ? <Bell size={18} /> : <BellOff size={18} />}</button>
-              <button onClick={() => deleteAlarm(alarm.id)} className="p-2 text-red-500"><Trash2 size={18} /></button>
+        {alarms.length === 0 ? (
+          <p className="text-center text-gray-400 py-4">No alarms set.</p>
+        ) : (
+          alarms.map(alarm => (
+            <div key={alarm.id} className={`flex items-center justify-between p-2 rounded-lg ${alarm.enabled ? '' : 'opacity-50'}`}>
+              <span className="text-lg font-mono text-gray-200">{alarm.time}</span>
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  {alarm.days.length === 0 ? (
+                    <span className="text-xs text-gray-400">One-time</span>
+                  ) : (
+                    dayLabels.map((label, index) => (
+                      <span key={index} className={`text-xs font-semibold ${alarm.days.includes(index) ? 'text-accent' : 'text-gray-500'}`}>
+                        {label}
+                      </span>
+                    ))
+                  )}
+                </div>
+                <button onClick={() => toggleAlarm(alarm.id)} className="p-2 text-gray-200">{alarm.enabled ? <Bell size={18} /> : <BellOff size={18} />}</button>
+                <button onClick={() => deleteAlarm(alarm.id)} className="p-2 text-red-500"><Trash2 size={18} /></button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
