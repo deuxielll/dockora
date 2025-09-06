@@ -77,3 +77,12 @@ body.grabbing, body.grabbing * {
   border-right: 2px solid rgba(255, 255, 255, 0.3);
   border-bottom: 2px solid rgba(255, 255, 255, 0.3);
 }
+
+/* Custom styles for Xterm.js scrollbar */
+.xterm-container .xterm-viewport::-webkit-scrollbar {
+  display: none;
+}
+.xterm-container .xterm-viewport {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;    /* Firefox */
+}

@@ -204,7 +204,7 @@ const SshTerminalOutputCard = () => {
           {executionStatus === 'error' && <XCircle size={16} className="text-red-500 ml-auto" />}
           {isExecuting && <Loader size={16} className="animate-spin text-blue-500 ml-auto" />}
         </div>
-        <div ref={terminalRef} className="flex-grow" />
+        <div ref={terminalRef} className="flex-grow xterm-container" />
       </div>
     </SettingsCard>
   );
