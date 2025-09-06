@@ -147,6 +147,52 @@
             width: 16px;
             height: 16px;
         }
+        .breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .breadcrumb-item {
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: background-color 0.2s;
+        }
+        .breadcrumb-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .breadcrumb-item.active {
+            color: #d1d5db;
+            font-weight: 600;
+        }
+        .go-up-btn {
+            background: #1e1e1e;
+            color: #d1d5db;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 6px 6px 12px rgba(0,0,0,0.6), -6px -6px 12px rgba(255,255,255,0.15);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease-in-out;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+        .go-up-btn:hover {
+            opacity: 0.9;
+        }
+        .go-up-btn:active {
+            box-shadow: inset 6px 6px 12px rgba(0,0,0,0.6), inset -6px -6px 12px rgba(255,255,255,0.15);
+        }
+        .go-up-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
     </style>
 </head>
 <body>
@@ -154,6 +200,15 @@
         <h1 id="share-title">Loading Shared Content...</h1>
         <div id="loading" class="loading-spinner"></div>
         <p id="error-message" class="error-message" style="display: none;"></p>
+
+        <div id="file-browser-controls" style="display: none;">
+            <div class="breadcrumbs" id="breadcrumbs"></div>
+            <button id="go-up-btn" class="go-up-btn" style="display: none;">
+                <svg class="icon-small" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 12 6 7 11"></polyline><line x1="12" y1="18" x2="12" y2="6"></line></svg>
+                Up
+            </button>
+        </div>
+        
         <ul id="item-list" class="item-list" style="display: none;"></ul>
         <a id="download-all-link" class="action-btn download-all-btn" style="display: none;">
             <svg class="icon-small" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -171,6 +226,11 @@
         const errorMessage = document.getElementById('error-message');
         const itemList = document.getElementById('item-list');
         const downloadAllLink = document.getElementById('download-all-link');
+        const breadcrumbsContainer = document.getElementById('breadcrumbs');
+        const goUpButton = document.getElementById('go-up-btn');
+        const fileBrowserControls = document.getElementById('file-browser-controls');
+
+        let currentVirtualPath = '/'; // State to track current path in the share
 
         function formatSize(bytes) {
             if (bytes === 0) return '0 B';
@@ -187,9 +247,45 @@
             return `<svg class="icon text-gray-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
         }
 
-        async function fetchSharedContent() {
+        function renderBreadcrumbs() {
+            breadcrumbsContainer.innerHTML = '';
+            const parts = currentVirtualPath.split('/').filter(Boolean);
+            let path = '';
+
+            const rootCrumb = document.createElement('span');
+            rootCrumb.className = 'breadcrumb-item';
+            rootCrumb.textContent = 'Root';
+            rootCrumb.addEventListener('click', () => navigateTo('/'));
+            breadcrumbsContainer.appendChild(rootCrumb);
+
+            parts.forEach((part, index) => {
+                path += `/${part}`;
+                const separator = document.createElement('span');
+                separator.textContent = '/';
+                separator.style.margin = '0 0.25rem';
+                separator.style.color = '#6b7280'; /* gray-400 */
+                breadcrumbsContainer.appendChild(separator);
+
+                const crumb = document.createElement('span');
+                crumb.className = `breadcrumb-item ${index === parts.length - 1 ? 'active' : ''}`;
+                crumb.textContent = part;
+                crumb.addEventListener('click', () => navigateTo(path));
+                breadcrumbsContainer.appendChild(crumb);
+            });
+
+            goUpButton.disabled = currentVirtualPath === '/';
+        }
+
+        async function fetchSharedContent(virtualPath) {
+            loadingSpinner.style.display = 'block';
+            errorMessage.style.display = 'none';
+            itemList.style.display = 'none';
+            downloadAllLink.style.display = 'none';
+            fileBrowserControls.style.display = 'none';
+            itemList.innerHTML = '';
+
             try {
-                const response = await fetch(`${API_BASE_URL}/shares/${token}/details`);
+                const response = await fetch(`${API_BASE_URL}/shares/${token}/details?sub_path=${encodeURIComponent(virtualPath)}`);
                 if (!response.ok) {
                     const errData = await response.json();
                     throw new Error(errData.error || 'Failed to fetch shared content.');
@@ -197,6 +293,9 @@
                 const data = await response.json();
 
                 shareTitle.textContent = `Shared: ${data.name}`;
+                currentVirtualPath = data.current_virtual_path; // Update path from backend response
+                renderBreadcrumbs();
+                fileBrowserControls.style.display = 'block';
                 
                 if (data.contents && data.contents.length > 0) {
                     data.contents.forEach(item => {
@@ -209,18 +308,22 @@
                                 <span class="item-size">${item.type === 'file' ? formatSize(item.size) : ''}</span>
                             </div>
                             <div class="item-actions">
+                                ${item.type === 'file' ? `
                                 <a href="${API_BASE_URL}/shares/${token}/download?file=${encodeURIComponent(item.path)}" class="action-btn" download>
                                     <svg class="icon-small" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                     Download
                                 </a>
-                                ${item.type === 'file' ? `
                                 <a href="${API_BASE_URL}/shares/${token}/view?file=${encodeURIComponent(item.path)}" target="_blank" class="action-btn">
                                     <svg class="icon-small" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                                     View
                                 </a>` : ''}
                             </div>
                         `;
-                        if (item.type === 'file') {
+                        if (item.type === 'dir') {
+                            listItem.addEventListener('click', (e) => {
+                                navigateTo(item.path);
+                            });
+                        } else { // File
                             listItem.addEventListener('click', (e) => {
                                 // Only trigger view if not clicking on a button
                                 if (!e.target.closest('.action-btn')) {
@@ -231,10 +334,15 @@
                         itemList.appendChild(listItem);
                     });
                     itemList.style.display = 'flex';
-                    downloadAllLink.href = `${API_BASE_URL}/shares/${token}/download`;
+                    
+                    // Update "Download All" button
+                    const downloadName = currentVirtualPath === '/' ? share.name : currentVirtualPath.split('/').pop();
+                    downloadAllLink.href = `${API_BASE_URL}/shares/${token}/download?current_virtual_path=${encodeURIComponent(currentVirtualPath)}`;
+                    downloadAllLink.textContent = `Download ${downloadName === '/' ? 'All' : downloadName} as Zip`;
                     downloadAllLink.style.display = 'inline-flex';
+
                 } else {
-                    errorMessage.textContent = 'No items found in this share.';
+                    errorMessage.textContent = 'No items found in this folder.';
                     errorMessage.style.display = 'block';
                 }
 
@@ -248,8 +356,22 @@
             }
         }
 
+        function navigateTo(path) {
+            currentVirtualPath = path;
+            fetchSharedContent(currentVirtualPath);
+        }
+
+        function goUp() {
+            if (currentVirtualPath === '/') return;
+            const lastSlashIndex = currentVirtualPath.lastIndexOf('/');
+            const parentPath = lastSlashIndex === 0 ? '/' : currentVirtualPath.substring(0, lastSlashIndex);
+            navigateTo(parentPath);
+        }
+
+        goUpButton.addEventListener('click', goUp);
+
         if (token) {
-            fetchSharedContent();
+            fetchSharedContent(currentVirtualPath);
         } else {
             shareTitle.textContent = 'Invalid Share Link';
             errorMessage.textContent = 'No share token provided in the URL.';
