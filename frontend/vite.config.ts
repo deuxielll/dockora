@@ -6,7 +6,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      'simple-icons': path.resolve(__dirname, 'node_modules/simple-icons'),
+      // Explicitly alias 'simple-icons' to its main entry file
+      'simple-icons': path.resolve(__dirname, 'node_modules/simple-icons/index.js'),
     },
   },
   optimizeDeps: {
