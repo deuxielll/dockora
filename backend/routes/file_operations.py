@@ -7,8 +7,7 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from decorators import login_required
 from helpers import get_user_and_base_path, resolve_user_path
-from models import ShareLink, SharedItem, UserFileShare # Import necessary models
-from extensions import db # Import db
+from models import UserFileShare # Used for checking if a file is shared
 
 file_operations_bp = Blueprint('file_operations', __name__)
 
@@ -222,60 +221,3 @@ def view_file():
     try:
         return send_from_directory(os.path.dirname(real_path), os.path.basename(real_path))
     except Exception as e: return jsonify({"error": str(e)}), 500
-
-@file_operations_bp.route("/files/stop-sharing-by-path", methods=["POST"])
-@login_required
-def stop_sharing_by_path():
-    user, base_path, is_sandboxed = get_user_and_base_path()
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    data = request.get_json()
-    paths_to_unshare = data.get('paths')
-
-    if not paths_to_unshare or not isinstance(paths_to_unshare, list):
-        return jsonify({"error": "A list of paths is required"}), 400
-
-    errors = []
-    for user_path in paths_to_unshare:
-        # Resolve the real path to ensure the user has access and it exists
-        real_path = resolve_user_path(base_path, is_sandboxed, user_path)
-        if not real_path or not os.path.exists(real_path):
-            errors.append(f"Item not found or inaccessible: {user_path}")
-            continue
-
-        try:
-            # 1. Handle Public Shares
-            # Find SharedItem entries that match the user_path and belong to the current user's ShareLinks
-            shared_items_to_delete = SharedItem.query.join(ShareLink).filter(
-                SharedItem.path == user_path,
-                ShareLink.created_by_user_id == user.id
-            ).all()
-
-            for shared_item in shared_items_to_delete:
-                share_link = shared_item.share_link
-                db.session.delete(shared_item)
-                # If the ShareLink becomes empty after deleting this item, delete the ShareLink itself
-                if not share_link.items: # Check if the relationship collection is empty
-                    db.session.delete(share_link)
-
-            # 2. Handle User-to-User Shares
-            user_file_shares_to_delete = UserFileShare.query.filter(
-                UserFileShare.sharer_user_id == user.id,
-                UserFileShare.path == user_path
-            ).all()
-
-            for user_file_share in user_file_shares_to_delete:
-                db.session.delete(user_file_share)
-
-        except Exception as e:
-            errors.append(f"Failed to stop sharing '{user_path}': {str(e)}")
-            db.session.rollback() # Rollback changes for this path if an error occurs
-            continue # Continue to next path
-
-    if errors:
-        db.session.rollback() # Rollback any remaining changes if there were errors
-        return jsonify({"error": "\n".join(errors)}), 500
-
-    db.session.commit()
-    return jsonify({"success": True, "message": "Sharing stopped for selected items."})

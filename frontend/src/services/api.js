@@ -129,7 +129,6 @@ export const viewSharedWithMeFile = (share_id) => api.get(`/files/shared-with-me
 export const downloadSharedWithMeFile = (share_id) => api.get(`/files/shared-with-me/download?share_id=${share_id}`, { responseType: 'blob' });
 export const getSharedWithMeFileContent = (share_id) => api.get(`/files/shared-with-me/content?share_id=${share_id}`);
 export const getSharedByMeItems = () => api.get('/files/shared-by-me');
-export const stopSharingByPath = (paths) => api.post('/files/stop-sharing-by-path', { paths }); // New API call
 
 // New File Manager Activity APIs
 export const getRecentFileActivity = () => api.get('/files/recent-activity');

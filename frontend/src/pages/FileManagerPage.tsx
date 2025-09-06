@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash, getSharedWithMeItems, viewSharedWithMeFile, downloadSharedWithMeFile, getSharedWithMeFileContent, unshareFileWithUsers, getSharedByMeItems, updateLastViewedSharedFilesTimestamp, copyItems, stopSharingByPath } from '../services/api'; // Import copyItems and stopSharingByPath
+import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash, getSharedWithMeItems, viewSharedWithMeFile, downloadSharedWithMeFile, getSharedWithMeFileContent, unshareFileWithUsers, getSharedByMeItems, updateLastViewedSharedFilesTimestamp, copyItems } from '../services/api'; // Import copyItems
 import FileViewerModal from '../components/modals/FileViewerModal';
 import CreateItemModal from '../components/modals/CreateItemModal';
 import RenameItemModal from '../components/modals/RenameItemModal';
@@ -315,22 +315,6 @@ const FileManagerPage = () => {
     }
   };
 
-  const handleStopSharing = async () => {
-    const pathsToUnshare = Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id).path);
-    if (pathsToUnshare.length === 0) return;
-
-    if (window.confirm(`Are you sure you want to stop sharing ${pathsToUnshare.length} item(s)? This will revoke all public links and user-to-user shares created by you for these items.`)) {
-      try {
-        await stopSharingByPath(pathsToUnshare);
-        toast.success(`Sharing stopped for ${pathsToUnshare.length} item(s).`);
-        fetchItems(currentPath); // Refresh the list to update shared indicators
-        setSelectedItems(new Set()); // Clear selection
-      } catch (err) {
-        toast.error(err.response?.data?.error || 'Failed to stop sharing item(s).');
-      }
-    }
-  };
-
   const handleContextMenu = (event, item) => {
     event.preventDefault();
     event.stopPropagation();
@@ -563,7 +547,6 @@ const FileManagerPage = () => {
         onPaste={handlePaste}
         hasCopiedItems={copiedItems.length > 0}
         hasCutItems={cutItems.length > 0}
-        onStopSharing={handleStopSharing}
       />
       <EmptySpaceContextMenu
         contextMenu={emptySpaceContextMenu}
