@@ -8,8 +8,55 @@ from datetime import datetime, timedelta
 from extensions import client, db
 from models import User, Notification, Stack, ContainerStatus
 from decorators import admin_required
+import re # Added import for regular expressions
 
 containers_bp = Blueprint('containers', __name__)
+
+# Helper to parse CPU limit string (e.g., "1.5" -> 1500000000)
+def parse_cpu_limit(cpu_str):
+    if not cpu_str:
+        return None
+    try:
+        # Allow for "N/A" or empty string to mean no limit
+        if cpu_str.strip().lower() == 'n/a' or not cpu_str.strip():
+            return None
+        
+        # Remove " Cores" if present
+        cpu_str = cpu_str.replace(' Cores', '').strip()
+        
+        # Convert to float and then to nanoCPUs
+        cores = float(cpu_str)
+        return int(cores * 1_000_000_000)
+    except ValueError:
+        return None
+
+# Helper to parse memory limit string (e.g., "512MB" -> 536870912 bytes)
+def parse_memory_limit(mem_str):
+    if not mem_str:
+        return None
+    try:
+        # Allow for "Unlimited" or empty string to mean no limit
+        if mem_str.strip().lower() == 'unlimited' or not mem_str.strip():
+            return None
+
+        mem_str = mem_str.strip().upper()
+        match = re.match(r'(\d+(\.\d+)?)\s*(K|M|G)?B?', mem_str)
+        if not match:
+            return None
+
+        value = float(match.group(1))
+        unit = match.group(3)
+
+        if unit == 'K':
+            return int(value * 1024)
+        elif unit == 'M':
+            return int(value * 1024**2)
+        elif unit == 'G':
+            return int(value * 1024**3)
+        else: # Default to bytes if no unit or 'B'
+            return int(value)
+    except ValueError:
+        return None
 
 @containers_bp.route("/containers", methods=["GET"])
 @admin_required
@@ -201,12 +248,54 @@ def recreate_container(id):
     try:
         container = client.containers.get(id)
         config, host_config = container.attrs['Config'], container.attrs['HostConfig']
+        
+        data = request.json
+        new_ports = data.get("ports", [])
+        new_cpu_limit_str = data.get("cpu_limit")
+        new_memory_limit_str = data.get("memory_limit")
+
+        # Parse new limits
+        nano_cpus_limit = parse_cpu_limit(new_cpu_limit_str)
+        mem_limit_bytes = parse_memory_limit(new_memory_limit_str)
+
+        # Determine final CPU limit: if new_cpu_limit_str is provided (even empty), use parsed value. Otherwise, use existing.
+        final_nano_cpus = nano_cpus_limit if new_cpu_limit_str is not None else host_config.get('NanoCpus')
+        
+        # Determine final memory limit: if new_memory_limit_str is provided (even empty), use parsed value. Otherwise, use existing.
+        final_mem_limit = mem_limit_bytes if new_memory_limit_str is not None else host_config.get('Memory')
+
+        # Docker's `Memory` field in HostConfig is 0 for unlimited.
+        # When passing to `run`, `mem_limit=None` means unlimited.
+        if final_mem_limit == 0:
+            final_mem_limit = None
+
+        # Extract existing binds (volumes)
+        existing_binds = host_config.get('Binds')
+
+        # Extract existing restart policy
+        existing_restart_policy = host_config.get('RestartPolicy')
+        restart_policy_dict = existing_restart_policy if existing_restart_policy else {'Name': 'no'}
+        
+        # Extract existing network mode
+        existing_network_mode = host_config.get('NetworkMode')
+
+        # Extract existing labels from config
+        existing_labels = config.get('Labels')
+
         new_container = client.containers.run(
-            image=config.get('Image'), name=container.name, command=config.get('Cmd'),
-            entrypoint=config.get('Entrypoint'), environment=config.get('Env'),
-            volumes=host_config.get('Binds'), restart_policy=host_config.get('RestartPolicy'),
-            network_mode=host_config.get('NetworkMode'), labels=config.get('Labels'),
-            ports=parse_ports(request.json.get("ports", [])), detach=True
+            image=config.get('Image'),
+            name=container.name,
+            command=config.get('Cmd'),
+            entrypoint=config.get('Entrypoint'),
+            environment=config.get('Env'),
+            volumes=existing_binds, # Use existing volumes
+            restart_policy=restart_policy_dict, # Use existing restart policy
+            network_mode=existing_network_mode, # Use existing network mode
+            labels=existing_labels, # Use existing labels
+            ports=parse_ports(new_ports),
+            nano_cpus=final_nano_cpus, # Apply new CPU limit
+            mem_limit=final_mem_limit, # Apply new Memory limit
+            detach=True
         )
         container.stop()
         container.remove()

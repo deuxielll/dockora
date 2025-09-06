@@ -211,7 +211,7 @@ const ContainerView = ({ onCreateStack }) => {
               </div>
               <div className="flex gap-3 flex-wrap self-start sm:self-center">
                 <ActionDropdown containerId={c.id} onAction={handleAction} disabled={isDashboardContainer} />
-                <button title="Edit Ports" onClick={() => setContainerToEdit(c)} disabled={isDashboardContainer} className={`${iconButtonStyles} text-gray-300`}><Edit size={18} /></button>
+                <button title="Edit Resources" onClick={() => setContainerToEdit(c)} disabled={isDashboardContainer} className={`${iconButtonStyles} text-gray-300`}><Edit size={18} /></button>
                 <button title="Rename" onClick={() => setContainerToRename(c)} disabled={isDashboardContainer} className={`${iconButtonStyles} text-gray-300`}><Pencil size={18} /></button>
                 <button title="Remove" onClick={() => handleAction(c.id, "remove")} disabled={isDashboardContainer} className={`${iconButtonStyles} text-red-500`}><Trash2 size={18} /></button>
                 <button title="View Logs" onClick={() => handleViewLogs(c)} className={`${iconButtonStyles} text-indigo-500`}><FileText size={18} /></button>
