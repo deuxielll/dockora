@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request, send_from_directory, render_template, send_file, session
 import os
 import io
-import zipfile # New import
+import zipfile
 import json
 import uuid
 from decorators import login_required
@@ -218,6 +218,7 @@ def get_shared_file_content(token):
     share = ShareLink.query.filter_by(token=token).first_or_404()
     sharer_user, sharer_base_path, is_sandboxed = get_sharing_user_context(share)
     requested_virtual_file_path = request.args.get('file') # This is now a virtual path
+    zip_sub_path = request.args.get('zip_sub_path', '/') # New parameter for path inside ZIP
     
     if not requested_virtual_file_path:
         return jsonify({"error": "File path is required."}), 400
@@ -226,18 +227,53 @@ def get_shared_file_content(token):
     if not real_target_path or not os.path.isfile(real_target_path):
         return jsonify({"error": "File not found or access denied."}), 404
     
-    # Check if it's a ZIP file
+    # Handle ZIP files
     if real_target_path.lower().endswith('.zip'):
         try:
             with zipfile.ZipFile(real_target_path, 'r') as zf:
                 zip_contents = []
+                normalized_zip_sub_path = zip_sub_path.strip('/')
+                if normalized_zip_sub_path and not normalized_zip_sub_path.endswith('/'):
+                    normalized_zip_sub_path += '/'
+
                 for member in zf.infolist():
-                    zip_contents.append({
-                        "name": member.filename,
-                        "size": member.file_size,
-                        "is_dir": member.is_dir()
-                    })
-                return jsonify({"type": "zip_contents", "contents": zip_contents})
+                    member_name = member.filename
+                    if member_name == normalized_zip_sub_path and member.is_dir():
+                        continue
+
+                    if normalized_zip_sub_path == '/' or member_name.startswith(normalized_zip_sub_path):
+                        relative_to_sub_path = member_name[len(normalized_zip_sub_path):]
+                        if '/' not in relative_to_sub_path.strip('/'):
+                            if relative_to_sub_path.endswith('/') and not member.is_dir():
+                                continue
+                            zip_contents.append({
+                                "name": relative_to_sub_path.strip('/'),
+                                "size": member.file_size,
+                                "type": "dir" if member.is_dir() else "file",
+                                "path": os.path.join(zip_sub_path, relative_to_sub_path).replace('\\', '/')
+                            })
+                
+                if not zip_sub_path.endswith('/'):
+                    try:
+                        with zf.open(normalized_zip_sub_path) as member_file:
+                            content = member_file.read()
+                            try:
+                                return jsonify({"type": "file_content", "content": content.decode('utf-8')})
+                            except UnicodeDecodeError:
+                                return jsonify({"type": "file_content", "content": "Binary file content cannot be displayed directly."})
+                    except KeyError:
+                        return jsonify({"error": f"File '{zip_sub_path}' not found in archive."}), 404
+                
+                unique_zip_contents = []
+                seen_names = set()
+                for item in zip_contents:
+                    if item['name'] not in seen_names:
+                        unique_zip_contents.append(item)
+                        seen_names.add(item['name'])
+                
+                unique_zip_contents.sort(key=lambda x: (x['type'] != 'dir', x['name'].lower()))
+
+                return jsonify({"type": "zip_contents", "contents": unique_zip_contents, "current_zip_path": zip_sub_path})
         except zipfile.BadZipFile:
             return jsonify({"error": "Bad ZIP file or not a ZIP file."}), 400
         except Exception as e:
@@ -248,6 +284,6 @@ def get_shared_file_content(token):
         if os.path.getsize(real_target_path) > 5 * 1024 * 1024:
             return jsonify({"error": "File is too large to display."}), 400
         with open(real_target_path, 'r', errors='ignore') as f:
-            return jsonify({"content": f.read()})
+            return jsonify({"type": "file_content", "content": f.read()})
     except Exception as e:
         return jsonify({"error": str(e)}), 500

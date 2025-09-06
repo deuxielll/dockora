@@ -9,6 +9,7 @@ from decorators import login_required
 from helpers import get_user_and_base_path, resolve_user_path
 from models import UserFileShare # Used for checking if a file is shared
 import zipfile # New import
+import io # New import
 
 file_operations_bp = Blueprint('file_operations', __name__)
 
@@ -68,37 +69,87 @@ def browse_files():
 @login_required
 def get_file_content():
     user_path = request.args.get('path', '')
+    zip_sub_path = request.args.get('zip_sub_path', '/') # New parameter for path inside ZIP
+    
     user, base_path, is_sandboxed = get_user_and_base_path()
     if not user: return jsonify({"error": "User not found"}), 404
     real_path = resolve_user_path(base_path, is_sandboxed, user_path)
     if not real_path or not os.path.exists(real_path) or not os.path.isfile(real_path):
         return jsonify({"error": "Invalid or inaccessible file path"}), 400
     
-    # Check if it's a ZIP file
+    # Handle ZIP files
     if real_path.lower().endswith('.zip'):
         try:
             with zipfile.ZipFile(real_path, 'r') as zf:
-                # Get a list of all members (files and directories) in the archive
-                # Filter out directories if you only want files, or process them differently
                 zip_contents = []
+                # Normalize zip_sub_path for comparison
+                normalized_zip_sub_path = zip_sub_path.strip('/')
+                if normalized_zip_sub_path and not normalized_zip_sub_path.endswith('/'):
+                    normalized_zip_sub_path += '/'
+
+                # Collect direct children of normalized_zip_sub_path
                 for member in zf.infolist():
-                    zip_contents.append({
-                        "name": member.filename,
-                        "size": member.file_size,
-                        "is_dir": member.is_dir()
-                    })
-                return jsonify({"type": "zip_contents", "contents": zip_contents})
+                    member_name = member.filename
+                    
+                    # Skip the root directory entry if it exists and matches the sub_path
+                    if member_name == normalized_zip_sub_path and member.is_dir():
+                        continue
+
+                    # Check if member is a direct child of the current zip_sub_path
+                    if normalized_zip_sub_path == '/' or member_name.startswith(normalized_zip_sub_path):
+                        relative_to_sub_path = member_name[len(normalized_zip_sub_path):]
+                        
+                        # Only direct children (no further slashes)
+                        if '/' not in relative_to_sub_path.strip('/'):
+                            # Ensure we don't add the same directory twice (once as dir, once as file prefix)
+                            if relative_to_sub_path.endswith('/') and not member.is_dir():
+                                continue # Skip if it's a file that looks like a directory prefix
+                            
+                            zip_contents.append({
+                                "name": relative_to_sub_path.strip('/'),
+                                "size": member.file_size,
+                                "type": "dir" if member.is_dir() else "file",
+                                "path": os.path.join(zip_sub_path, relative_to_sub_path).replace('\\', '/') # Full virtual path inside zip
+                            })
+                
+                # If zip_sub_path points to a file within the zip, return its content
+                if not zip_sub_path.endswith('/'): # It's a file path
+                    try:
+                        with zf.open(normalized_zip_sub_path) as member_file:
+                            content = member_file.read()
+                            # Attempt to decode as text, otherwise return as base64 or similar for binary
+                            try:
+                                return jsonify({"type": "file_content", "content": content.decode('utf-8')})
+                            except UnicodeDecodeError:
+                                # For binary files, we might need a different approach or just indicate it's binary
+                                return jsonify({"type": "file_content", "content": "Binary file content cannot be displayed directly."})
+                    except KeyError:
+                        return jsonify({"error": f"File '{zip_sub_path}' not found in archive."}), 404
+                
+                # Otherwise, return the directory listing
+                # Filter out duplicates (e.g., 'folder/' and 'folder/file.txt' should only show 'folder')
+                unique_zip_contents = []
+                seen_names = set()
+                for item in zip_contents:
+                    if item['name'] not in seen_names:
+                        unique_zip_contents.append(item)
+                        seen_names.add(item['name'])
+                
+                # Sort directories first, then files, then by name
+                unique_zip_contents.sort(key=lambda x: (x['type'] != 'dir', x['name'].lower()))
+
+                return jsonify({"type": "zip_contents", "contents": unique_zip_contents, "current_zip_path": zip_sub_path})
         except zipfile.BadZipFile:
             return jsonify({"error": "Bad ZIP file or not a ZIP file."}), 400
         except Exception as e:
             return jsonify({"error": f"Failed to read ZIP file: {str(e)}"}), 500
 
-    # Existing logic for other file types
+    # Existing logic for other file types (non-ZIP)
     try:
         if os.path.getsize(real_path) > 5 * 1024 * 1024:
             return jsonify({"error": "File is too large to display (> 5MB)"}), 400
         with open(real_path, 'r', errors='ignore') as f:
-            return jsonify({"content": f.read()})
+            return jsonify({"type": "file_content", "content": f.read()})
     except Exception as e: return jsonify({"error": str(e)}), 500
 
 @file_operations_bp.route("/files/create", methods=["POST"])
@@ -124,9 +175,9 @@ def create_item():
 @login_required
 def upload_file():
     user, base_path, is_sandboxed = get_user_and_base_path()
-    if not user: return jsonify({"error": "User not found"}), 404
+    if 'file' not in request.files: return jsonify({"error": "File is required"}), 400
     user_path = request.form.get('path')
-    if 'file' not in request.files or not user_path: return jsonify({"error": "File and path are required"}), 400
+    if not user_path: return jsonify({"error": "Path is required"}), 400
     real_path = resolve_user_path(base_path, is_sandboxed, user_path)
     if not real_path: return jsonify({"error": "Invalid path"}), 400
     file = request.files['file']
