@@ -5,6 +5,10 @@ const ToastProvider = () => {
   return (
     <Toaster
       position="bottom-center"
+      containerStyle={{
+        bottom: '8.5rem', // Position above the fully extended navbar (approx 7.5rem height + 1rem margin)
+        zIndex: 60, // Ensure it's above the navbar (z-50)
+      }}
       toastOptions={{
         style: {
           background: '#1e1e1e',
