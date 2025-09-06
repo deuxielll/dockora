@@ -54,7 +54,8 @@ const FileManagerPage = () => {
         res = await getSharedWithMeItems();
         await updateLastViewedSharedFilesTimestamp(); // Mark shared files as seen
       } else if (path === 'my-shares') {
-        setItems([]); 
+        // MySharesView now handles its own data fetching, so we don't need to fetch here.
+        // We just need to ensure isLoading is set correctly for the parent.
         setIsLoading(false);
         return;
       } else {
@@ -327,7 +328,6 @@ const FileManagerPage = () => {
   };
 
   const handleEmptySpaceContextMenu = (event) => {
-    // Removed the check: if (event.target !== event.currentTarget) return;
     event.preventDefault();
     closeAllContextMenus();
     setSelectedItems(new Set()); // Clear selection when right-clicking empty space
