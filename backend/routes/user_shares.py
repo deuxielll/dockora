@@ -7,6 +7,7 @@ from models import User, UserFileShare, Notification
 from extensions import db
 from datetime import datetime # Import datetime for error logging
 import zipfile # New import
+import io # New import for in-memory zipping
 
 user_shares_bp = Blueprint('user_shares', __name__)
 
@@ -230,7 +231,22 @@ def download_shared_with_me_file():
         return jsonify({"error": "File not found or inaccessible"}), 404
     
     try:
-        return send_file(real_path, as_attachment=True, download_name=os.path.basename(real_path))
+        if os.path.isdir(real_path):
+            # Create a zip file in memory for the directory
+            memory_file = io.BytesIO()
+            with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+                for root, _, files in os.walk(real_path):
+                    for file in files:
+                        file_real_path = os.path.join(root, file)
+                        # Create archive path relative to the shared folder's base
+                        archive_path = os.path.join(os.path.basename(real_path), os.path.relpath(file_real_path, real_path))
+                        zf.write(file_real_path, archive_path)
+            memory_file.seek(0)
+            download_name = f"{os.path.basename(real_path)}.zip"
+            return send_file(memory_file, download_name=download_name, as_attachment=True)
+        else:
+            # Existing logic for single file download
+            return send_file(real_path, as_attachment=True, download_name=os.path.basename(real_path))
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

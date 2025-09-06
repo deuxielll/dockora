@@ -29,7 +29,7 @@ const FileManagerActions = ({
         </>
       ) : isSharedWithMeView ? (
         <>
-          {singleSelectedItem && singleSelectedItem.type === 'file' && (
+          {singleSelectedItem && ( // Allow download for both files and folders
             <button onClick={() => onDownloadShared(singleSelectedItem)} className={actionButtonStyles}><Download size={16} /> Download</button>
           )}
           <button onClick={onDeletePermanently} disabled={selectedCount === 0} className={`${actionButtonStyles} !text-red-500`}><Trash2 size={16} /> Remove from list</button>
