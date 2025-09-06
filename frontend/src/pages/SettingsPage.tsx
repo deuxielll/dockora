@@ -12,6 +12,7 @@ import AppearanceSettings from '../components/settings/AppearanceSettings';
 import TrashSettings from '../components/settings/TrashSettings';
 import SmtpSettings from '../components/settings/SmtpSettings';
 import SshTerminalSettings from '../components/settings/SshTerminalSettings';
+import SshTerminalOutputCard from '../components/settings/SshTerminalOutputCard'; // New import
 import SettingsSidebar from '../components/settings/SettingsSidebar';
 
 const SettingsPage = () => {
@@ -37,7 +38,12 @@ const SettingsPage = () => {
       case 'system-smtp':
         return <SmtpSettings />;
       case 'system-ssh-terminal':
-        return <SshTerminalSettings />;
+        return (
+          <>
+            <SshTerminalSettings />
+            <SshTerminalOutputCard />
+          </>
+        );
       case 'user-management':
         return <UserManagement />;
       default:
@@ -48,8 +54,8 @@ const SettingsPage = () => {
   return (
     <div className="flex gap-8 h-full">
       <SettingsSidebar activeSection={activeSection} onNavigate={setActiveSection} />
-      <div className="flex-1 overflow-y-auto no-scrollbar p-4 sm:p-6"> {/* Added padding here */}
-        <h2 className="sr-only">Settings Content</h2> {/* Hidden title for accessibility */}
+      <div className="flex-1 overflow-y-auto no-scrollbar p-4 sm:p-6">
+        <h2 className="sr-only">Settings Content</h2>
         {renderActiveSection()}
       </div>
     </div>
