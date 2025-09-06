@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { X, Download, Folder, FileText, ArrowUp } from 'lucide-react'; // Added ArrowUp icon
+import React, { useState, useEffect } from 'react';
+import { X, Download, Folder, FileText } from 'lucide-react'; // Added Folder and FileText icons
 import { getFileContent, viewFile, getSharedWithMeFileContent, viewSharedWithMeFile } from '../../services/api';
 import SimpleCodeEditor from '../SimpleCodeEditor';
 import LoadingSpinner from '../LoadingSpinner';
@@ -20,10 +20,15 @@ const getFileType = (filename) => {
     if (['mp3', 'wav', 'ogg', 'flac', 'm4a'].includes(extension)) return 'audio';
     if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp'].includes(extension)) return 'image';
     if (['pdf'].includes(extension)) return 'pdf';
-    if (['zip'].includes(extension)) return 'zip';
+    if (['zip'].includes(extension)) return 'zip'; // New: Recognize ZIP files
     
     const textBasedExtensions = [
-        'txt', 'md', 'rtf', 'tex', 'csv', 'tsv', 'yml', 'yaml', 'json', 'sh', 'py', 'js', 'jsx', 'html', 'css', 'dockerfile', 'log'
+        // Documents
+        'txt', 'md', 'rtf', 'tex',
+        // Spreadsheets
+        'csv', 'tsv',
+        // Existing code-like files
+        'yml', 'yaml', 'json', 'sh', 'py', 'js', 'jsx', 'html', 'css', 'dockerfile', 'log'
     ];
 
     if (textBasedExtensions.includes(extension)) return 'code';
@@ -33,168 +38,61 @@ const getFileType = (filename) => {
 
 const FileViewerModal = ({ item, onClose }) => {
     const [textContent, setTextContent] = useState('');
-    const [zipContents, setZipContents] = useState([]);
+    const [zipContents, setZipContents] = useState([]); // New state for ZIP contents
     const [mediaUrl, setMediaUrl] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
-    const [currentZipPath, setCurrentZipPath] = useState('/'); // New state for path inside ZIP
 
     const fileType = getFileType(item.name);
     
     // Determine which API calls to use based on whether it's a shared item
     const fetchContentApi = item.isShared ? getSharedWithMeFileContent : getFileContent;
     const viewFileApi = item.isShared ? viewSharedWithMeFile : viewFile;
-
-    const loadFile = useCallback(async (zipPath = '/') => {
-        setIsLoading(true);
-        setError('');
-        setTextContent('');
-        setZipContents([]);
-        setMediaUrl(null);
-
-        try {
-            if (fileType === 'zip') {
-                const res = await fetchContentApi(item.path, zipPath);
-                if (res.data.type === 'zip_contents') {
-                    setZipContents(res.data.contents);
-                    setCurrentZipPath(res.data.current_zip_path);
-                } else if (res.data.type === 'file_content') {
-                    const subFileType = getFileType(zipPath.split('/').pop());
-                    if (subFileType === 'code') {
-                        setTextContent(res.data.content);
-                    } else if (subFileType === 'binary') { // Placeholder for binary files within zip
-                        setTextContent("Binary file content cannot be displayed directly.");
-                    } else {
-                        // For other media types within a zip, we'd need a way to stream/serve them
-                        // For now, we'll just show a message or offer download
-                        setTextContent(`Preview not available for '${subFileType}' files within ZIP. Please download.`);
-                    }
-                }
-            } else if (fileType === 'code') {
-                const res = await fetchContentApi(item.path);
-                setTextContent(res.data.content);
-            } else if (fileType === 'video' || fileType === 'audio' || fileType === 'image' || fileType === 'pdf') {
-                const res = await viewFileApi(item.path);
-                const objectUrl = URL.createObjectURL(res.data);
-                setMediaUrl(objectUrl);
-            }
-        } catch (err) {
-            const errorMessage = err.response?.data?.error || 'Failed to load file.';
-            setError(errorMessage);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [item.path, item.isShared, fetchContentApi, viewFileApi, fileType]);
+    const downloadUrl = item.isShared 
+        ? `${API_BASE_URL}/files/shared-with-me/download?share_id=${item.path}`
+        : `${API_BASE_URL}/files/view?path=${encodeURIComponent(item.path)}`;
 
     useEffect(() => {
-        loadFile(currentZipPath);
-    }, [loadFile, currentZipPath]);
+        let objectUrl = null;
+        const loadFile = async () => {
+            setIsLoading(true);
+            setError('');
+            try {
+                if (fileType === 'code' || fileType === 'zip') { // Handle ZIP files here
+                    const res = await fetchContentApi(item.path);
+                    if (res.data.type === 'zip_contents') {
+                        setZipContents(res.data.contents);
+                        setTextContent(''); // Clear text content if it's a zip
+                    } else {
+                        setTextContent(res.data.content);
+                        setZipContents([]); // Clear zip contents if it's a text file
+                    }
+                } else if (fileType === 'video' || fileType === 'audio' || fileType === 'image' || fileType === 'pdf') {
+                    const res = await viewFileApi(item.path);
+                    objectUrl = URL.createObjectURL(res.data);
+                    setMediaUrl(objectUrl);
+                }
+            } catch (err) {
+                const errorMessage = err.response?.data?.error || 'Failed to load file.';
+                setError(errorMessage);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        
+        loadFile();
 
-    const handleZipItemClick = (zipItem) => {
-        if (zipItem.type === 'dir') {
-            setCurrentZipPath(zipItem.path);
-        } else {
-            // If it's a file, load its content
-            setCurrentZipPath(zipItem.path);
-        }
-    };
-
-    const handleZipGoUp = () => {
-        if (currentZipPath === '/') return;
-        const lastSlashIndex = currentZipPath.lastIndexOf('/');
-        const parentPath = lastSlashIndex === 0 ? '/' : currentZipPath.substring(0, lastSlashIndex);
-        setCurrentZipPath(parentPath);
-    };
-
-    const renderZipContent = () => {
-        const downloadZipUrl = item.isShared 
-            ? `${API_BASE_URL}/files/shared-with-me/download?share_id=${item.path}`
-            : `${API_BASE_URL}/files/view?path=${encodeURIComponent(item.path)}`;
-
-        if (zipContents.length > 0) {
-            const zipPathParts = currentZipPath.split('/').filter(Boolean);
-            return (
-                <div className="flex-grow w-full h-full flex flex-col p-2">
-                    <div className="flex items-center gap-2 mb-4 text-sm text-gray-200">
-                        {currentZipPath !== '/' && (
-                            <button onClick={handleZipGoUp} className="p-1 rounded-full hover:shadow-neo-inset transition-all" title="Go Up">
-                                <ArrowUp size={16} />
-                            </button>
-                        )}
-                        <span>/</span>
-                        {zipPathParts.map((part, index) => (
-                            <React.Fragment key={part}>
-                                <span className="px-2 py-1 rounded-md">{part}</span>
-                                {index < zipPathParts.length - 1 && <span>/</span>}
-                            </React.Fragment>
-                        ))}
-                    </div>
-                    <ul className="space-y-2 flex-grow overflow-y-auto no-scrollbar">
-                        {zipContents.map((zipItem, index) => (
-                            <li key={index} 
-                                onClick={() => handleZipItemClick(zipItem)}
-                                className="flex items-center gap-3 p-2 rounded-lg bg-dark-bg-secondary shadow-neo-inset cursor-pointer hover:shadow-neo active:shadow-neo-inset transition-all"
-                            >
-                                {zipItem.type === 'dir' ? <Folder size={20} className="text-blue-400" /> : <FileText size={20} className="text-gray-400" />}
-                                <span className="font-medium text-gray-200 truncate">{zipItem.name}</span>
-                                {!zipItem.is_dir && <span className="text-sm text-gray-400 ml-auto">{formatSize(zipItem.size)}</span>}
-                            </li>
-                        ))}
-                    </ul>
-                    <div className="text-center mt-6 flex-shrink-0">
-                        <a href={downloadZipUrl} download={item.name} className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors">
-                            <Download size={16} /> Download ZIP
-                        </a>
-                    </div>
-                </div>
-            );
-        } else if (textContent) {
-            // Display content of a file within the zip
-            return (
-                <div className="flex-grow w-full h-full flex flex-col p-2">
-                    <div className="flex items-center gap-2 mb-4 text-sm text-gray-200">
-                        <button onClick={handleZipGoUp} className="p-1 rounded-full hover:shadow-neo-inset transition-all" title="Go Up">
-                            <ArrowUp size={16} />
-                        </button>
-                        <span>/</span>
-                        {currentZipPath.split('/').filter(Boolean).map((part, index, arr) => (
-                            <React.Fragment key={part}>
-                                <span className={`px-2 py-1 rounded-md ${index === arr.length - 1 ? 'font-bold' : ''}`}>{part}</span>
-                                {index < arr.length - 1 && <span>/</span>}
-                            </React.Fragment>
-                        ))}
-                    </div>
-                    <div className="rounded-lg flex-grow w-full h-full overflow-hidden">
-                        <SimpleCodeEditor value={textContent} onChange={() => {}} />
-                    </div>
-                    <div className="text-center mt-6 flex-shrink-0">
-                        <a href={downloadZipUrl} download={item.name} className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors">
-                            <Download size={16} /> Download ZIP
-                        </a>
-                    </div>
-                </div>
-            );
-        }
-        return (
-            <div className="flex-grow flex flex-col items-center justify-center text-center text-gray-400 p-8">
-                <Folder size={48} className="mb-4" />
-                <p>This ZIP file is empty or could not be read.</p>
-                <div className="text-center mt-6 flex-shrink-0">
-                    <a href={downloadZipUrl} download={item.name} className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors">
-                        <Download size={16} /> Download ZIP
-                    </a>
-                </div>
-            </div>
-        );
-    };
+        return () => {
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+            }
+        };
+    }, [item.path, fileType, fetchContentApi, viewFileApi]);
 
     const renderContent = () => {
         if (isLoading) return <div className="flex-grow flex items-center justify-center"><LoadingSpinner /></div>;
         
         const isFileTooLarge = error.includes("File is too large to display");
-        const downloadUrl = item.isShared 
-            ? `${API_BASE_URL}/files/shared-with-me/download?share_id=${item.path}`
-            : `${API_BASE_URL}/files/view?path=${encodeURIComponent(item.path)}`;
 
         if (error && !isFileTooLarge) return <div className="flex-grow flex items-center justify-center text-red-500">{error}</div>;
 
@@ -226,10 +124,32 @@ const FileViewerModal = ({ item, onClose }) => {
                         <SimpleCodeEditor value={textContent} onChange={() => {}} />
                     </div>
                 );
-            case 'zip':
-                return renderZipContent();
+            case 'zip': // New: Render ZIP contents
+                return (
+                    <div className="flex-grow w-full h-full overflow-y-auto no-scrollbar p-2">
+                        <h3 className="font-bold text-lg text-gray-200 mb-4">Contents of {item.name}</h3>
+                        {zipContents.length > 0 ? (
+                            <ul className="space-y-2">
+                                {zipContents.map((zipItem, index) => (
+                                    <li key={index} className="flex items-center gap-3 p-2 rounded-lg bg-dark-bg-secondary shadow-neo-inset">
+                                        {zipItem.is_dir ? <Folder size={20} className="text-blue-400" /> : <FileText size={20} className="text-gray-400" />}
+                                        <span className="font-medium text-gray-200 truncate">{zipItem.name}</span>
+                                        {!zipItem.is_dir && <span className="text-sm text-gray-400 ml-auto">{formatSize(zipItem.size)}</span>}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-center text-gray-400 py-8">This ZIP file is empty or could not be read.</p>
+                        )}
+                        <div className="text-center mt-6">
+                            <a href={downloadUrl} download={item.name} className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors">
+                                <Download size={16} /> Download ZIP
+                            </a>
+                        </div>
+                    </div>
+                );
             default:
-                return null;
+                return null; // Should be caught by isFileTooLarge or fileType === 'unsupported'
         }
     };
     
