@@ -245,16 +245,16 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
             className="flex-1"
           />
 
-          <NetworksEditorCard
-            networks={networks}
-            setNetworks={setNetworks}
+          <EnvEditorCard // New Env Editor Card
+            envContent={envContent}
+            setEnvContent={setEnvContent}
             disabled={deploymentId !== null}
             className="flex-shrink-0"
           />
 
-          <EnvEditorCard // New Env Editor Card
-            envContent={envContent}
-            setEnvContent={setEnvContent}
+          <NetworksEditorCard
+            networks={networks}
+            setNetworks={setNetworks}
             disabled={deploymentId !== null}
             className="flex-shrink-0"
           />
