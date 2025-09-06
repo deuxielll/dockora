@@ -9,13 +9,20 @@ from models import ShareLink, SharedItem
 from extensions import db
 from helpers.share_helpers import get_sharing_user_context, validate_shared_path
 from helpers.main_helpers import resolve_user_path # Import resolve_user_path
+from urllib.parse import urlparse, urlunparse # Import for URL manipulation
 
 public_shares_bp = Blueprint('public_shares', __name__)
 
 @public_shares_bp.route("/shares/<token>")
 def public_share_page(token):
     if not ShareLink.query.filter_by(token=token).first(): return "Share link not found or expired.", 404
-    return render_template('share_page.html')
+
+    # Construct the API_BASE_URL for the frontend JS
+    parsed_url = urlparse(request.host_url)
+    # Assuming backend is on port 5000, adjust if your setup is different
+    api_base_url = urlunparse(parsed_url._replace(port='5000', path='/api')) 
+
+    return render_template('share_page.html', api_base_url=api_base_url)
 
 @public_shares_bp.route("/api/shares/<token>/details")
 def get_public_share_details(token):
