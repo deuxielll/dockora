@@ -8,22 +8,22 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #1a1a1a; /* dark-bg */
+            background-color: #1e1e1e; /* dark-bg */
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #ffffff; /* text-white */
+            color: #d1d5db; /* gray-200 */
         }
         .container {
             max-width: 800px;
             margin: 40px auto;
             padding: 30px;
-            background: #252526; /* similar to panelClasses */
-            border-radius: 20px;
-            box-shadow: 10px 10px 20px #1f1f1f, -10px -10px 20px #2f2f34;
+            background: #252526; /* dark-bg-secondary */
+            border-radius: 1rem; /* rounded-2xl */
+            box-shadow: 8px 8px 20px rgba(0,0,0,0.6), -8px -8px 20px rgba(255,255,255,0.15); /* shadow-neo */
             overflow: hidden;
         }
         h1 {
             font-size: 28px;
-            color: #ffffff;
+            color: #d1d5db; /* gray-200 */
             margin-bottom: 20px;
             text-align: center;
         }
@@ -31,48 +31,84 @@
             list-style: none;
             padding: 0;
             margin: 20px 0;
-            border-top: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem; /* space-y-3 */
         }
         .item-list li {
+            background: #252526; /* dark-bg-secondary */
+            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.6), inset -3px -3px 6px rgba(255,255,255,0.15); /* shadow-neo-inset (smaller) */
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 0.75rem; /* p-3 */
             display: flex;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
             justify-content: space-between;
             align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid #333;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
         }
-        .item-list li:last-child {
-            border-bottom: none;
+        .item-list li:hover {
+            box-shadow: 6px 6px 12px rgba(0,0,0,0.6), -6px -6px 12px rgba(255,255,255,0.15); /* hover:shadow-neo */
+        }
+        .item-info {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+            min-width: 0; /* Allow text to truncate */
+            margin-right: 1rem; /* Gap between info and buttons */
         }
         .item-name {
-            font-weight: bold;
-            color: #ffffff;
+            font-weight: 600; /* font-semibold */
+            color: #d1d5db; /* gray-200 */
             flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .item-size {
             font-size: 14px;
-            color: #e0e0e0; /* gray-400 */
+            color: #9ca3af; /* gray-300 */
             margin-left: 15px;
+            white-space: nowrap;
         }
         .item-type {
             font-size: 12px;
-            color: #c0c0c0; /* gray-500 */
+            color: #9ca3af; /* gray-300 */
             margin-left: 10px;
             text-transform: capitalize;
+            white-space: nowrap;
         }
-        .download-btn {
-            background: linear-gradient(145deg, #3c8df6, #3374db); /* accent */
-            color: #ffffff;
-            padding: 8px 15px;
-            border-radius: 25px;
+        .item-actions {
+            display: flex;
+            gap: 0.5rem; /* space-x-2 */
+            margin-top: 0.5rem; /* For wrapping on small screens */
+        }
+        @media (min-width: 640px) { /* sm breakpoint */
+            .item-actions {
+                margin-top: 0;
+            }
+        }
+
+        .action-btn {
+            background: #1e1e1e; /* dark-bg */
+            color: #3b82f6; /* accent */
+            padding: 0.5rem 1rem; /* px-4 py-2 */
+            border-radius: 0.5rem; /* rounded-lg */
             text-decoration: none;
-            font-weight: bold;
-            box-shadow: 3px 3px 6px #1c1c1f, -3px -3px 6px #38383d;
-            display: inline-block;
+            font-weight: 600; /* font-semibold */
+            box-shadow: 6px 6px 12px rgba(0,0,0,0.6), -6px -6px 12px rgba(255,255,255,0.15); /* shadow-neo */
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
             transition: all 0.3s ease-in-out;
-            margin-left: 15px;
+            border: none; /* Remove default button border */
+            cursor: pointer;
         }
-        .download-btn:hover {
+        .action-btn:hover {
             opacity: 0.9;
+        }
+        .action-btn:active {
+            box-shadow: inset 6px 6px 12px rgba(0,0,0,0.6), inset -6px -6px 12px rgba(255,255,255,0.15); /* active:shadow-neo-inset */
         }
         .download-all-btn {
             display: block;
@@ -83,7 +119,7 @@
             border-radius: 30px;
         }
         .error-message {
-            color: #f87171; /* red-500 */
+            color: #ef4444; /* red-500 */
             text-align: center;
             margin-top: 20px;
         }
@@ -105,6 +141,11 @@
             height: 20px;
             vertical-align: middle;
             margin-right: 8px;
+            flex-shrink: 0;
+        }
+        .icon-small {
+            width: 16px;
+            height: 16px;
         }
     </style>
 </head>
@@ -114,7 +155,10 @@
         <div id="loading" class="loading-spinner"></div>
         <p id="error-message" class="error-message" style="display: none;"></p>
         <ul id="item-list" class="item-list" style="display: none;"></ul>
-        <a id="download-all-link" class="download-btn download-all-btn" style="display: none;">Download All as Zip</a>
+        <a id="download-all-link" class="action-btn download-all-btn" style="display: none;">
+            <svg class="icon-small" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Download All as Zip
+        </a>
     </div>
 
     <script>
@@ -138,9 +182,9 @@
 
         function getIconSvg(type) {
             if (type === 'dir') {
-                return `<svg class="icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+                return `<svg class="icon text-blue-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
             }
-            return `<svg class="icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
+            return `<svg class="icon text-gray-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
         }
 
         async function fetchSharedContent() {
@@ -158,22 +202,37 @@
                     data.contents.forEach(item => {
                         const listItem = document.createElement('li');
                         listItem.innerHTML = `
-                            <div style="display: flex; align-items: center;">
+                            <div class="item-info">
                                 ${getIconSvg(item.type)}
-                                <span class="item-name">${item.name}</span>
+                                <span class="item-name" title="${item.name}">${item.name}</span>
                                 <span class="item-type">${item.type}</span>
-                            </div>
-                            <div style="display: flex; align-items: center;">
                                 <span class="item-size">${item.type === 'file' ? formatSize(item.size) : ''}</span>
-                                <a href="${API_BASE_URL}/shares/${token}/download?file=${encodeURIComponent(item.path)}" class="download-btn">Download</a>
-                                ${item.type === 'file' ? `<a href="${API_BASE_URL}/shares/${token}/view?file=${encodeURIComponent(item.path)}" target="_blank" class="download-btn" style="margin-left: 5px;">View</a>` : ''}
+                            </div>
+                            <div class="item-actions">
+                                <a href="${API_BASE_URL}/shares/${token}/download?file=${encodeURIComponent(item.path)}" class="action-btn" download>
+                                    <svg class="icon-small" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                    Download
+                                </a>
+                                ${item.type === 'file' ? `
+                                <a href="${API_BASE_URL}/shares/${token}/view?file=${encodeURIComponent(item.path)}" target="_blank" class="action-btn">
+                                    <svg class="icon-small" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    View
+                                </a>` : ''}
                             </div>
                         `;
+                        if (item.type === 'file') {
+                            listItem.addEventListener('click', (e) => {
+                                // Only trigger view if not clicking on a button
+                                if (!e.target.closest('.action-btn')) {
+                                    window.open(`${API_BASE_URL}/shares/${token}/view?file=${encodeURIComponent(item.path)}`, '_blank');
+                                }
+                            });
+                        }
                         itemList.appendChild(listItem);
                     });
-                    itemList.style.display = 'block';
+                    itemList.style.display = 'flex';
                     downloadAllLink.href = `${API_BASE_URL}/shares/${token}/download`;
-                    downloadAllLink.style.display = 'block';
+                    downloadAllLink.style.display = 'inline-flex';
                 } else {
                     errorMessage.textContent = 'No items found in this share.';
                     errorMessage.style.display = 'block';
