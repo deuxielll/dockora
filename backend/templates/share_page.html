@@ -4,44 +4,121 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dockora Share</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    boxShadow: {
-                        'neo': '8px 8px 20px rgba(0,0,0,0.6), -8px -8px 20px rgba(255,255,255,0.15)',
-                        'neo-inset': 'inset 8px 8px 20px rgba(0,0,0,0.6), inset -8px -8px 20px rgba(255,255,255,0.15)',
-                    },
-                    colors: {
-                        'dark-bg': '#1e1e1e',
-                        'dark-bg-secondary': '#252526',
-                        'accent': '#3b82f6',
-                        'accent-hover': '#2563eb',
-                        'gray-200': '#d1d5db',
-                        'gray-300': '#9ca3af',
-                        'gray-400': '#6b7280',
-                        'gray-500': '#4b5563',
-                        'red-500': '#ef4444',
-                        'blue-400': '#60a5fa',
-                    },
-                }
-            }
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a; /* dark-bg */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ffffff; /* text-white */
         }
-    </script>
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background: #252526; /* similar to panelClasses */
+            border-radius: 20px;
+            box-shadow: 10px 10px 20px #1f1f1f, -10px -10px 20px #2f2f34;
+            overflow: hidden;
+        }
+        h1 {
+            font-size: 28px;
+            color: #ffffff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .item-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+            border-top: 1px solid #333;
+        }
+        .item-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #333;
+        }
+        .item-list li:last-child {
+            border-bottom: none;
+        }
+        .item-name {
+            font-weight: bold;
+            color: #ffffff;
+            flex-grow: 1;
+        }
+        .item-size {
+            font-size: 14px;
+            color: #e0e0e0; /* gray-400 */
+            margin-left: 15px;
+        }
+        .item-type {
+            font-size: 12px;
+            color: #c0c0c0; /* gray-500 */
+            margin-left: 10px;
+            text-transform: capitalize;
+        }
+        .download-btn {
+            background: linear-gradient(145deg, #3c8df6, #3374db); /* accent */
+            color: #ffffff;
+            padding: 8px 15px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 3px 3px 6px #1c1c1f, -3px -3px 6px #38383d;
+            display: inline-block;
+            transition: all 0.3s ease-in-out;
+            margin-left: 15px;
+        }
+        .download-btn:hover {
+            opacity: 0.9;
+        }
+        .download-all-btn {
+            display: block;
+            width: fit-content;
+            margin: 30px auto 0;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 30px;
+        }
+        .error-message {
+            color: #f87171; /* red-500 */
+            text-align: center;
+            margin-top: 20px;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #3b82f6; /* accent */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .icon {
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+    </style>
 </head>
-<body class="bg-dark-bg text-gray-200 font-sans">
-
-    <div class="max-w-3xl mx-auto my-10 p-6 bg-dark-bg-secondary rounded-2xl shadow-neo">
-        <h1 id="share-title" class="text-3xl font-bold text-center text-gray-200 mb-6">Loading Shared Content...</h1>
-        <div id="loading" class="border-4 border-gray-700/50 border-t-accent rounded-full w-8 h-8 animate-spin mx-auto my-5"></div>
-        <p id="error-message" class="text-red-500 text-center mt-5" style="display: none;"></p>
-        <ul id="item-list" class="list-none p-0 m-0 mt-5 border-t border-gray-700/50" style="display: none;"></ul>
-        <a id="download-all-link" class="download-btn bg-accent text-white px-6 py-3 rounded-full shadow-neo hover:bg-accent-hover active:shadow-neo-inset transition-all font-semibold block w-fit mx-auto mt-8" style="display: none;">Download All as Zip</a>
+<body>
+    <div class="container">
+        <h1 id="share-title">Loading Shared Content...</h1>
+        <div id="loading" class="loading-spinner"></div>
+        <p id="error-message" class="error-message" style="display: none;"></p>
+        <ul id="item-list" class="item-list" style="display: none;"></ul>
+        <a id="download-all-link" class="download-btn download-all-btn" style="display: none;">Download All as Zip</a>
     </div>
 
     <script>
-        const API_BASE_URL = "{{ api_base_url }}"; // Passed from Flask
+        const API_BASE_URL = window.location.origin + '/api';
         const pathParts = window.location.pathname.split('/');
         const token = pathParts[pathParts.length - 1];
 
@@ -61,9 +138,9 @@
 
         function getIconSvg(type) {
             if (type === 'dir') {
-                return `<svg class="w-5 h-5 text-blue-400 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+                return `<svg class="icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
             }
-            return `<svg class="w-5 h-5 text-gray-400 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
+            return `<svg class="icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
         }
 
         async function fetchSharedContent() {
@@ -80,17 +157,16 @@
                 if (data.contents && data.contents.length > 0) {
                     data.contents.forEach(item => {
                         const listItem = document.createElement('li');
-                        listItem.className = "flex justify-between items-center p-4 border-b border-gray-700/50 last:border-b-0 bg-dark-bg-secondary shadow-neo-inset rounded-lg my-2";
                         listItem.innerHTML = `
-                            <div class="flex items-center flex-grow min-w-0">
+                            <div style="display: flex; align-items: center;">
                                 ${getIconSvg(item.type)}
-                                <span class="font-medium text-gray-200 truncate">${item.name}</span>
-                                <span class="text-xs text-gray-400 ml-3 capitalize flex-shrink-0">${item.type}</span>
+                                <span class="item-name">${item.name}</span>
+                                <span class="item-type">${item.type}</span>
                             </div>
-                            <div class="flex items-center flex-shrink-0 ml-4">
-                                <span class="text-sm text-gray-300 mr-3">${item.type === 'file' ? formatSize(item.size) : ''}</span>
-                                <a href="${API_BASE_URL}/shares/${token}/download?file=${encodeURIComponent(item.path)}" class="bg-dark-bg text-accent px-4 py-2 rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold text-sm">Download</a>
-                                ${item.type === 'file' ? `<a href="${API_BASE_URL}/shares/${token}/view?file=${encodeURIComponent(item.path)}" target="_blank" class="bg-dark-bg text-gray-300 px-4 py-2 rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold text-sm ml-2">View</a>` : ''}
+                            <div style="display: flex; align-items: center;">
+                                <span class="item-size">${item.type === 'file' ? formatSize(item.size) : ''}</span>
+                                <a href="${API_BASE_URL}/shares/${token}/download?file=${encodeURIComponent(item.path)}" class="download-btn">Download</a>
+                                ${item.type === 'file' ? `<a href="${API_BASE_URL}/shares/${token}/view?file=${encodeURIComponent(item.path)}" target="_blank" class="download-btn" style="margin-left: 5px;">View</a>` : ''}
                             </div>
                         `;
                         itemList.appendChild(listItem);
