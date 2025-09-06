@@ -6,6 +6,7 @@ import CreateItemModal from '../modals/CreateItemModal';
 import RenameItemModal from '../modals/RenameItemModal';
 import ShareModal from '../modals/ShareModal';
 import ShareWithUsersModal from '../modals/ShareWithUsersModal';
+import MoveItemModal from '../modals/MoveItemModal'; // New import
 import { getSharedWithMeFileContent, viewSharedWithMeFile } from '../../services/api';
 
 const FileManagerModals = ({
@@ -22,6 +23,9 @@ const FileManagerModals = ({
   itemsToShareWithUsers,
   setItemsToShareWithUsers,
   onShareWithUsersSuccess,
+  itemsToMove, // New prop
+  setItemsToMove, // New prop
+  onMove, // New prop
 }) => {
   return (
     <>
@@ -41,6 +45,13 @@ const FileManagerModals = ({
           itemsToShare={itemsToShareWithUsers}
           onClose={() => setItemsToShareWithUsers(null)}
           onSuccess={onShareWithUsersSuccess}
+        />
+      )}
+      {itemsToMove && ( // Render new MoveItemModal
+        <MoveItemModal
+          items={itemsToMove}
+          onClose={() => setItemsToMove(null)}
+          onMove={onMove}
         />
       )}
     </>

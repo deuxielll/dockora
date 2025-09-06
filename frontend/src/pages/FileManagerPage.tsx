@@ -37,6 +37,9 @@ const FileManagerPage = () => {
   const [sortColumn, setSortColumn] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
 
+  // New state for MoveItemModal
+  const [itemsToMove, setItemsToMove] = useState(null);
+
   const isTrashView = currentPath === 'trash';
   const isSharedWithMeView = currentPath === 'shared-with-me';
   const isMySharesView = currentPath === 'my-shares';
@@ -301,6 +304,18 @@ const FileManagerPage = () => {
     }
   };
 
+  const handleMove = async (itemsToMovePaths, destinationPath) => {
+    try {
+      await moveItems(itemsToMovePaths, destinationPath);
+      toast.success(`${itemsToMovePaths.length} item(s) moved successfully.`);
+      fetchItems(currentPath);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to move item(s).');
+    } finally {
+      setItemsToMove(null);
+    }
+  };
+
   const handleContextMenu = (event, item) => {
     event.preventDefault();
     event.stopPropagation();
@@ -492,6 +507,9 @@ const FileManagerPage = () => {
           setItemsToShareWithUsers(null);
           setSelectedItems(new Set());
         }}
+        itemsToMove={itemsToMove} // Pass new state
+        setItemsToMove={setItemsToMove} // Pass new state setter
+        onMove={handleMove} // Pass new move handler
       />
       <FileManagerContextMenus
         contextMenu={contextMenu}
@@ -517,6 +535,7 @@ const FileManagerPage = () => {
         hasCutItems={cutItems.length > 0}
         onCreateFile={() => setShowCreateModal({ type: 'file' })}
         onCreateFolder={() => setShowCreateModal({ type: 'dir' })}
+        onMove={() => setItemsToMove(Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id).path))} // New move action
       />
     </>
   );

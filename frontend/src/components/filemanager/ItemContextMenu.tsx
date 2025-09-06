@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, Share2, Copy, Edit, Trash2, RotateCcw, Users, Download, ClipboardPaste, Scissors } from 'lucide-react';
+import { Eye, Share2, Copy, Edit, Trash2, RotateCcw, Users, Download, ClipboardPaste, Scissors, FolderInput } from 'lucide-react'; // Added FolderInput
 
 const ItemContextMenu = ({
   contextMenu,
@@ -22,10 +22,12 @@ const ItemContextMenu = ({
   onPaste, // New prop
   hasCopiedItems, // New prop
   hasCutItems, // New prop
+  onMove, // New prop
 }) => {
   if (!contextMenu || selectedCount === 0) return null;
 
   const canPaste = (hasCopiedItems || hasCutItems) && !isTrashView && !isSharedWithMeView && !isMySharesView;
+  const canMove = !isTrashView && !isSharedWithMeView && !isMySharesView;
 
   return (
     <div
@@ -66,6 +68,9 @@ const ItemContextMenu = ({
           )}
           <li><button onClick={() => { onCopy(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Copy size={16} /><span>Copy ({selectedCount})</span></button></li>
           <li><button onClick={() => { onCut(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Scissors size={16} /><span>Cut ({selectedCount})</span></button></li>
+          {canMove && (
+            <li><button onClick={() => { onMove(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><FolderInput size={16} /><span>Move to... ({selectedCount})</span></button></li>
+          )}
           <li><button onClick={() => { onCopyPath(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Copy size={16} /><span>Copy Path(s)</span></button></li>
           {canPaste && (
             <li><button onClick={() => { onPaste(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><ClipboardPaste size={16} /><span>Paste ({hasCutItems ? 'Cut' : 'Copy'})</span></button></li>
