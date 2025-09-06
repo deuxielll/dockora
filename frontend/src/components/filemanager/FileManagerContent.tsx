@@ -16,7 +16,7 @@ const FileManagerContent = ({
   isLoading,
   error,
   selectedItems,
-  setSelectedItems,
+  setSelectedItems, // New prop
   draggedOverItem,
   isDragging,
   copiedItems,
@@ -47,12 +47,11 @@ const FileManagerContent = ({
   onDrop,
   onDragEnd,
   onRefreshMyShares,
-  searchTerm,
-  setSearchTerm,
-  sortColumn,
-  sortDirection,
-  onSort,
-  onEmptySpaceContextMenu, // New prop for empty space context menu
+  searchTerm, // New prop
+  setSearchTerm, // New prop
+  sortColumn, // New prop
+  sortDirection, // New prop
+  onSort, // New prop
 }) => {
   const panelClasses = "bg-dark-bg shadow-neo";
   const inputStyles = "w-full p-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition placeholder:text-gray-500";
@@ -64,7 +63,6 @@ const FileManagerContent = ({
       onDragLeave={onDragLeave}
       onDrop={onDrop}
       onDragEnd={onDragEnd}
-      onContextMenu={onEmptySpaceContextMenu} // Attach context menu to empty space
     >
       {isDragging && (
         <div className="absolute inset-0 bg-accent/10 border-2 border-dashed border-accent rounded-xl flex items-center justify-center z-10 pointer-events-none shadow-neo">
@@ -121,8 +119,8 @@ const FileManagerContent = ({
         {isMySharesView ? (
           <MySharesView 
             onRefreshFileManager={onRefreshMyShares} 
-            selectedItems={selectedItems}
-            setSelectedItems={setSelectedItems}
+            selectedItems={selectedItems} // Pass selectedItems
+            setSelectedItems={setSelectedItems} // Pass setSelectedItems
           />
         ) : (
           <FileTable
@@ -140,10 +138,10 @@ const FileManagerContent = ({
             onItemDragEnter={onItemDragEnter}
             onItemDragLeave={onItemDragLeave}
             onDropOnItem={onDropOnItem}
-            searchTerm={searchTerm}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
-            onSort={onSort}
+            searchTerm={searchTerm} // Pass search term
+            sortColumn={sortColumn} // Pass sort column
+            sortDirection={sortDirection} // Pass sort direction
+            onSort={onSort} // Pass sort handler
           />
         )}
       </div>

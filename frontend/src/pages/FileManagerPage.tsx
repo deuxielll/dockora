@@ -25,7 +25,7 @@ const FileManagerPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const [emptySpaceContextMenu, setEmptySpaceContextMenu] = useState(null);
-  const [selectedItems, setSelectedItems] = new Set(); // Initialize as empty set
+  const [selectedItems, setSelectedItems] = useState(new Set());
   const [selectionAnchor, setSelectionAnchor] = useState(null);
   const [draggedOverItem, setDraggedOverItem] = useState(null);
   const [copiedItems, setCopiedItems] = useState([]);
@@ -476,7 +476,7 @@ const FileManagerPage = () => {
             isLoading={isLoading}
             error={error}
             selectedItems={selectedItems}
-            setSelectedItems={setSelectedItems}
+            setSelectedItems={setSelectedItems} // Pass setSelectedItems to FileManagerContent
             draggedOverItem={draggedOverItem}
             isDragging={isDragging}
             copiedItems={copiedItems}
@@ -512,7 +512,6 @@ const FileManagerPage = () => {
             sortColumn={sortColumn}
             sortDirection={sortDirection}
             onSort={handleSort}
-            onEmptySpaceContextMenu={handleEmptySpaceContextMenu} // Pass the handler here
           />
         </div>
       </div>
@@ -533,9 +532,9 @@ const FileManagerPage = () => {
           setItemsToShareWithUsers(null);
           setSelectedItems(new Set());
         }}
-        itemsToMove={itemsToMove}
-        setItemsToMove={setItemsToMove}
-        onMove={handleMove}
+        itemsToMove={itemsToMove} // Pass new state
+        setItemsToMove={setItemsToMove} // Pass new state setter
+        onMove={handleMove} // Pass new move handler
       />
       <FileManagerContextMenus
         contextMenu={contextMenu}
@@ -561,7 +560,7 @@ const FileManagerPage = () => {
         hasCutItems={cutItems.length > 0}
         onCreateFile={() => setShowCreateModal({ type: 'file' })}
         onCreateFolder={() => setShowCreateModal({ type: 'dir' })}
-        onMove={() => setItemsToMove(Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id).path))}
+        onMove={() => setItemsToMove(Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id).path))} // New move action
       />
     </>
   );
