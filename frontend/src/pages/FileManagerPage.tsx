@@ -57,8 +57,9 @@ const FileManagerPage = () => {
         await updateLastViewedSharedFilesTimestamp();
         setItems(res.data);
       } else if (path === 'my-shares') {
-        res = await getSharedByMeItems();
-        setItems(res.data); // Populate items for context menu logic
+        // MySharesView now fetches its own data, and manages its own selection
+        // We set items to empty here to ensure FileTable doesn't render for this view
+        setItems([]); 
       } else {
         res = await browseFiles(path);
         setItems(res.data);
@@ -95,8 +96,11 @@ const FileManagerPage = () => {
     const handleKeyDown = (e) => {
       if (e.ctrlKey && e.key.toLowerCase() === 'a') {
         e.preventDefault();
-        const allItemIdentifiers = new Set(items.map(item => getItemIdentifier(item)));
-        setSelectedItems(allItemIdentifiers);
+        // For MySharesView, the selection is managed internally, so we don't select all here.
+        if (!isMySharesView) {
+          const allItemIdentifiers = new Set(items.map(item => getItemIdentifier(item)));
+          setSelectedItems(allItemIdentifiers);
+        }
       }
     };
     document.addEventListener('keydown', handleKeyDown);
@@ -105,7 +109,7 @@ const FileManagerPage = () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('click', closeAllContextMenus);
     };
-  }, [items, closeAllContextMenus]);
+  }, [items, closeAllContextMenus, isMySharesView]);
 
   const getItemIdentifier = (item) => {
     if (isTrashView) return item.trashed_name;
@@ -507,7 +511,7 @@ const FileManagerPage = () => {
             setSearchTerm={setSearchTerm}
             sortColumn={sortColumn}
             sortDirection={sortDirection}
-            onSort={onSort}
+            onSort={handleSort}
           />
         </div>
       </div>

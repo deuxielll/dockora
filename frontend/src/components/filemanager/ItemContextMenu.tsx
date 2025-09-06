@@ -52,12 +52,6 @@ const ItemContextMenu = ({
         </ul>
       ) : isMySharesView ? ( // New context menu for My Shares
         <ul className="space-y-1">
-          {singleSelectedItem && singleSelectedItem.type === 'file' && (
-            <li><button onClick={() => { onView(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Eye size={16} /><span>View</span></button></li>
-          )}
-          {singleSelectedItem && (
-            <li><button onClick={() => { onDownloadShared(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Download size={16} /><span>Download</span></button></li>
-          )}
           <li><button onClick={() => { onCopyPath(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Copy size={16} /><span>Copy Path(s)</span></button></li>
           <li><button onClick={() => { onDelete(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md"><Trash2 size={16} /><span>Unshare ({selectedCount})</span></button></li>
         </ul>
