@@ -51,19 +51,15 @@ const FileManagerPage = () => {
       let res;
       if (path === 'trash') {
         res = await getTrashItems();
-        setItems(res.data);
       } else if (path === 'shared-with-me') {
         res = await getSharedWithMeItems();
         await updateLastViewedSharedFilesTimestamp();
-        setItems(res.data);
       } else if (path === 'my-shares') {
-        // MySharesView now fetches its own data, and manages its own selection
-        // We set items to empty here to ensure FileTable doesn't render for this view
-        setItems([]); 
+        res = await getSharedByMeItems(); // MySharesView now fetches its own data, but we need to populate `items` for context menu logic
       } else {
         res = await browseFiles(path);
-        setItems(res.data);
       }
+      setItems(res.data);
       setSelectedItems(new Set());
       setSearchTerm(''); // Reset search term on path change
       setSortColumn('name'); // Reset sort on path change
@@ -96,11 +92,8 @@ const FileManagerPage = () => {
     const handleKeyDown = (e) => {
       if (e.ctrlKey && e.key.toLowerCase() === 'a') {
         e.preventDefault();
-        // For MySharesView, the selection is managed internally, so we don't select all here.
-        if (!isMySharesView) {
-          const allItemIdentifiers = new Set(items.map(item => getItemIdentifier(item)));
-          setSelectedItems(allItemIdentifiers);
-        }
+        const allItemIdentifiers = new Set(items.map(item => getItemIdentifier(item)));
+        setSelectedItems(allItemIdentifiers);
       }
     };
     document.addEventListener('keydown', handleKeyDown);
@@ -109,12 +102,12 @@ const FileManagerPage = () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('click', closeAllContextMenus);
     };
-  }, [items, closeAllContextMenus, isMySharesView]);
+  }, [items, closeAllContextMenus]);
 
   const getItemIdentifier = (item) => {
     if (isTrashView) return item.trashed_name;
     if (isSharedWithMeView) return item.id;
-    if (isMySharesView) return item.id; // For MySharesView, item.id is the UserFileShare ID
+    if (isMySharesView) return item.id;
     return item.path;
   };
 
@@ -151,7 +144,8 @@ const FileManagerPage = () => {
     } else {
       setSelectedItems(new Set([itemIdentifier]));
       setSelectionAnchor(item);
-      // Do not clear copied/cut items on single click
+      setCopiedItems([]);
+      setCutItems([]);
     }
   };
 
@@ -467,7 +461,7 @@ const FileManagerPage = () => {
       <div className="flex h-full p-4 sm:p-6 pb-28">
         <Sidebar onNavigate={setCurrentPath} currentUser={currentUser} />
         <div className="flex-1 flex flex-col overflow-hidden ml-6">
-          <h2 className="text-2xl font-bold text-gray-200 mb-6">File Manager</h2>
+          {/* Removed: <h2 className="text-2xl font-bold text-gray-200 mb-6">File Manager</h2> */}
           <FileManagerContent
             currentUser={currentUser}
             currentPath={currentPath}
@@ -476,7 +470,7 @@ const FileManagerPage = () => {
             isLoading={isLoading}
             error={error}
             selectedItems={selectedItems}
-            setSelectedItems={setSelectedItems} // Pass setSelectedItems to FileManagerContent
+            setSelectedItems={setSelectedItems}
             draggedOverItem={draggedOverItem}
             isDragging={isDragging}
             copiedItems={copiedItems}
@@ -532,9 +526,9 @@ const FileManagerPage = () => {
           setItemsToShareWithUsers(null);
           setSelectedItems(new Set());
         }}
-        itemsToMove={itemsToMove} // Pass new state
-        setItemsToMove={setItemsToMove} // Pass new state setter
-        onMove={handleMove} // Pass new move handler
+        itemsToMove={itemsToMove}
+        setItemsToMove={setItemsToMove}
+        onMove={handleMove}
       />
       <FileManagerContextMenus
         contextMenu={contextMenu}
@@ -560,7 +554,7 @@ const FileManagerPage = () => {
         hasCutItems={cutItems.length > 0}
         onCreateFile={() => setShowCreateModal({ type: 'file' })}
         onCreateFolder={() => setShowCreateModal({ type: 'dir' })}
-        onMove={() => setItemsToMove(Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id).path))} // New move action
+        onMove={() => setItemsToMove(Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id).path))}
       />
     </>
   );
