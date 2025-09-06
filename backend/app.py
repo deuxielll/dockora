@@ -71,7 +71,7 @@ if __name__ == "__main__":
         os.makedirs(os.path.realpath('/data/home'), exist_ok=True)
         os.makedirs('/data/.trash', exist_ok=True)
         os.makedirs('/data/avatars', exist_ok=True)
-        os.makedirs('/data/alarm_sounds', exist_ok=True) # New: Create alarm sounds directory
+        # Removed: os.makedirs('/data/alarm_sounds', exist_ok=True) # New: Create alarm sounds directory
         
         scheduler_thread = threading.Thread(target=start_app_refresh_scheduler, args=(app,), daemon=True)
         scheduler_thread.start()

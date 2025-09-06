@@ -9,20 +9,12 @@ import { useSettings } from '../../hooks/useSettings'; // New import
 
 let audioContext;
 let oscillator;
-let customAudioElement; // New: For playing custom audio files
 
-const API_BASE_URL = `http://${window.location.hostname}:5000`; // Base URL for serving static files
-
-const playAlarmSound = (soundType, customSoundUrl) => {
+const playAlarmSound = (soundType) => {
   // Stop any currently playing sound
   if (oscillator) {
     oscillator.stop();
     oscillator = null;
-  }
-  if (customAudioElement) {
-    customAudioElement.pause();
-    customAudioElement.currentTime = 0;
-    customAudioElement = null;
   }
   if (audioContext) {
     audioContext.close();
@@ -30,17 +22,6 @@ const playAlarmSound = (soundType, customSoundUrl) => {
   }
 
   try {
-    if (soundType === 'custom' && customSoundUrl) {
-      customAudioElement = new Audio(`${API_BASE_URL}${customSoundUrl}`);
-      customAudioElement.loop = true; // Loop custom sound
-      customAudioElement.volume = 0.5;
-      customAudioElement.play().catch(e => {
-        console.error("Failed to play custom alarm sound:", e);
-        toast.error("Failed to play custom alarm sound. Ensure browser allows audio playback.");
-      });
-      return;
-    }
-
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
     oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
@@ -84,11 +65,6 @@ const stopAlarmSound = () => {
     oscillator.stop();
     oscillator = null;
   }
-  if (customAudioElement) {
-    customAudioElement.pause();
-    customAudioElement.currentTime = 0;
-    customAudioElement = null;
-  }
   if (audioContext) {
     audioContext.close();
     audioContext = null;
@@ -104,20 +80,19 @@ const Alarm = () => {
   const [newAlarmDays, setNewAlarmDays] = useState([]);
   const { settings } = useSettings(); // Use settings hook
   const alarmSoundType = settings.alarmSoundType || 'beep'; // Get selected sound type
-  const customAlarmSoundUrl = settings.customAlarmSoundUrl || ''; // New: Get custom sound URL
 
   useInterval(() => setTime(new Date()), 1000);
 
   useEffect(() => {
     if (ringingAlarm) {
       // Start playing sound when an alarm is ringing
-      const interval = setInterval(() => playAlarmSound(alarmSoundType, customAlarmSoundUrl), 600); // Loop sound, pass soundType and customSoundUrl
+      const interval = setInterval(() => playAlarmSound(alarmSoundType), 600); // Loop sound, pass soundType
       return () => {
         clearInterval(interval);
         stopAlarmSound();
       };
     }
-  }, [ringingAlarm, alarmSoundType, customAlarmSoundUrl]); // Add customAlarmSoundUrl to dependencies
+  }, [ringingAlarm, alarmSoundType]); // Add alarmSoundType to dependencies
 
   // New: Check for missed alarms when tab becomes visible
   useEffect(() => {
