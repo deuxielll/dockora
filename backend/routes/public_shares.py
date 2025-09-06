@@ -8,6 +8,7 @@ from decorators import login_required
 from models import ShareLink, SharedItem
 from extensions import db
 from helpers.share_helpers import get_sharing_user_context, validate_shared_path
+from helpers.main_helpers import resolve_user_path # Import resolve_user_path
 
 public_shares_bp = Blueprint('public_shares', __name__)
 
@@ -19,17 +20,77 @@ def public_share_page(token):
 @public_shares_bp.route("/api/shares/<token>/details")
 def get_public_share_details(token):
     share = ShareLink.query.filter_by(token=token).first_or_404()
-    _, base_path, is_sandboxed = get_sharing_user_context(share)
-    contents = []
-    for item in share.items:
-        real_path = validate_shared_path(share, item.path, base_path, is_sandboxed) # Use validate_shared_path
-        if not real_path or not os.path.exists(real_path): continue
-        stat_info = os.stat(real_path)
-        contents.append({
-            "name": os.path.basename(real_path), "path": item.path,
-            "type": 'dir' if os.path.isdir(real_path) else 'file', "size": stat_info.st_size
-        })
-    return jsonify({"name": share.name, "type": "dir", "contents": contents})
+    sharer_user, base_path, is_sandboxed = get_sharing_user_context(share)
+    
+    all_shared_content = []
+
+    for shared_item_entry in share.items:
+        # Resolve the real path of the explicitly shared item (file or directory)
+        real_shared_item_path = resolve_user_path(base_path, is_sandboxed, shared_item_entry.path)
+
+        if not real_shared_item_path or not os.path.exists(real_shared_item_path):
+            continue # Skip if the shared item no longer exists
+
+        # If it's a directory, traverse its contents
+        if os.path.isdir(real_shared_item_path):
+            for root, dirs, files in os.walk(real_shared_item_path):
+                # Calculate the relative path from the original shared item's path
+                # This is crucial for generating correct download/view links
+                relative_to_shared_entry = os.path.relpath(root, real_shared_item_path)
+                
+                # Add directories
+                for name in dirs:
+                    full_path = os.path.join(root, name)
+                    # Construct the path as it would appear relative to the sharer's home
+                    # This is the 'path' that the frontend will use for download/view
+                    relative_path_for_frontend = os.path.join(shared_item_entry.path, relative_to_shared_entry, name).replace('\\', '/')
+                    if relative_path_for_frontend.startswith('./'):
+                        relative_path_for_frontend = relative_path_for_frontend[2:]
+                    if relative_path_for_frontend.startswith('/'):
+                        relative_path_for_frontend = relative_path_for_frontend[1:]
+
+                    all_shared_content.append({
+                        "name": name,
+                        "path": relative_path_for_frontend,
+                        "type": "dir",
+                        "size": 0 # Directories don't have a size in this context
+                    })
+
+                # Add files
+                for name in files:
+                    full_path = os.path.join(root, name)
+                    stat_info = os.stat(full_path)
+                    # Construct the path as it would appear relative to the sharer's home
+                    relative_path_for_frontend = os.path.join(shared_item_entry.path, relative_to_shared_entry, name).replace('\\', '/')
+                    if relative_path_for_frontend.startswith('./'):
+                        relative_path_for_frontend = relative_path_for_frontend[2:]
+                    if relative_path_for_frontend.startswith('/'):
+                        relative_path_for_frontend = relative_path_for_frontend[1:]
+
+                    all_shared_content.append({
+                        "name": name,
+                        "path": relative_path_for_frontend,
+                        "type": "file",
+                        "size": stat_info.st_size
+                    })
+        else: # It's a file
+            stat_info = os.stat(real_shared_item_path)
+            # For a single file, its 'path' is just its original shared path
+            relative_path_for_frontend = shared_item_entry.path
+            if relative_path_for_frontend.startswith('/'):
+                relative_path_for_frontend = relative_path_for_frontend[1:]
+
+            all_shared_content.append({
+                "name": os.path.basename(real_shared_item_path),
+                "path": relative_path_for_frontend,
+                "type": "file",
+                "size": stat_info.st_size
+            })
+            
+    # Sort the content for consistent display
+    all_shared_content.sort(key=lambda x: (x['type'] != 'dir', x['name'].lower()))
+
+    return jsonify({"name": share.name, "type": "dir", "contents": all_shared_content})
 
 @public_shares_bp.route("/api/files/share", methods=["POST"])
 @login_required
