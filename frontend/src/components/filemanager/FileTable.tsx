@@ -9,12 +9,13 @@ const FileTable = ({
   error,
   isTrashView,
   isSharedWithMeView,
+  isMySharesView, // New prop
   selectedItems,
   draggedOverItem,
   onItemClick,
   onItemDoubleClick,
   onItemContextMenu,
-  onDragStart, // This prop is now correctly named and passed
+  onDragStart,
   onItemDragEnter,
   onItemDragLeave,
   onDropOnItem,
@@ -36,6 +37,7 @@ const FileTable = ({
   const getItemIdentifier = (item) => {
     if (isTrashView) return item.trashed_name;
     if (isSharedWithMeView) return item.id;
+    if (isMySharesView) return item.id; // Use item.id for MySharesView
     return item.path;
   };
 
@@ -58,8 +60,8 @@ const FileTable = ({
         bValue = b.type === 'file' ? b.size : (b.type === 'dir' ? -1 : 0);
         break;
       case 'modified_at':
-        aValue = new Date(isTrashView ? a.deleted_at : isSharedWithMeView ? a.shared_at : a.modified_at).getTime();
-        bValue = new Date(isTrashView ? b.deleted_at : isSharedWithMeView ? b.shared_at : b.modified_at).getTime();
+        aValue = new Date(isTrashView ? a.deleted_at : isSharedWithMeView ? a.shared_at : isMySharesView ? a.shared_at : a.modified_at).getTime();
+        bValue = new Date(isTrashView ? b.deleted_at : isSharedWithMeView ? b.shared_at : isMySharesView ? b.shared_at : b.modified_at).getTime();
         break;
       default:
         aValue = a.name.toLowerCase();
@@ -89,6 +91,9 @@ const FileTable = ({
     } else if (isSharedWithMeView) {
         message = 'No files or folders have been shared with you.';
         Icon = Users;
+    } else if (isMySharesView) {
+        message = 'You haven\'t shared any files or folders yet.';
+        Icon = Users;
     } else if (searchTerm) {
         message = `No items found matching "${searchTerm}".`;
     }
@@ -111,6 +116,7 @@ const FileTable = ({
           </th>
           {isTrashView && <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden lg:table-cell">Original Location</th>}
           {isSharedWithMeView && <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden lg:table-cell">Shared By</th>}
+          {isMySharesView && <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden lg:table-cell">Shared With</th>} {/* New header */}
           <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden md:table-cell cursor-pointer hover:text-accent transition-colors" onClick={() => onSort('size')}>
             <div className="flex items-center">
               Size {renderSortIcon('size')}
@@ -118,7 +124,7 @@ const FileTable = ({
           </th>
           <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden sm:table-cell cursor-pointer hover:text-accent transition-colors" onClick={() => onSort('modified_at')}>
             <div className="flex items-center">
-              {isTrashView ? 'Date Deleted' : isSharedWithMeView ? 'Date Shared' : 'Last Modified'} {renderSortIcon('modified_at')}
+              {isTrashView ? 'Date Deleted' : isSharedWithMeView ? 'Date Shared' : isMySharesView ? 'Date Shared' : 'Last Modified'} {renderSortIcon('modified_at')}
             </div>
           </th>
         </tr>
@@ -127,7 +133,7 @@ const FileTable = ({
         {sortedItems.map((item) => (
           <tr
             key={getItemIdentifier(item)}
-            draggable={!isTrashView && !isSharedWithMeView}
+            draggable={!isTrashView && !isSharedWithMeView && !isMySharesView} // Disable drag for MySharesView too
             onDragStart={(e) => onDragStart(e, item)}
             onDragEnter={(e) => onItemDragEnter(e, item)}
             onDragLeave={onItemDragLeave}
@@ -147,8 +153,9 @@ const FileTable = ({
             </td>
             {isTrashView && <td className="p-4 text-sm hidden lg:table-cell truncate text-gray-300" title={item.original_path}>{item.original_path}</td>}
             {isSharedWithMeView && <td className="p-4 text-sm hidden lg:table-cell truncate text-gray-300" title={item.sharer_name}>{item.sharer_name}</td>}
+            {isMySharesView && <td className="p-4 text-sm hidden lg:table-cell truncate text-gray-300" title={item.recipient_name}>{item.recipient_name}</td>} {/* New column data */}
             <td className="p-4 text-sm hidden md:table-cell text-gray-300">{item.type === 'file' ? formatSize(item.size) : '-'}</td>
-            <td className="p-4 text-sm hidden sm:table-cell text-gray-300">{formatDate(isTrashView ? item.deleted_at : isSharedWithMeView ? item.shared_at : item.modified_at)}</td>
+            <td className="p-4 text-sm hidden sm:table-cell text-gray-300">{formatDate(isTrashView ? item.deleted_at : isSharedWithMeView ? item.shared_at : isMySharesView ? item.shared_at : item.modified_at)}</td>
           </tr>
         ))}
       </tbody>
