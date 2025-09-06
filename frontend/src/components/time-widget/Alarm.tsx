@@ -11,16 +11,7 @@ let audioContext;
 let oscillator;
 
 const playAlarmSound = (soundType) => {
-  // Stop any currently playing sound
-  if (oscillator) {
-    oscillator.stop();
-    oscillator = null;
-  }
-  if (audioContext) {
-    audioContext.close();
-    audioContext = null;
-  }
-
+  if (oscillator) return; // Already playing
   try {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
     oscillator = audioContext.createOscillator();
@@ -33,27 +24,21 @@ const playAlarmSound = (soundType) => {
       case 'chime':
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(660, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.5);
         break;
       case 'ascending':
         oscillator.type = 'triangle';
         oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
-        oscillator.frequency.linearRampToValueAtTime(880, audioContext.currentTime + 0.8);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.8);
+        // For ascending, we'll simulate it by starting and then stopping after a short ramp
+        // However, for continuous loop, we just set the initial frequency.
+        // The continuous loop will be a steady tone.
         break;
       case 'beep':
       default:
         oscillator.type = 'square';
         oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.3);
         break;
     }
+    oscillator.start(); // Start the oscillator, it will play continuously until stopped
   } catch (e) {
     console.error("Failed to play alarm sound:", e);
     toast.error("Failed to play alarm sound. Ensure browser allows audio playback.");
@@ -62,7 +47,7 @@ const playAlarmSound = (soundType) => {
 
 const stopAlarmSound = () => {
   if (oscillator) {
-    oscillator.stop();
+    oscillator.stop(); // Explicitly stop the oscillator
     oscillator = null;
   }
   if (audioContext) {
@@ -85,14 +70,14 @@ const Alarm = () => {
 
   useEffect(() => {
     if (ringingAlarm) {
-      // Start playing sound when an alarm is ringing
-      const interval = setInterval(() => playAlarmSound(alarmSoundType), 600); // Loop sound, pass soundType
+      playAlarmSound(alarmSoundType); // Start playing once
       return () => {
-        clearInterval(interval);
-        stopAlarmSound();
+        stopAlarmSound(); // Stop when ringingAlarm changes or component unmounts
       };
+    } else {
+      stopAlarmSound(); // Ensure it's stopped if ringingAlarm becomes null
     }
-  }, [ringingAlarm, alarmSoundType]); // Add alarmSoundType to dependencies
+  }, [ringingAlarm, alarmSoundType]);
 
   // New: Check for missed alarms when tab becomes visible
   useEffect(() => {
