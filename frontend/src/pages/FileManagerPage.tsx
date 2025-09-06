@@ -51,15 +51,19 @@ const FileManagerPage = () => {
       let res;
       if (path === 'trash') {
         res = await getTrashItems();
+        setItems(res.data);
       } else if (path === 'shared-with-me') {
         res = await getSharedWithMeItems();
         await updateLastViewedSharedFilesTimestamp();
+        setItems(res.data);
       } else if (path === 'my-shares') {
-        res = await getSharedByMeItems(); // MySharesView now fetches its own data, but we need to populate `items` for context menu logic
+        // MySharesView now fetches its own data, and manages its own selection
+        // We set items to empty here to ensure FileTable doesn't render for this view
+        setItems([]); 
       } else {
         res = await browseFiles(path);
+        setItems(res.data);
       }
-      setItems(res.data);
       setSelectedItems(new Set());
       setSearchTerm(''); // Reset search term on path change
       setSortColumn('name'); // Reset sort on path change
@@ -92,8 +96,11 @@ const FileManagerPage = () => {
     const handleKeyDown = (e) => {
       if (e.ctrlKey && e.key.toLowerCase() === 'a') {
         e.preventDefault();
-        const allItemIdentifiers = new Set(items.map(item => getItemIdentifier(item)));
-        setSelectedItems(allItemIdentifiers);
+        // For MySharesView, the selection is managed internally, so we don't select all here.
+        if (!isMySharesView) {
+          const allItemIdentifiers = new Set(items.map(item => getItemIdentifier(item)));
+          setSelectedItems(allItemIdentifiers);
+        }
       }
     };
     document.addEventListener('keydown', handleKeyDown);
@@ -102,12 +109,12 @@ const FileManagerPage = () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('click', closeAllContextMenus);
     };
-  }, [items, closeAllContextMenus]);
+  }, [items, closeAllContextMenus, isMySharesView]);
 
   const getItemIdentifier = (item) => {
     if (isTrashView) return item.trashed_name;
     if (isSharedWithMeView) return item.id;
-    if (isMySharesView) return item.id;
+    if (isMySharesView) return item.id; // For MySharesView, item.id is the UserFileShare ID
     return item.path;
   };
 
@@ -144,8 +151,7 @@ const FileManagerPage = () => {
     } else {
       setSelectedItems(new Set([itemIdentifier]));
       setSelectionAnchor(item);
-      setCopiedItems([]);
-      setCutItems([]);
+      // Do not clear copied/cut items on single click
     }
   };
 
@@ -259,9 +265,13 @@ const FileManagerPage = () => {
     const pathsToCopy = Array.from(selectedItems).map(id => {
       const item = items.find(i => getItemIdentifier(i) === id);
       if (isSharedWithMeView) return `${item.sharer_name}:${item.path}`;
-      if (isMySharesView) return `${item.recipient_name}:${item.path}`;
+      if (isMySharesView) {
+        // For MySharesView, the 'path' is relative to the sharer, so we show sharer:path
+        const sharedItem = items.find(i => i.id === id);
+        return sharedItem ? `${sharedItem.sharer_name}:${sharedItem.path}` : '';
+      }
       return item.path;
-    });
+    }).filter(Boolean); // Filter out any empty strings from items not found
     navigator.clipboard.writeText(pathsToCopy.join('\n'))
       .then(() => toast.success('Path(s) copied to clipboard.'))
       .catch(() => toast.error('Failed to copy paths.'));
@@ -466,6 +476,7 @@ const FileManagerPage = () => {
             isLoading={isLoading}
             error={error}
             selectedItems={selectedItems}
+            setSelectedItems={setSelectedItems} // Pass setSelectedItems to FileManagerContent
             draggedOverItem={draggedOverItem}
             isDragging={isDragging}
             copiedItems={copiedItems}

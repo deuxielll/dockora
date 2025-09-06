@@ -16,6 +16,7 @@ const FileManagerContent = ({
   isLoading,
   error,
   selectedItems,
+  setSelectedItems, // New prop
   draggedOverItem,
   isDragging,
   copiedItems,
@@ -116,7 +117,11 @@ const FileManagerContent = ({
 
       <div className="overflow-y-auto flex-grow no-scrollbar" onClick={(e) => e.stopPropagation()}>
         {isMySharesView ? (
-          <MySharesView onRefreshFileManager={onRefreshMyShares} />
+          <MySharesView 
+            onRefreshFileManager={onRefreshMyShares} 
+            selectedItems={selectedItems} // Pass selectedItems
+            setSelectedItems={setSelectedItems} // Pass setSelectedItems
+          />
         ) : (
           <FileTable
             items={items}

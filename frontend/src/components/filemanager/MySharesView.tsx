@@ -4,11 +4,10 @@ import LoadingSpinner from '../LoadingSpinner';
 import { Folder, FileText, Users, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const MySharesView = ({ onRefreshFileManager }) => {
+const MySharesView = ({ onRefreshFileManager, selectedItems, setSelectedItems }) => {
   const [sharedItems, setSharedItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedShares, setSelectedShares] = useState(new Set());
 
   const fetchSharedItems = useCallback(async () => {
     setIsLoading(true);
@@ -16,36 +15,36 @@ const MySharesView = ({ onRefreshFileManager }) => {
     try {
       const res = await getSharedByMeItems();
       setSharedItems(res.data);
-      setSelectedShares(new Set()); // Clear selection on refresh
+      setSelectedItems(new Set()); // Clear selection on refresh
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to load your shared items.');
       console.error("Error fetching shared by me items:", err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setSelectedItems]);
 
   useEffect(() => {
     fetchSharedItems();
   }, [fetchSharedItems]);
 
   const handleShareToggle = (shareId) => {
-    const newSelection = new Set(selectedShares);
+    const newSelection = new Set(selectedItems);
     if (newSelection.has(shareId)) {
       newSelection.delete(shareId);
     } else {
       newSelection.add(shareId);
     }
-    setSelectedShares(newSelection);
+    setSelectedItems(newSelection);
   };
 
   const handleUnshareSelected = async () => {
-    if (selectedShares.size === 0) return;
+    if (selectedItems.size === 0) return;
 
-    if (window.confirm(`Are you sure you want to unshare ${selectedShares.size} item(s)? This will revoke access for the recipients.`)) {
+    if (window.confirm(`Are you sure you want to unshare ${selectedItems.size} item(s)? This will revoke access for the recipients.`)) {
       try {
-        await unshareFileWithUsers(Array.from(selectedShares));
-        toast.success(`${selectedShares.size} item(s) unshared successfully.`);
+        await unshareFileWithUsers(Array.from(selectedItems));
+        toast.success(`${selectedItems.size} item(s) unshared successfully.`);
         fetchSharedItems(); // Refresh the list
         onRefreshFileManager(); // Notify parent to refresh main file view if needed
       } catch (err) {
@@ -80,10 +79,10 @@ const MySharesView = ({ onRefreshFileManager }) => {
       <div className="flex justify-end mb-4">
         <button
           onClick={handleUnshareSelected}
-          disabled={selectedShares.size === 0}
+          disabled={selectedItems.size === 0}
           className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none bg-dark-bg text-red-500 shadow-neo active:shadow-neo-inset disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Trash2 size={16} /> Unshare Selected ({selectedShares.size})
+          <Trash2 size={16} /> Unshare Selected ({selectedItems.size})
         </button>
       </div>
       <table className="w-full text-left select-none">
@@ -102,11 +101,11 @@ const MySharesView = ({ onRefreshFileManager }) => {
             <tr
               key={item.id}
               onClick={() => handleShareToggle(item.id)}
-              className={`transition-colors duration-200 cursor-pointer hover:shadow-neo-inset ${selectedShares.has(item.id) ? 'shadow-neo-inset bg-blue-500/10' : ''}`}
+              className={`transition-colors duration-200 cursor-pointer hover:shadow-neo-inset ${selectedItems.has(item.id) ? 'shadow-neo-inset bg-blue-500/10' : ''}`}
             >
               <td className="p-4">
                 <div className="w-5 h-5 rounded bg-dark-bg shadow-neo-inset flex items-center justify-center">
-                  {selectedShares.has(item.id) && <div className="w-2.5 h-2.5 bg-accent rounded-sm shadow-neo" />}
+                  {selectedItems.has(item.id) && <div className="w-2.5 h-2.5 bg-accent rounded-sm shadow-neo" />}
                 </div>
               </td>
               <td className="p-4 flex items-center gap-3">
