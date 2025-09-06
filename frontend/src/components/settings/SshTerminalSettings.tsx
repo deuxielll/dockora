@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Terminal as TerminalIcon, Save, Play, Loader, XCircle, CheckCircle } from 'lucide-react';
+import { Terminal as TerminalIcon, Save, Play, Loader, XCircle, CheckCircle, ChevronDown } from 'lucide-react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
@@ -20,6 +20,7 @@ const SshTerminalSettings = () => {
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionStatus, setExecutionStatus] = useState(null); // 'success', 'error', 'info'
   const [error, setError] = useState('');
+  const [isTerminalOpen, setIsTerminalOpen] = useState(false); // New state for terminal visibility
 
   const terminalRef = useRef(null);
   const xtermInstance = useRef(null);
@@ -42,7 +43,7 @@ const SshTerminalSettings = () => {
   }, []);
 
   useEffect(() => {
-    if (terminalRef.current && !xtermInstance.current) {
+    if (isTerminalOpen && terminalRef.current && !xtermInstance.current) {
       xtermInstance.current = new Terminal({
         convertEol: true,
         fontFamily: `'Fira Mono', monospace`,
@@ -85,8 +86,12 @@ const SshTerminalSettings = () => {
         xtermInstance.current = null;
         resizeObserver.disconnect();
       };
+    } else if (!isTerminalOpen && xtermInstance.current) {
+      // Dispose xterm when terminal is closed
+      xtermInstance.current?.dispose();
+      xtermInstance.current = null;
     }
-  }, []);
+  }, [isTerminalOpen]);
 
   useEffect(() => {
     if (xtermInstance.current) {
@@ -167,7 +172,7 @@ const SshTerminalSettings = () => {
 
   return (
     <SettingsCard title="SSH Terminal (Admin)">
-      <p className="text-sm text-gray-400 mb-6">Connect to a remote server via SSH to execute commands.</p>
+      <p className="text-sm text-gray-400 mb-6">Configure connection details for a remote server via SSH.</p>
       <form onSubmit={handleSaveSettings} className="space-y-4 mb-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -197,28 +202,48 @@ const SshTerminalSettings = () => {
 
       <hr className="my-8 border-gray-700/50" />
 
-      <h4 className="text-lg font-semibold mb-4 text-gray-300">Execute Command</h4>
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-2 text-gray-400">Command</label>
-        <input type="text" value={command} onChange={(e) => setCommand(e.target.value)} className={inputStyles} placeholder="e.g., ls -la /" />
-      </div>
-      <div className="flex justify-end mb-6">
-        <button onClick={handleExecuteCommand} disabled={isExecuting || !settings.ssh_host || !settings.ssh_username || !command} className={buttonStyles}>
-          {isExecuting ? <Loader size={16} className="animate-spin mr-2" /> : <Play size={16} className="mr-2" />}
-          {isExecuting ? 'Executing...' : 'Execute'}
+      <div
+        className="flex justify-between items-center cursor-pointer"
+        onClick={() => setIsTerminalOpen(!isTerminalOpen)}
+        aria-expanded={isTerminalOpen}
+      >
+        <h4 className="text-lg font-semibold text-gray-300">SSH Terminal</h4>
+        <button
+          type="button"
+          className="p-2 rounded-full hover:shadow-neo-inset transition-all"
+        >
+          <ChevronDown
+            size={20}
+            className={`transition-transform duration-300 ${isTerminalOpen ? 'rotate-180' : ''}`}
+          />
         </button>
       </div>
 
-      <div className="bg-gray-900 rounded-lg shadow-neo-inset p-4 h-64 overflow-hidden flex flex-col">
-        <div className="flex items-center gap-2 mb-2 text-sm font-semibold">
-          <TerminalIcon size={18} className="text-gray-400" />
-          <span className="text-gray-200">Output:</span>
-          {executionStatus === 'success' && <CheckCircle size={16} className="text-green-500 ml-auto" />}
-          {executionStatus === 'error' && <XCircle size={16} className="text-red-500 ml-auto" />}
-          {isExecuting && <Loader size={16} className="animate-spin text-blue-500 ml-auto" />}
+      {isTerminalOpen && (
+        <div className="mt-6">
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2 text-gray-400">Command</label>
+            <input type="text" value={command} onChange={(e) => setCommand(e.target.value)} className={inputStyles} placeholder="e.g., ls -la /" />
+          </div>
+          <div className="flex justify-end mb-6">
+            <button onClick={handleExecuteCommand} disabled={isExecuting || !settings.ssh_host || !settings.ssh_username || !command} className={buttonStyles}>
+              {isExecuting ? <Loader size={16} className="animate-spin mr-2" /> : <Play size={16} className="mr-2" />}
+              {isExecuting ? 'Executing...' : 'Execute'}
+            </button>
+          </div>
+
+          <div className="bg-gray-900 rounded-lg shadow-neo-inset p-4 h-64 overflow-hidden flex flex-col">
+            <div className="flex items-center gap-2 mb-2 text-sm font-semibold">
+              <TerminalIcon size={18} className="text-gray-400" />
+              <span className="text-gray-200">Output:</span>
+              {executionStatus === 'success' && <CheckCircle size={16} className="text-green-500 ml-auto" />}
+              {executionStatus === 'error' && <XCircle size={16} className="text-red-500 ml-auto" />}
+              {isExecuting && <Loader size={16} className="animate-spin text-blue-500 ml-auto" />}
+            </div>
+            <div ref={terminalRef} className="flex-grow" />
+          </div>
         </div>
-        <div ref={terminalRef} className="flex-grow" />
-      </div>
+      )}
     </SettingsCard>
   );
 };
