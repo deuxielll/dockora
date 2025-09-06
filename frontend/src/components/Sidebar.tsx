@@ -47,15 +47,15 @@ const Sidebar = ({ onNavigate, currentUser }) => {
 
             <div className="mt-auto pt-4 border-t border-gray-700/50">
                 {specialSections.map(section => (
-                     <div
+                     <SidebarItem
                         key={section.path}
-                        onClick={() => onNavigate(section.path)}
-                        title={section.name}
-                        className="flex items-center p-3 rounded-lg cursor-pointer hover:shadow-neo-inset"
-                    >
-                        <section.icon size={20} className="text-gray-300" />
-                        {!isCollapsed && <span className="ml-4 font-semibold text-gray-200">{section.name}</span>}
-                    </div>
+                        name={section.name}
+                        icon={section.icon}
+                        path={section.path}
+                        isCollapsed={isCollapsed}
+                        onNavigate={onNavigate}
+                        depth={0} // Special sections are top-level
+                    />
                 ))}
             </div>
         </div>
