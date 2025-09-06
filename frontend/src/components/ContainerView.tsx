@@ -116,6 +116,9 @@ const ContainerView = ({ onCreateStack }) => {
   }, [fetchContainers]);
 
   const filteredContainers = containers.filter(c => {
+    // Hide Dockora containers
+    if (c.name.startsWith('dockora-')) return false;
+
     if (filter === 'all') return true;
     if (filter === 'active') return c.status.includes('running') || c.status.includes('up');
     if (filter === 'paused') return c.status.includes('paused');
