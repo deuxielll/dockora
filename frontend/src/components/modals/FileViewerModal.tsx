@@ -49,7 +49,7 @@ const FileViewerModal = ({ item, onClose }) => {
     const fetchContentApi = item.isShared ? getSharedWithMeFileContent : getFileContent;
     const viewFileApi = item.isShared ? viewSharedWithMeFile : viewFile;
     const downloadUrl = item.isShared 
-        ? `${API_BASE_URL}/files/shared-with-me/download?share_id=${item.path}`
+        ? `${API_BASE_URL}/files/shared-with-me/download?share_id=${item.path}&sub_path=${encodeURIComponent(item.subPath)}&file_name=${encodeURIComponent(item.name)}`
         : `${API_BASE_URL}/files/view?path=${encodeURIComponent(item.path)}`;
 
     useEffect(() => {
@@ -59,7 +59,7 @@ const FileViewerModal = ({ item, onClose }) => {
             setError('');
             try {
                 if (fileType === 'code' || fileType === 'zip') { // Handle ZIP files here
-                    const res = await fetchContentApi(item.path);
+                    const res = await fetchContentApi(item.path, item.subPath); // Pass subPath
                     if (res.data.type === 'zip_contents') {
                         setZipContents(res.data.contents);
                         setTextContent(''); // Clear text content if it's a zip
@@ -68,7 +68,7 @@ const FileViewerModal = ({ item, onClose }) => {
                         setZipContents([]); // Clear zip contents if it's a text file
                     }
                 } else if (fileType === 'video' || fileType === 'audio' || fileType === 'image' || fileType === 'pdf') {
-                    const res = await viewFileApi(item.path);
+                    const res = await viewFileApi(item.path, item.subPath); // Pass subPath
                     objectUrl = URL.createObjectURL(res.data);
                     setMediaUrl(objectUrl);
                 }
@@ -87,7 +87,7 @@ const FileViewerModal = ({ item, onClose }) => {
                 URL.revokeObjectURL(objectUrl);
             }
         };
-    }, [item.path, fileType, fetchContentApi, viewFileApi]);
+    }, [item.path, item.subPath, fileType, fetchContentApi, viewFileApi]); // Add item.subPath to dependencies
 
     const renderContent = () => {
         if (isLoading) return <div className="flex-grow flex items-center justify-center"><LoadingSpinner /></div>;

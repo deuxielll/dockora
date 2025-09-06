@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash, getSharedWithMeItems, downloadSharedWithMeFile, unshareFileWithUsers, updateLastViewedSharedFilesTimestamp, copyItems, getSharedByMeItems } from '../services/api';
+import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash, getSharedWithMeItems, downloadSharedWithMeFile, unshareFileWithUsers, updateLastViewedSharedFilesTimestamp, copyItems, getSharedByMeItems, getSharedWithMeFolderContents } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import Sidebar from '../components/Sidebar';
 import FileManagerContent from '../components/filemanager/FileManagerContent';
@@ -41,8 +41,16 @@ const FileManagerPage = () => {
   const [itemsToMove, setItemsToMove] = useState(null);
 
   const isTrashView = currentPath === 'trash';
-  const isSharedWithMeView = currentPath === 'shared-with-me';
   const isMySharesView = currentPath === 'my-shares';
+  const isSharedWithMeView = currentPath.startsWith('shared-with-me'); // Now a prefix check
+
+  const parseSharedPath = (path) => {
+    if (!path.startsWith('shared-with-me/')) return { shareId: null, subPath: '/' };
+    const parts = path.split('/');
+    const shareId = parts[1];
+    const subPath = parts.slice(2).join('/');
+    return { shareId, subPath: subPath ? `/${subPath}` : '/' };
+  };
 
   const fetchItems = useCallback(async (path) => {
     setIsLoading(true);
@@ -51,22 +59,34 @@ const FileManagerPage = () => {
       let res;
       if (path === 'trash') {
         res = await getTrashItems();
-      } else if (path === 'shared-with-me') {
+        setItems(res.data);
+      } else if (path === 'my-shares') {
+        setItems([]); // MySharesView now fetches its own data, so clear items here
+      } else if (path === 'shared-with-me') { // Top-level shared-with-me view
         res = await getSharedWithMeItems();
         await updateLastViewedSharedFilesTimestamp();
-      } else if (path === 'my-shares') {
-        res = await getSharedByMeItems(); // MySharesView now fetches its own data, but we need to populate `items` for context menu logic
-      } else {
+        setItems(res.data);
+      } else if (path.startsWith('shared-with-me/')) { // Browsing inside a shared folder
+        const { shareId, subPath } = parseSharedPath(path);
+        if (!shareId) throw new Error("Invalid shared path.");
+        res = await getSharedWithMeFolderContents(shareId, subPath);
+        setItems(res.data);
+      } else { // Regular file browsing
         res = await browseFiles(path);
+        setItems(res.data);
       }
-      setItems(res.data);
       setSelectedItems(new Set());
       setSearchTerm(''); // Reset search term on path change
       setSortColumn('name'); // Reset sort on path change
       setSortDirection('asc'); // Reset sort on path change
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to load directory.');
-      if (path !== '/' && path !== 'trash' && path !== 'shared-with-me' && path !== 'my-shares') setCurrentPath('/');
+      // If an error occurs while browsing a shared path, revert to top-level shared-with-me
+      if (path.startsWith('shared-with-me/')) {
+        setCurrentPath('shared-with-me');
+      } else if (path !== '/' && path !== 'trash' && path !== 'my-shares') {
+        setCurrentPath('/');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -92,8 +112,11 @@ const FileManagerPage = () => {
     const handleKeyDown = (e) => {
       if (e.ctrlKey && e.key.toLowerCase() === 'a') {
         e.preventDefault();
-        const allItemIdentifiers = new Set(items.map(item => getItemIdentifier(item)));
-        setSelectedItems(allItemIdentifiers);
+        // For MySharesView, the selection is managed internally, so we don't select all here.
+        if (!isMySharesView) {
+          const allItemIdentifiers = new Set(items.map(item => getItemIdentifier(item)));
+          setSelectedItems(allItemIdentifiers);
+        }
       }
     };
     document.addEventListener('keydown', handleKeyDown);
@@ -102,55 +125,72 @@ const FileManagerPage = () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('click', closeAllContextMenus);
     };
-  }, [items, closeAllContextMenus]);
+  }, [items, closeAllContextMenus, isMySharesView]);
 
   const getItemIdentifier = (item) => {
     if (isTrashView) return item.trashed_name;
-    if (isSharedWithMeView) return item.id;
-    if (isMySharesView) return item.id;
+    if (isMySharesView) return item.id; // For MySharesView, item.id is the UserFileShare ID
+    
+    // For shared-with-me view, the identifier needs to be unique for the current path
+    if (isSharedWithMeView) {
+      // If at top-level shared-with-me, use the share_id
+      if (currentPath === 'shared-with-me') return item.id;
+      // If browsing inside a shared folder, use a combination of share_id and sub_path
+      return `${item.id}:${item.path}`;
+    }
     return item.path;
   };
 
   const handleItemDoubleClick = async (item) => {
     if (item.type === 'dir') {
-      if (isSharedWithMeView || isMySharesView) {
+      if (isTrashView || isMySharesView) {
         toast.error("Cannot browse subfolders directly in this view. Please download or view the item.");
         return;
       }
-      setCurrentPath(item.path);
-    } else {
-      setViewingFile(item);
-    }
-  };
-
-  const handleItemClick = (item, e) => {
-    e.stopPropagation();
-    const itemIdentifier = getItemIdentifier(item);
-
-    if (e.shiftKey && selectionAnchor) {
-      const anchorIndex = items.findIndex(i => getItemIdentifier(i) === getItemIdentifier(selectionAnchor));
-      const currentIndex = items.findIndex(i => getItemIdentifier(i) === itemIdentifier);
-      const start = Math.min(anchorIndex, currentIndex);
-      const end = Math.max(anchorIndex, currentIndex);
-      const newSelectedItems = e.ctrlKey ? new Set(selectedItems) : new Set();
-      for (let i = start; i <= end; i++) newSelectedItems.add(getItemIdentifier(items[i]));
-      setSelectedItems(newSelectedItems);
-    } else if (e.ctrlKey) {
-      const newSelectedItems = new Set(selectedItems);
-      if (newSelectedItems.has(itemIdentifier)) newSelectedItems.delete(itemIdentifier);
-      else newSelectedItems.add(itemIdentifier);
-      setSelectedItems(newSelectedItems);
-      setSelectionAnchor(item);
-    } else {
-      setSelectedItems(new Set([itemIdentifier]));
-      setSelectionAnchor(item);
-      setCopiedItems([]);
-      setCutItems([]);
+      // If it's a shared-with-me folder, navigate into it
+      if (isSharedWithMeView) {
+        const { shareId } = parseSharedPath(currentPath);
+        const newPathSegment = shareId ? `${shareId}${item.path}` : item.id;
+        setCurrentPath(`shared-with-me/${newPathSegment}`);
+      } else { // Regular folder
+        setCurrentPath(item.path);
+      }
+    } else { // It's a file
+      // For shared-with-me files, pass share_id and sub_path for viewing
+      if (isSharedWithMeView) {
+        const { shareId } = parseSharedPath(currentPath);
+        const fileShareId = shareId || item.id; // Use current shareId or item's id if top-level
+        const fileSubPath = shareId ? item.path : '/'; // If browsing, item.path is already sub_path
+        setViewingFile({
+          name: item.name,
+          path: fileShareId, // This is the share_id
+          subPath: fileSubPath, // This is the path within the shared item
+          type: item.type,
+          isShared: true,
+          sharer_name: item.sharer_name
+        });
+      } else {
+        setViewingFile(item);
+      }
     }
   };
 
   const goUp = () => {
-    if (currentPath !== '/') setCurrentPath(currentPath.substring(0, currentPath.lastIndexOf('/')) || '/');
+    if (currentPath === '/') return;
+    if (currentPath === 'trash') return;
+    if (currentPath === 'my-shares') return;
+    if (currentPath === 'shared-with-me') return; // Cannot go up from top-level shared-with-me
+
+    if (isSharedWithMeView) {
+      const parts = currentPath.split('/');
+      if (parts.length === 2) { // e.g., shared-with-me/123 -> shared-with-me
+        setCurrentPath('shared-with-me');
+      } else if (parts.length > 2) { // e.g., shared-with-me/123/folder -> shared-with-me/123
+        setCurrentPath(parts.slice(0, -1).join('/'));
+      }
+    } else {
+      setCurrentPath(currentPath.substring(0, currentPath.lastIndexOf('/')) || '/');
+    }
   };
 
   const handleCreate = async (name) => {
@@ -258,7 +298,12 @@ const FileManagerPage = () => {
   const handleCopyMultiplePaths = () => {
     const pathsToCopy = Array.from(selectedItems).map(id => {
       const item = items.find(i => getItemIdentifier(i) === id);
-      if (isSharedWithMeView) return `${item.sharer_name}:${item.path}`;
+      if (isSharedWithMeView) {
+        const { shareId, subPath } = parseSharedPath(currentPath);
+        const fileShareId = shareId || item.id;
+        const fileSubPath = shareId ? item.path : '/';
+        return `Shared by ${item.sharer_name}: /shared-with-me/${fileShareId}${fileSubPath}`;
+      }
       if (isMySharesView) {
         // For MySharesView, the 'path' is relative to the sharer, so we show sharer:path
         const sharedItem = items.find(i => i.id === id);
@@ -430,9 +475,14 @@ const FileManagerPage = () => {
       toast.error("Cannot view directories directly. Please download.");
       return;
     }
+    // For shared-with-me files, pass share_id and sub_path for viewing
+    const { shareId } = parseSharedPath(currentPath);
+    const fileShareId = shareId || item.id; // Use current shareId or item's id if top-level
+    const fileSubPath = shareId ? item.path : '/'; // If browsing, item.path is already sub_path
     setViewingFile({
       name: item.name,
-      path: item.id,
+      path: fileShareId, // This is the share_id
+      subPath: fileSubPath, // This is the path within the shared item
       type: item.type,
       isShared: true,
       sharer_name: item.sharer_name
@@ -441,7 +491,19 @@ const FileManagerPage = () => {
 
   const handleDownloadSharedFile = async (item) => {
     try {
-      const response = await downloadSharedWithMeFile(item.id);
+      const { shareId } = parseSharedPath(currentPath);
+      const fileShareId = shareId || item.id;
+      const fileSubPath = shareId ? item.path : '/';
+
+      let response;
+      if (item.type === 'dir') {
+        // Download folder as zip
+        response = await downloadSharedWithMeFile(fileShareId, fileSubPath);
+      } else {
+        // Download specific file
+        response = await downloadSharedWithMeFile(fileShareId, fileSubPath, item.name);
+      }
+      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -461,7 +523,6 @@ const FileManagerPage = () => {
       <div className="flex h-full p-4 sm:p-6 pb-28">
         <Sidebar onNavigate={setCurrentPath} currentUser={currentUser} />
         <div className="flex-1 flex flex-col overflow-hidden ml-6">
-          {/* Removed: <h2 className="text-2xl font-bold text-gray-200 mb-6">File Manager</h2> */}
           <FileManagerContent
             currentUser={currentUser}
             currentPath={currentPath}
@@ -539,7 +600,7 @@ const FileManagerPage = () => {
         isMySharesView={isMySharesView}
         selectedCount={selectedCount}
         singleSelectedItem={singleSelectedItem}
-        onView={() => handleItemDoubleClick(singleSelectedItem)}
+        onView={() => handleViewSharedFile(singleSelectedItem)}
         onSharePublic={() => setItemsToSharePublic(Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id).path))}
         onShareWithUsers={() => setItemsToShareWithUsers(Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id).path))}
         onCopyPath={handleCopyMultiplePaths}

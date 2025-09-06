@@ -29,7 +29,7 @@ const FileManagerActions = ({
         </>
       ) : isSharedWithMeView ? (
         <>
-          {singleSelectedItem && singleSelectedItem.type === 'file' && (
+          {singleSelectedItem && (singleSelectedItem.type === 'file' || singleSelectedItem.type === 'dir') && (
             <button onClick={() => onDownloadShared(singleSelectedItem)} className={actionButtonStyles}><Download size={16} /> Download</button>
           )}
           <button onClick={onDeletePermanently} disabled={selectedCount === 0} className={`${actionButtonStyles} !text-red-500`}><Trash2 size={16} /> Remove from list</button>
@@ -41,7 +41,8 @@ const FileManagerActions = ({
           <button onClick={onCreateFolder} className={actionButtonStyles}><FolderPlus size={16} /> New Folder</button>
         </>
       )}
-      {!isTrashView && !isSharedWithMeView && <button onClick={onGoUp} disabled={currentPath === '/'} className={actionButtonStyles}><ArrowUp size={16} /> Up</button>}
+      {/* Go Up button is now always present for non-trash/my-shares views, and its disabled state is handled by currentPath logic */}
+      {!isTrashView && !isMySharesView && <button onClick={onGoUp} disabled={currentPath === '/' || currentPath === 'shared-with-me'} className={actionButtonStyles}><ArrowUp size={16} /> Up</button>}
     </div>
   );
 };
