@@ -9,7 +9,7 @@ import DeploymentStatusWidget from '../components/widgets/DeploymentStatusWidget
 import DownloadClientWidget from '../components/widgets/DownloadClientWidget';
 import NetworkingWidget from '../components/widgets/NetworkingWidget';
 import FileActivityWidget from '../components/widgets/FileActivityWidget';
-import SystemLogsWidget from '../components/widgets/SystemLogsWidget'; // New import
+import SystemLogsWidget from '../components/widgets/SystemLogsWidget';
 import { Sun, Moon } from 'lucide-react';
 import LogoutButton from '../components/LogoutButton';
 import NotificationBell from '../components/NotificationBell';
@@ -28,13 +28,12 @@ const WIDGETS_CONFIG = {
   downloadClient: { component: DownloadClientWidget, title: 'Download Client', defaultVisible: true, defaultLayout: { h: 3.5, minH: 3, minW: 1 } },
   appLauncher: { component: AppLauncherWidget, title: 'App Launcher', defaultVisible: true, defaultLayout: { h: 4, minH: 4, minW: 1 } },
   fileActivity: { component: FileActivityWidget, title: 'File Activity', defaultVisible: true, defaultLayout: { h: 3, minH: 3, minW: 1 } },
-  systemLogs: { component: SystemLogsWidget, title: 'System Logs', defaultVisible: true, defaultLayout: { h: 4, minH: 3, minW: 1 } }, // New widget
+  systemLogs: { component: SystemLogsWidget, title: 'System Logs', defaultVisible: true, defaultLayout: { h: 4, minH: 3, minW: 1 } },
 };
 
 const HomePage = () => {
   const { currentUser } = useAuth();
   const { settings, setSetting, isLoading: isSettingsLoading } = useSettings();
-  // Removed isInteracting state and related functions
 
   const isLayoutLocked = useMemo(() => {
     return settings.lockWidgetLayout === 'true';
@@ -60,18 +59,16 @@ const HomePage = () => {
     } catch (e) { return false; }
   }, [settings.downloadClientConfig]);
 
-  const visibleWidgets = useMemo(() => Object.keys(WIDGETS_CONFIG).filter(key => {
-    if (key === 'downloadClient' && !isDownloadClientConfigured) return false;
-    return widgetVisibility[key] !== false;
-  }), [widgetVisibility, isDownloadClientConfigured]);
-
-  const generateDefaultLayouts = useCallback(() => {
-    const breakpoints = { lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 };
+  // This generates a default layout for ALL widgets, used when settings are loading or no layout is saved.
+  const generateAllWidgetsDefaultLayouts = useCallback(() => {
+    const breakpoints = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
+    const colsConfig = { lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 };
     const newLayouts = {};
-    for (const [breakpoint, cols] of Object.entries(breakpoints)) {
+    for (const [breakpoint, minWidth] of Object.entries(breakpoints)) {
+      const cols = colsConfig[breakpoint];
       newLayouts[breakpoint] = [];
       const colY = Array(cols).fill(0);
-      visibleWidgets.forEach((key) => {
+      Object.keys(WIDGETS_CONFIG).forEach((key) => {
         const widgetConfig = WIDGETS_CONFIG[key];
         if (!widgetConfig) return;
         const col = colY.indexOf(Math.min(...colY));
@@ -86,14 +83,40 @@ const HomePage = () => {
       });
     }
     return newLayouts;
-  }, [visibleWidgets]);
+  }, []);
 
+  // This useEffect saves the initial layout based on *visible* widgets once settings are loaded.
   useEffect(() => {
-    if (!isSettingsLoading && !layouts && visibleWidgets.length > 0) {
-      setSetting('widgetLayouts', JSON.stringify(generateDefaultLayouts()));
-    }
-  }, [layouts, visibleWidgets, generateDefaultLayouts, setSetting, isSettingsLoading]);
+    if (!isSettingsLoading && !layouts) {
+      const layoutsForVisible = {};
+      const breakpoints = { lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 }; // Use cols values directly for layout generation
+      const visibleWidgets = Object.keys(WIDGETS_CONFIG).filter(key => {
+        if (key === 'downloadClient' && !isDownloadClientConfigured) return false;
+        return widgetVisibility[key] !== false;
+      });
 
+      for (const [breakpoint, cols] of Object.entries(breakpoints)) {
+        layoutsForVisible[breakpoint] = [];
+        const colY = Array(cols).fill(0);
+        visibleWidgets.forEach((key) => {
+          const widgetConfig = WIDGETS_CONFIG[key];
+          if (!widgetConfig) return;
+          const col = colY.indexOf(Math.min(...colY));
+          const layoutItem = {
+            i: key, x: col, y: colY[col], w: 1,
+            h: widgetConfig.defaultLayout.h,
+            minH: widgetConfig.defaultLayout.minH,
+            minW: widgetConfig.defaultLayout.minW,
+          };
+          layoutsForVisible[breakpoint].push(layoutItem);
+          colY[col] += widgetConfig.defaultLayout.h;
+        });
+      }
+      setSetting('widgetLayouts', JSON.stringify(layoutsForVisible));
+    }
+  }, [layouts, widgetVisibility, isDownloadClientConfigured, setSetting, isSettingsLoading]);
+
+  // Ensure AppLauncher has minimum height
   useEffect(() => {
     if (layouts) {
         let layoutNeedsUpdate = false;
@@ -120,12 +143,25 @@ const HomePage = () => {
     setSetting('widgetLayouts', JSON.stringify(allLayouts));
   };
 
-  // Removed handleDragResizeStart and handleDragResizeStop
+  // Determine which layouts to use: default (all widgets) if loading, otherwise saved layouts.
+  const currentLayouts = useMemo(() => {
+    if (isSettingsLoading || !layouts) {
+      return generateAllWidgetsDefaultLayouts();
+    }
+    return layouts;
+  }, [isSettingsLoading, layouts, generateAllWidgetsDefaultLayouts]);
 
-  const handleHideWidget = (widgetKey) => {
-    const newVisibility = { ...widgetVisibility, [widgetKey]: false };
-    setSetting('widgetVisibility', JSON.stringify(newVisibility));
-  };
+  // Determine which widgets to render: all for skeletons if loading, otherwise filtered by visibility.
+  const widgetsToRender = useMemo(() => {
+    const allWidgetKeys = Object.keys(WIDGETS_CONFIG);
+    if (isSettingsLoading) {
+      return allWidgetKeys;
+    }
+    return allWidgetKeys.filter(key => {
+      if (key === 'downloadClient' && !isDownloadClientConfigured) return false;
+      return widgetVisibility[key] !== false;
+    });
+  }, [isSettingsLoading, widgetVisibility, isDownloadClientConfigured]);
 
   const { greeting, Icon, iconColor } = useMemo(() => {
     const hour = new Date().getHours();
@@ -154,38 +190,34 @@ const HomePage = () => {
         </div>
       </div>
 
-      {layouts ? (
-        <ResponsiveGridLayout
-          layouts={layouts}
-          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-          cols={{ lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 }}
-          rowHeight={100}
-          margin={[24, 24]}
-          containerPadding={[0, 0]}
-          onLayoutChange={handleLayoutChange}
-          // Removed onDragStart, onDragStop, onResizeStart, onResizeStop
-          draggableHandle=".drag-handle"
-          isDraggable={!isLayoutLocked}
-          isResizable={!isLayoutLocked}
-        >
-          {visibleWidgets.map(key => {
-            const WidgetComponent = WIDGETS_CONFIG[key].component;
-            return (
-              <div key={key}>
-                <WidgetWrapper
-                  widgetId={key}
-                  title={WIDGETS_CONFIG[key].title}
-                  onHide={handleHideWidget}
-                  isLocked={isLayoutLocked}
-                  // Removed isInteracting prop
-                >
-                  <WidgetComponent />
-                </WidgetWrapper>
-              </div>
-            );
-          })}
-        </ResponsiveGridLayout>
-      ) : null}
+      <ResponsiveGridLayout
+        layouts={currentLayouts}
+        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+        cols={{ lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 }}
+        rowHeight={100}
+        margin={[24, 24]}
+        containerPadding={[0, 0]}
+        onLayoutChange={handleLayoutChange}
+        draggableHandle=".drag-handle"
+        isDraggable={!isLayoutLocked}
+        isResizable={!isLayoutLocked}
+      >
+        {widgetsToRender.map(key => {
+          const WidgetComponent = WIDGETS_CONFIG[key].component;
+          return (
+            <div key={key}>
+              <WidgetWrapper
+                widgetId={key}
+                title={WIDGETS_CONFIG[key].title}
+                onHide={handleHideWidget}
+                isLocked={isLayoutLocked}
+              >
+                <WidgetComponent />
+              </WidgetWrapper>
+            </div>
+          );
+        })}
+      </ResponsiveGridLayout>
     </div>
   );
 };
