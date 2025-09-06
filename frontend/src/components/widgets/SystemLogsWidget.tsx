@@ -5,6 +5,25 @@ import { useSettings } from '../../hooks/useSettings';
 import LoadingSpinner from '../LoadingSpinner';
 import toast from 'react-hot-toast';
 
+const SystemLogsWidgetSkeleton = () => {
+  const skeletonBase = "bg-gray-700/50 rounded animate-pulse";
+  return (
+    <div className="h-full flex flex-col">
+      <div className={`${skeletonBase} h-10 w-full mb-4`}></div>
+      <div className="flex items-center gap-2 mb-2 text-sm font-semibold text-gray-400 flex-shrink-0">
+        <div className={`${skeletonBase} h-4 w-4`}></div>
+        <div className={`${skeletonBase} h-4 w-16`}></div>
+        <div className={`${skeletonBase} h-4 w-16 ml-auto`}></div>
+      </div>
+      <div className="text-xs overflow-y-auto bg-gray-900 p-4 rounded-lg flex-grow whitespace-pre-wrap font-mono text-gray-300 shadow-neo-inset no-scrollbar">
+        {[...Array(10)].map((_, i) => (
+          <div key={i} className={`${skeletonBase} h-3 w-full mb-2`}></div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const SystemLogsWidget = () => {
   const { settings, setSetting } = useSettings();
   const [availableContainers, setAvailableContainers] = useState([]);
@@ -100,7 +119,7 @@ const SystemLogsWidget = () => {
 
   const renderContent = () => {
     if (isLoading) {
-      return <div className="flex-grow flex items-center justify-center"><LoadingSpinner /></div>;
+      return <SystemLogsWidgetSkeleton />;
     }
     if (error && !selectedContainerId) {
       return (

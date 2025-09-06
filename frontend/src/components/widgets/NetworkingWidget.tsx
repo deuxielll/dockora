@@ -37,6 +37,36 @@ const formatSpeed = (bytes) => {
 
 const MAX_DATA_POINTS = 20;
 
+const NetworkingWidgetSkeleton = () => {
+  const skeletonBase = "bg-gray-700/50 rounded animate-pulse";
+  return (
+    <div className="h-full flex flex-col justify-between">
+      <div className="h-24 mb-4 bg-gray-800 rounded-lg animate-pulse"></div>
+      <div className="flex justify-between items-center text-sm mb-4">
+        <div className="flex items-center gap-2">
+          <div className={`${skeletonBase} h-4 w-4`}></div>
+          <div className={`${skeletonBase} h-4 w-20`}></div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className={`${skeletonBase} h-4 w-4`}></div>
+          <div className={`${skeletonBase} h-4 w-20`}></div>
+        </div>
+      </div>
+      <div className="flex flex-col gap-2 text-sm text-gray-400">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="flex justify-between items-center w-full">
+            <div className="flex items-center gap-2">
+              <div className={`${skeletonBase} h-4 w-4`}></div>
+              <div className={`${skeletonBase} h-4 w-16`}></div>
+            </div>
+            <div className={`${skeletonBase} h-4 w-24`}></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const NetworkingWidget = () => {
   const [stats, setStats] = useState(null);
   const [history, setHistory] = useState({
@@ -127,7 +157,7 @@ const NetworkingWidget = () => {
 
   const renderContent = () => {
     if (isLoading) {
-      return <div className="flex-grow flex items-center justify-center"><Loader className="animate-spin text-blue-500" /></div>;
+      return <NetworkingWidgetSkeleton />;
     }
     if (!stats) {
       return <div className="flex-grow flex items-center justify-center text-sm text-gray-500">Could not load network data.</div>;
