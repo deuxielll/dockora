@@ -23,9 +23,17 @@ def browse_files():
     try:
         items = []
         
-        # Fetch all shares created by the current user for quick lookup
-        user_shares = UserFileShare.query.filter_by(sharer_user_id=user.id).all()
-        shared_paths = {share.path for share in user_shares}
+        # Fetch all shares created by the current user and resolve their real paths
+        user_shares_entries = UserFileShare.query.filter_by(sharer_user_id=user.id).all()
+        
+        # Store resolved real paths of shared items for efficient lookup
+        # This set will contain paths like '/data/home/username/Documents/shared_folder'
+        # or '/data/home/username/Documents/shared_file.txt'
+        resolved_shared_real_paths = set()
+        for share_entry in user_shares_entries:
+            resolved_path = resolve_user_path(base_path, is_sandboxed, share_entry.path)
+            if resolved_path and os.path.exists(resolved_path):
+                resolved_shared_real_paths.add(resolved_path)
 
         for item_name in sorted(os.listdir(real_path), key=str.lower):
             full_item_path = os.path.join(real_path, item_name)
@@ -35,7 +43,16 @@ def browse_files():
                 relative_path = '/' + os.path.relpath(full_item_path, base_path).replace('\\', '/')
                 if relative_path == '/.': relative_path = '/'
 
-                is_shared = relative_path in shared_paths
+                # Determine if the current item is shared
+                is_shared = False
+                for shared_real_path in resolved_shared_real_paths:
+                    if full_item_path == shared_real_path: # Exact match
+                        is_shared = True
+                        break
+                    # Check if the current item is inside a shared directory
+                    if os.path.isdir(shared_real_path) and full_item_path.startswith(shared_real_path + os.sep):
+                        is_shared = True
+                        break
 
                 items.append({
                     "name": item_name, "path": relative_path, "type": item_type,
