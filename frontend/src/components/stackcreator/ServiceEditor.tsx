@@ -1,6 +1,6 @@
 import React from 'react';
 import KeyValueEditor from './KeyValueEditor';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Cpu, MemoryStick } from 'lucide-react';
 
 const ServiceEditor = ({ service, updateService, removeService }) => {
   const handleFieldChange = (field, value) => {
@@ -89,6 +89,34 @@ const ServiceEditor = ({ service, updateService, removeService }) => {
           setItems={setNetworks}
           placeholder="network_name"
         />
+        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <label htmlFor={`service-cpu-${service.id}`} className="block text-sm font-medium mb-2 text-gray-400 flex items-center gap-2">
+              <Cpu size={16} /> CPU Limit (e.g., 0.5, 1, 2)
+            </label>
+            <input
+              id={`service-cpu-${service.id}`}
+              type="text"
+              value={service.cpu_limit}
+              onChange={(e) => handleFieldChange('cpu_limit', e.target.value)}
+              className={inputStyles}
+              placeholder="e.g., 1.0 for 1 core, leave blank for unlimited"
+            />
+          </div>
+          <div>
+            <label htmlFor={`service-memory-${service.id}`} className="block text-sm font-medium mb-2 text-gray-400 flex items-center gap-2">
+              <MemoryStick size={16} /> Memory Limit (e.g., 512MB, 1GB)
+            </label>
+            <input
+              id={`service-memory-${service.id}`}
+              type="text"
+              value={service.memory_limit}
+              onChange={(e) => handleFieldChange('memory_limit', e.target.value)}
+              className={inputStyles}
+              placeholder="e.g., 512MB, 1GB, leave blank for unlimited"
+            />
+          </div>
+        </div>
         <div className="md:col-span-2">
           <label htmlFor={`service-restart-${service.id}`} className="block text-sm font-medium mb-2 text-gray-400">Restart Policy</label>
           <select

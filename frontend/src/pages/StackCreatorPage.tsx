@@ -54,6 +54,18 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
       if (s.restart && s.restart !== 'no') {
         serviceDef.restart = s.restart;
       }
+
+      // Add CPU and Memory limits
+      if (s.cpu_limit || s.memory_limit) {
+        serviceDef.deploy = {
+          resources: {
+            limits: {}
+          }
+        };
+        if (s.cpu_limit) serviceDef.deploy.resources.limits.cpus = String(s.cpu_limit);
+        if (s.memory_limit) serviceDef.deploy.resources.limits.memory = String(s.memory_limit);
+      }
+
       if (Object.keys(serviceDef).length > 0) compose.services[s.name] = serviceDef;
     });
 
@@ -84,6 +96,8 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
             volumes: (def.volumes || []).map(v => ({ id: crypto.randomUUID(), value: String(v) })),
             networks: (def.networks || []).map(n => ({ id: crypto.randomUUID(), value: String(n) })),
             restart: def.restart || 'no',
+            cpu_limit: def.deploy?.resources?.limits?.cpus || '', // Parse CPU limit
+            memory_limit: def.deploy?.resources?.limits?.memory || '', // Parse Memory limit
           }));
         }
         setServices(newServices);
@@ -119,6 +133,8 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
         volumes: [],
         networks: [],
         restart: 'unless-stopped',
+        cpu_limit: '', // Initialize new field
+        memory_limit: '', // Initialize new field
       },
     ]);
   };
