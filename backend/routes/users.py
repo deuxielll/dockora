@@ -112,7 +112,7 @@ def upload_avatar():
     return jsonify({"error": "File type not allowed"}), 400
 
 @users_bp.route("/users", methods=["GET"])
-@login_required # Changed from @admin_required
+@login_required
 def list_users():
     current_user_id = session.get('user_id')
     current_user = User.query.get(current_user_id)
@@ -120,12 +120,9 @@ def list_users():
     if not current_user:
         return jsonify({"error": "User not found"}), 404
 
-    if current_user.role == 'admin':
-        # Admins can see all users
-        users = User.query.all()
-    else:
-        # Regular users can only see other non-admin users (excluding themselves)
-        users = User.query.filter(User.role != 'admin', User.id != current_user_id).all()
+    # Any logged-in user can see all other users (admins and regular users)
+    # but not themselves, for sharing purposes.
+    users = User.query.filter(User.id != current_user_id).all()
         
     result = [{
         "id": user.id,
