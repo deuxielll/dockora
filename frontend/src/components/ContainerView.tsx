@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { getContainers, manageContainer, getContainerLogs } from "../services/api";
-import { Trash2, FileText, Cpu, MemoryStick, Network, Pencil, Edit } from "lucide-react";
+import { Trash2, FileText, Cpu, MemoryStick, Network, Pencil, Edit, Loader } from "lucide-react"; // Added Loader icon
 import LogModal from "./modals/LogModal";
 import ActionDropdown from "./ActionDropdown";
 import RenameContainerModal from "./modals/RenameContainerModal";
 import FloatingActionButton from "./FloatingActionButton";
-import EditContainerResourcesModal from "./modals/EditContainerResourcesModal"; // Updated import
+import EditContainerResourcesModal from "./modals/EditContainerResourcesModal";
 import ContainerCardSkeleton from "./skeletons/ContainerCardSkeleton";
 import toast from 'react-hot-toast';
 
@@ -32,6 +32,7 @@ const ContainerView = ({ onCreateStack }) => {
   const [containerToEdit, setContainerToEdit] = useState(null);
   const [filter, setFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [actionLoadingStates, setActionLoadingStates] = useState({}); // { containerId: boolean }
   const panelClasses = "bg-dark-bg shadow-neo";
 
   const fetchContainers = useCallback(async () => {
@@ -44,10 +45,14 @@ const ContainerView = ({ onCreateStack }) => {
   }, []);
 
   const handleAction = async (id, act) => {
+    setActionLoadingStates(prev => ({ ...prev, [id]: true })); // Set loading for this container
     const toastId = toast.loading(`Sending '${act}' command...`);
     
     const originalContainer = containers.find(c => c.id === id);
-    if (!originalContainer) return;
+    if (!originalContainer) {
+      setActionLoadingStates(prev => { const newState = { ...prev }; delete newState[id]; return newState; });
+      return;
+    }
     const originalStatus = originalContainer.status;
 
     // Optimistic update
@@ -77,10 +82,12 @@ const ContainerView = ({ onCreateStack }) => {
                     clearInterval(poll);
                     toast.success(`Status for ${updatedContainer.name} updated.`, { id: toastId });
                     setContainers(res.data); // Update with the fresh full list
+                    setActionLoadingStates(prev => { const newState = { ...prev }; delete newState[id]; return newState; });
                 } else if (attempts >= maxAttempts) {
                     clearInterval(poll);
                     toast.warn(`Could not verify status change for ${originalContainer.name}. Refreshing list.`, { id: toastId });
                     fetchContainers(); // Fallback to a final fetch
+                    setActionLoadingStates(prev => { const newState = { ...prev }; delete newState[id]; return newState; });
                 }
             } catch (pollErr) {
                 // Ignore poll errors, the main error is already caught
@@ -91,16 +98,21 @@ const ContainerView = ({ onCreateStack }) => {
         toast.error(err.response?.data?.error || `Failed to send '${act}' command.`, { id: toastId });
         // Revert on failure by fetching the real state
         fetchContainers();
+        setActionLoadingStates(prev => { const newState = { ...prev }; delete newState[id]; return newState; });
     }
   };
 
   const handleViewLogs = async (container) => {
+    setActionLoadingStates(prev => ({ ...prev, [container.id]: true }));
     try {
       const res = await getContainerLogs(container.id);
       setLogs(res.data.logs);
       setSelectedContainer(container);
     } catch (err) {
       console.error("Error fetching logs:", err);
+      toast.error(err.response?.data?.error || "Failed to fetch logs.");
+    } finally {
+      setActionLoadingStates(prev => { const newState = { ...prev }; delete newState[container.id]; return newState; });
     }
   };
 
@@ -179,6 +191,7 @@ const ContainerView = ({ onCreateStack }) => {
           </>
         ) : filteredContainers.length > 0 ? filteredContainers.map((c) => {
           const isDashboardContainer = c.name.startsWith('dockora');
+          const isAnyActionLoading = actionLoadingStates[c.id];
           return (
             <div key={c.id} className={`p-5 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${panelClasses}`}>
               <div className="flex-grow w-full sm:w-auto">
@@ -213,11 +226,19 @@ const ContainerView = ({ onCreateStack }) => {
                 </div>
               </div>
               <div className="flex gap-3 flex-wrap self-start sm:self-center">
-                <ActionDropdown containerId={c.id} onAction={handleAction} disabled={isDashboardContainer} />
-                <button title="Edit Resources" onClick={() => setContainerToEdit(c)} disabled={isDashboardContainer} className={`${iconButtonStyles} text-gray-300`}><Edit size={18} /></button>
-                <button title="Rename" onClick={() => setContainerToRename(c)} disabled={isDashboardContainer} className={`${iconButtonStyles} text-gray-300`}><Pencil size={18} /></button>
-                <button title="Remove" onClick={() => handleAction(c.id, "remove")} disabled={isDashboardContainer} className={`${iconButtonStyles} text-red-500`}><Trash2 size={18} /></button>
-                <button title="View Logs" onClick={() => handleViewLogs(c)} className={`${iconButtonStyles} text-indigo-500`}><FileText size={18} /></button>
+                <ActionDropdown containerId={c.id} onAction={handleAction} disabled={isDashboardContainer || isAnyActionLoading} />
+                <button title="Edit Resources" onClick={() => setContainerToEdit(c)} disabled={isDashboardContainer || isAnyActionLoading} className={`${iconButtonStyles} text-gray-300`}>
+                  {isAnyActionLoading ? <Loader size={18} className="animate-spin" /> : <Edit size={18} />}
+                </button>
+                <button title="Rename" onClick={() => setContainerToRename(c)} disabled={isDashboardContainer || isAnyActionLoading} className={`${iconButtonStyles} text-gray-300`}>
+                  {isAnyActionLoading ? <Loader size={18} className="animate-spin" /> : <Pencil size={18} />}
+                </button>
+                <button title="Remove" onClick={() => handleAction(c.id, "remove")} disabled={isDashboardContainer || isAnyActionLoading} className={`${iconButtonStyles} text-red-500`}>
+                  {isAnyActionLoading ? <Loader size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                </button>
+                <button title="View Logs" onClick={() => handleViewLogs(c)} disabled={isDashboardContainer || isAnyActionLoading} className={`${iconButtonStyles} text-indigo-500`}>
+                  {isAnyActionLoading ? <Loader size={18} className="animate-spin" /> : <FileText size={18} />}
+                </button>
               </div>
             </div>
           )
