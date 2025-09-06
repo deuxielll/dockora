@@ -1,19 +1,34 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { useInterval } from '../../hooks/useInterval';
 import { Play, Pause, RotateCw } from 'lucide-react';
+import { useLocalStorage } from '../../hooks/useLocalStorage';
 
 const Timer = () => {
-  const [duration, setDuration] = useState(300); // 5 minutes
-  const [timeLeft, setTimeLeft] = useState(duration);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isFinished, setIsFinished] = useState(false);
+  const [duration, setDuration] = useLocalStorage('dockora-timer-duration', 300); // 5 minutes
+  const [timeLeft, setTimeLeft] = useLocalStorage('dockora-timer-timeLeft', duration);
+  const [isRunning, setIsRunning] = useLocalStorage('dockora-timer-isRunning', false);
+  const [isFinished, setIsFinished] = useLocalStorage('dockora-timer-isFinished', false);
+  const [lastTickTime, setLastTickTime] = useLocalStorage('dockora-timer-lastTickTime', Date.now());
+
+  // Recalculate timeLeft on mount/focus if it was running
+  useEffect(() => {
+    if (isRunning) {
+      const now = Date.now();
+      const elapsedSinceLastTick = Math.floor((now - lastTickTime) / 1000);
+      setTimeLeft(prev => Math.max(0, prev - elapsedSinceLastTick));
+    }
+  }, []); // Only on mount
 
   useInterval(() => {
     if (isRunning && timeLeft > 0) {
       setTimeLeft(t => t - 1);
+      setLastTickTime(Date.now()); // Update last tick time
     } else if (isRunning && timeLeft === 0) {
       setIsRunning(false);
       setIsFinished(true);
+      setLastTickTime(Date.now()); // Update last tick time
     }
   }, 1000);
 
@@ -31,13 +46,21 @@ const Timer = () => {
 
   const handleStartPause = () => {
     if (isFinished) setIsFinished(false);
-    if (timeLeft > 0) setIsRunning(!isRunning);
+    if (timeLeft > 0) {
+      setIsRunning(prev => {
+        if (!prev) { // If starting, record current time
+          setLastTickTime(Date.now());
+        }
+        return !prev;
+      });
+    }
   };
 
   const handleReset = () => {
     setIsRunning(false);
     setIsFinished(false);
     setTimeLeft(duration);
+    setLastTickTime(Date.now()); // Reset last tick time
   };
 
   const handleDurationChange = (e) => {

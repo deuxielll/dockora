@@ -119,6 +119,43 @@ const Alarm = () => {
     }
   }, [ringingAlarm, alarmSoundType, customAlarmSoundUrl]); // Add customAlarmSoundUrl to dependencies
 
+  // New: Check for missed alarms when tab becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !ringingAlarm) {
+        const now = new Date();
+        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const currentDay = now.getDay();
+
+        alarms.forEach(alarm => {
+          const isSnoozed = alarm.snoozedUntil && new Date(alarm.snoozedUntil) > now;
+          if (alarm.enabled && !isSnoozed) {
+            const repeatsToday = alarm.days.length === 0 || alarm.days.includes(currentDay);
+            
+            const alarmHour = parseInt(alarm.time.split(':')[0]);
+            const alarmMinute = parseInt(alarm.time.split(':')[1]);
+
+            const alarmDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), alarmHour, alarmMinute, 0);
+            
+            // Trigger if alarm time is in the past, but not too far in the past (e.g., last 5 minutes)
+            // And if it hasn't been snoozed past now
+            if (repeatsToday && alarmDate <= now && (now.getTime() - alarmDate.getTime() < 5 * 60 * 1000)) {
+                setRingingAlarm(alarm);
+            }
+          }
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Also run once on mount in case the tab was already visible but missed an alarm
+    handleVisibilityChange();
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [alarms, ringingAlarm]); // Depend on alarms and ringingAlarm state
+
   useInterval(() => {
     if (ringingAlarm) return; // Don't check for new alarms if one is already ringing
     const now = new Date();
