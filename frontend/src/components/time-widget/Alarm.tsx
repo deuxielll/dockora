@@ -5,11 +5,12 @@ import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { useInterval } from '../../hooks/useInterval';
 import { Plus, Trash2, Bell, BellOff, Timer } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useSettings } from '../../hooks/useSettings'; // New import
 
 let audioContext;
 let oscillator;
 
-const playAlarmSound = () => {
+const playAlarmSound = (soundType) => {
   if (oscillator) return; // Prevent multiple oscillators
   try {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -17,10 +18,33 @@ const playAlarmSound = () => {
     const gainNode = audioContext.createGain();
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
-    oscillator.type = 'square'; // A simple, noticeable sound
     gainNode.gain.setValueAtTime(0.1, audioContext.currentTime); // Soften the volume
-    oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // High pitch
-    oscillator.start();
+
+    switch (soundType) {
+      case 'chime':
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(660, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.5);
+        break;
+      case 'ascending':
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+        oscillator.frequency.linearRampToValueAtTime(880, audioContext.currentTime + 0.8);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.8);
+        break;
+      case 'beep':
+      default:
+        oscillator.type = 'square';
+        oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.3);
+        break;
+    }
   } catch (e) {
     console.error("Failed to play alarm sound:", e);
     toast.error("Failed to play alarm sound. Ensure browser allows audio playback.");
@@ -45,19 +69,21 @@ const Alarm = () => {
   const [showForm, setShowForm] = useState(false);
   const [newAlarmTime, setNewAlarmTime] = useState('07:00');
   const [newAlarmDays, setNewAlarmDays] = useState([]);
+  const { settings } = useSettings(); // Use settings hook
+  const alarmSoundType = settings.alarmSoundType || 'beep'; // Get selected sound type
 
   useInterval(() => setTime(new Date()), 1000);
 
   useEffect(() => {
     if (ringingAlarm) {
       // Start playing sound when an alarm is ringing
-      const interval = setInterval(playAlarmSound, 600); // Loop sound
+      const interval = setInterval(() => playAlarmSound(alarmSoundType), 600); // Loop sound, pass soundType
       return () => {
         clearInterval(interval);
         stopAlarmSound();
       };
     }
-  }, [ringingAlarm]);
+  }, [ringingAlarm, alarmSoundType]); // Add alarmSoundType to dependencies
 
   useInterval(() => {
     if (ringingAlarm) return; // Don't check for new alarms if one is already ringing
