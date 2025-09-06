@@ -2,8 +2,7 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 COPY package.json ./
-# Adding a dummy argument to force cache invalidation for pnpm install
-ARG CACHE_BUST=1 
+# Removed ARG CACHE_BUST=1
 RUN npm install -g pnpm
 RUN pnpm install
 COPY . .

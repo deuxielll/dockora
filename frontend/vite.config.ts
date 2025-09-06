@@ -4,8 +4,8 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
-    include: ['xterm', 'xterm-addon-fit'],
-    exclude: ['simple-icons'], // Exclude simple-icons from pre-bundling
+    include: ['xterm', 'xterm-addon-fit', 'simple-icons'], // Ensure 'simple-icons' is included here
+    // Removed 'exclude: ['simple-icons']' as it was preventing pre-bundling
   },
   build: {
     rollupOptions: {
