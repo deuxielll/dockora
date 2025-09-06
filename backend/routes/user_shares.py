@@ -5,6 +5,7 @@ from decorators import login_required
 from helpers import get_user_and_base_path, resolve_user_path, resolve_path_for_user
 from models import User, UserFileShare, Notification
 from extensions import db
+from datetime import datetime # Import datetime for error logging
 
 user_shares_bp = Blueprint('user_shares', __name__)
 
@@ -108,23 +109,25 @@ def get_shared_with_me_items():
     result = []
 
     for share in shared_items:
-        real_path = resolve_path_for_user(share.sharer_user_id, share.path)
-        if not real_path or not os.path.exists(real_path):
-            # If the original file no longer exists or is inaccessible, skip it
-            continue
-        
         try:
+            real_path = resolve_path_for_user(share.sharer_user_id, share.path)
+            if not real_path or not os.path.exists(real_path):
+                continue
+            
             stat_info = os.stat(real_path)
             item_type = 'dir' if stat.S_ISDIR(stat_info.st_mode) else 'file'
             
-            # Get sharer's username for display
             sharer = User.query.get(share.sharer_user_id)
             sharer_name = sharer.username if sharer else "Unknown"
 
+            display_name = os.path.basename(share.path)
+            if not display_name:
+                display_name = "Home Directory"
+
             result.append({
-                "id": share.id, # The ID of the UserFileShare entry
-                "name": os.path.basename(real_path),
-                "path": share.path, # The original path relative to sharer
+                "id": share.id,
+                "name": display_name,
+                "path": share.path,
                 "type": item_type,
                 "size": stat_info.st_size,
                 "modified_at": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
@@ -132,8 +135,9 @@ def get_shared_with_me_items():
                 "sharer_name": sharer_name,
                 "shared_at": share.shared_at.isoformat()
             })
-        except (IOError, OSError):
-            continue # Skip if stat fails
+        except Exception as e:
+            print(f"Error processing shared-with-me item {share.id} (path: {share.path}): {e}")
+            continue
 
     return jsonify(result)
 
@@ -148,12 +152,12 @@ def get_shared_by_me_items():
     result = []
 
     for share in shared_items:
-        real_path = resolve_path_for_user(share.sharer_user_id, share.path)
-        if not real_path or not os.path.exists(real_path):
-            # If the original file no longer exists or is inaccessible, skip it
-            continue
-        
-        try:
+        try: # Add try-except around processing each share item
+            real_path = resolve_path_for_user(share.sharer_user_id, share.path)
+            if not real_path or not os.path.exists(real_path):
+                # If the original file no longer exists or is inaccessible, skip it
+                continue
+            
             stat_info = os.stat(real_path)
             item_type = 'dir' if stat.S_ISDIR(stat_info.st_mode) else 'file'
             
@@ -161,9 +165,14 @@ def get_shared_by_me_items():
             recipient = User.query.get(share.recipient_user_id)
             recipient_name = recipient.username if recipient else "Unknown"
 
+            # Determine the display name for the shared item
+            display_name = os.path.basename(share.path)
+            if not display_name: # If path is just '/'
+                display_name = "Home Directory" # Or some other appropriate label
+
             result.append({
                 "id": share.id, # The ID of the UserFileShare entry
-                "name": os.path.basename(real_path),
+                "name": display_name, # Use the derived display name
                 "path": share.path, # The original path relative to sharer
                 "type": item_type,
                 "size": stat_info.st_size,
@@ -172,8 +181,11 @@ def get_shared_by_me_items():
                 "recipient_name": recipient_name,
                 "shared_at": share.shared_at.isoformat()
             })
-        except (IOError, OSError):
-            continue # Skip if stat fails
+        except Exception as e:
+            # Log the error for debugging, but don't let it crash the entire request
+            print(f"Error processing shared item {share.id} (path: {share.path}): {e}")
+            # Optionally, add a notification or skip this item
+            continue
 
     return jsonify(result)
 
