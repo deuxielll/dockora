@@ -9,6 +9,7 @@ import ShareAppModal from '../modals/ShareAppModal';
 import AppContextMenu from './AppContextMenu';
 import EditAppModal from '../modals/EditAppModal';
 import toast from 'react-hot-toast';
+import AppLauncherSkeleton from '../skeletons/AppLauncherSkeleton'; // Import skeleton
 
 const AppLauncherWidget = ({ isInteracting }) => {
   const { settings, setSetting } = useSettings();
@@ -254,7 +255,7 @@ const AppLauncherWidget = ({ isInteracting }) => {
   }, [launcherItems, searchTerm]);
 
   if (isLoading || isInteracting) {
-    return <div className="flex-grow flex items-center justify-center"><LoadingSpinner /></div>;
+    return <AppLauncherSkeleton />; // Render skeleton when loading or interacting
   }
 
   const AppItem = ({ item }) => {
