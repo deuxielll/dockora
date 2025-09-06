@@ -17,6 +17,8 @@ const ShareWithUsersModal = ({ itemsToShare, onClose, onSuccess }) => {
       const usersRes = await getUsers();
       // Filter out the current user from the list of potential recipients
       setUsers(usersRes.data.filter(u => u.id !== currentUser.id));
+      // For file sharing, start with no users pre-selected
+      setSelectedUserIds(new Set());
     } catch (error) {
       console.error("Failed to load users for sharing", error);
       toast.error("Could not load users for sharing.");
