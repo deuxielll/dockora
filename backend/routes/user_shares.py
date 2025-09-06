@@ -71,6 +71,74 @@ def share_file_with_users():
     db.session.commit()
     return jsonify({"message": "Files shared successfully."}), 201
 
+@user_shares_bp.route("/files/share-with-admin", methods=["POST"])
+@login_required
+def share_files_with_admin():
+    sharer_user_id = session.get('user_id')
+    if not sharer_user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
+    data = request.get_json()
+    paths = data.get('paths')
+
+    if not paths or not isinstance(paths, list):
+        return jsonify({"error": "A list of paths is required"}), 400
+    
+    sharer_user, sharer_base_path, sharer_is_sandboxed = get_user_and_base_path()
+    if not sharer_user:
+        return jsonify({"error": "Sharer user not found"}), 404
+
+    admin_users = User.query.filter_by(role='admin').all()
+    if not admin_users:
+        return jsonify({"error": "No admin users found to share with."}), 404
+
+    errors = []
+    shares_created = 0
+
+    for path in paths:
+        real_path = resolve_user_path(sharer_base_path, sharer_is_sandboxed, path)
+        if not real_path or not os.path.exists(real_path):
+            errors.append(f"Item not found or inaccessible: {path}")
+            continue
+
+        for admin_user in admin_users:
+            if admin_user.id == sharer_user_id:
+                continue # Admin cannot share with themselves via this route
+
+            existing_share = UserFileShare.query.filter_by(
+                sharer_user_id=sharer_user_id,
+                recipient_user_id=admin_user.id,
+                path=path
+            ).first()
+
+            if not existing_share:
+                new_share = UserFileShare(
+                    sharer_user_id=sharer_user_id,
+                    recipient_user_id=admin_user.id,
+                    path=path
+                )
+                db.session.add(new_share)
+
+                notification_message = f"'{os.path.basename(path)}' was shared with you by {sharer_user.username}."
+                new_notification = Notification(
+                    user_id=admin_user.id,
+                    message=notification_message,
+                    type='info'
+                )
+                db.session.add(new_notification)
+                shares_created += 1
+    
+    if errors:
+        db.session.rollback()
+        return jsonify({"error": "\n".join(errors)}), 400
+    
+    db.session.commit()
+    if shares_created > 0:
+        return jsonify({"message": f"{shares_created} file(s) shared with admin(s) successfully."}), 201
+    else:
+        return jsonify({"message": "No new shares created (items already shared or no valid admins)."})
+
+
 @user_shares_bp.route("/files/unshare-with-user", methods=["POST"])
 @login_required
 def unshare_file_with_users():

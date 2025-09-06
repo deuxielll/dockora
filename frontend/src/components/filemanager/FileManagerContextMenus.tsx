@@ -16,6 +16,7 @@ const FileManagerContextMenus = ({
   onView,
   onSharePublic,
   onShareWithUsers,
+  onShareWithAdmin, // New prop
   onCopyPath,
   onRename,
   onDelete,
@@ -28,6 +29,7 @@ const FileManagerContextMenus = ({
   hasCutItems,
   onCreateFile,
   onCreateFolder,
+  onMove,
 }) => {
   return (
     <>
@@ -41,6 +43,7 @@ const FileManagerContextMenus = ({
         onView={onView}
         onSharePublic={onSharePublic}
         onShareWithUsers={onShareWithUsers}
+        onShareWithAdmin={onShareWithAdmin} // New prop
         onCopyPath={onCopyPath}
         onRename={onRename}
         onDelete={onDelete}
@@ -52,6 +55,7 @@ const FileManagerContextMenus = ({
         onPaste={onPaste}
         hasCopiedItems={hasCopiedItems}
         hasCutItems={hasCutItems}
+        onMove={onMove}
       />
       <EmptySpaceContextMenu
         contextMenu={emptySpaceContextMenu}
