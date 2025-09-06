@@ -1,9 +1,9 @@
 # Stage 1: Builder
 FROM node:18-alpine AS builder
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
+COPY package.json ./
 # Use --mount=type=cache for pnpm install for more reliable caching
-RUN --mount=type=cache,target=/root/.pnpm-store pnpm install --frozen-lockfile
+RUN --mount=type=cache,target=/root/.pnpm-store pnpm install
 COPY . .
 RUN pnpm run build
 
