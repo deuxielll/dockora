@@ -243,7 +243,7 @@ def download_shared_with_me_file():
                         zf.write(file_real_path, archive_path)
             memory_file.seek(0)
             download_name = f"{os.path.basename(real_path)}.zip"
-            return send_file(memory_file, download_name=download_name, as_attachment=True)
+            return send_file(memory_file, download_name=download_name, as_attachment=True, mimetype='application/zip')
         else:
             # Existing logic for single file download
             return send_file(real_path, as_attachment=True, download_name=os.path.basename(real_path))
