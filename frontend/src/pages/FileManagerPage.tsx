@@ -25,7 +25,7 @@ const FileManagerPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const [emptySpaceContextMenu, setEmptySpaceContextMenu] = useState(null);
-  const [selectedItems, setSelectedItems] = useState(new Set());
+  const [selectedItems, setSelectedItems] = new useState(Set());
   const [selectionAnchor, setSelectionAnchor] = useState(null);
   const [draggedOverItem, setDraggedOverItem] = useState(null);
   const [copiedItems, setCopiedItems] = useState([]);
@@ -51,18 +51,15 @@ const FileManagerPage = () => {
       let res;
       if (path === 'trash') {
         res = await getTrashItems();
-        setItems(res.data);
       } else if (path === 'shared-with-me') {
         res = await getSharedWithMeItems();
         await updateLastViewedSharedFilesTimestamp();
-        setItems(res.data);
       } else if (path === 'my-shares') {
         res = await getSharedByMeItems();
-        setItems(res.data); // Populate items for context menu logic
       } else {
         res = await browseFiles(path);
-        setItems(res.data);
       }
+      setItems(res.data);
       setSelectedItems(new Set());
       setSearchTerm(''); // Reset search term on path change
       setSortColumn('name'); // Reset sort on path change
@@ -73,12 +70,7 @@ const FileManagerPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
-  const closeAllContextMenus = useCallback(() => {
-    setContextMenu(null);
-    setEmptySpaceContextMenu(null);
-  }, []);
+  }, [currentPath]); // Removed setSelectedItems from dependencies as it's a stable function
 
   useEffect(() => {
     fetchItems(currentPath);
@@ -507,7 +499,7 @@ const FileManagerPage = () => {
             setSearchTerm={setSearchTerm}
             sortColumn={sortColumn}
             sortDirection={sortDirection}
-            onSort={onSort}
+            onSort={handleSort}
           />
         </div>
       </div>

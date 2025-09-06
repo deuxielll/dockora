@@ -118,7 +118,9 @@ const FileManagerContent = ({
       <div className="overflow-y-auto flex-grow no-scrollbar" onClick={(e) => e.stopPropagation()}>
         {isMySharesView ? (
           <MySharesView 
-            onRefreshFileManager={onRefreshMyShares} 
+            items={items} // Pass items from FileManagerPage
+            isLoading={isLoading} // Pass isLoading from FileManagerPage
+            error={error} // Pass error from FileManagerPage
             selectedItems={selectedItems} 
             setSelectedItems={setSelectedItems}
             onItemClick={onItemClick}
