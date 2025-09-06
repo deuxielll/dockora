@@ -32,6 +32,7 @@ const WidgetSettings = () => {
   const [systemLogsWidgetConfig, setLocalSystemLogsWidgetConfig] = useState({
     defaultContainerId: ''
   });
+  const [lockLayout, setLockLayout] = useState(false); // New state for lock layout
 
   // Sync local states with global settings on load/change
   useEffect(() => {
@@ -59,6 +60,7 @@ const WidgetSettings = () => {
           console.error("Failed to parse system logs widget config", e);
         }
       }
+      setLockLayout(settings.lockWidgetLayout === 'true'); // Sync new setting
     }
   }, [settings]);
 
@@ -124,6 +126,18 @@ const WidgetSettings = () => {
     }
   }, [systemLogsWidgetConfig, setSetting, settings.systemLogsWidgetConfig]);
 
+  const handleLockLayoutToggle = useCallback(async () => {
+    const newValue = !lockLayout;
+    setLockLayout(newValue); // Optimistic UI update
+    try {
+      await setSetting('lockWidgetLayout', String(newValue));
+      toast.success(`Widget layout ${newValue ? 'locked' : 'unlocked'}.`);
+    } catch (err) {
+      toast.error('Failed to update layout lock setting.');
+      setLockLayout(settings.lockWidgetLayout === 'true'); // Revert on error
+    }
+  }, [lockLayout, setSetting, settings.lockWidgetLayout]);
+
   const handleReset = async () => {
     if (window.confirm('Are you sure you want to reset all widget settings to default?')) {
       try {
@@ -136,6 +150,7 @@ const WidgetSettings = () => {
           setSetting('weatherApiKey', ''),
           setSetting('downloadClientConfig', JSON.stringify({ type: 'none', url: '', username: '', password: '' })),
           setSetting('systemLogsWidgetConfig', JSON.stringify({ defaultContainerId: '' })), // Reset new setting
+          setSetting('lockWidgetLayout', 'false'), // Reset lock layout
           setSetting('widgetLayouts', null) // Also reset layouts
         ]);
         toast.success('Widget settings reset to default!');
@@ -197,6 +212,22 @@ const WidgetSettings = () => {
               </button>
             </div>
           ))}
+        </div>
+
+        <div className="mb-6 flex items-center justify-between p-3 rounded-lg shadow-neo-inset">
+          <div>
+            <label htmlFor="lockLayout" className="font-medium text-gray-300">Lock Widget Layout</label>
+            <p className="text-xs text-gray-400 mt-1">Prevent widgets from being moved or resized.</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleLockLayoutToggle}
+            className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${lockLayout ? 'bg-accent' : 'bg-gray-600'} shadow-neo-inset`}
+          >
+            <span
+              className={`inline-block w-4 h-4 transform bg-gray-400 rounded-full transition-transform shadow-neo ${lockLayout ? 'translate-x-6' : 'translate-x-1'}`}
+            />
+          </button>
         </div>
 
         {isWeatherWidgetEnabled && (
