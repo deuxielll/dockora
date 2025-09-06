@@ -37,7 +37,7 @@ const formatSpeed = (bytes) => {
 
 const MAX_DATA_POINTS = 20;
 
-const NetworkingWidget = ({ isInteracting }) => {
+const NetworkingWidget = () => {
   const [stats, setStats] = useState(null);
   const [history, setHistory] = useState({
     labels: Array(MAX_DATA_POINTS).fill(''),
@@ -47,9 +47,6 @@ const NetworkingWidget = ({ isInteracting }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Only fetch data if not interacting
-    if (isInteracting) return;
-
     const fetchData = async () => {
       try {
         const res = await getNetworkStats();
@@ -71,7 +68,7 @@ const NetworkingWidget = ({ isInteracting }) => {
     fetchData();
     const interval = setInterval(fetchData, 2000);
     return () => clearInterval(interval);
-  }, [isLoading, isInteracting]);
+  }, [isLoading]);
 
   const chartData = {
     labels: history.labels,

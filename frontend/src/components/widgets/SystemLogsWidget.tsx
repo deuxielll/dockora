@@ -5,7 +5,7 @@ import { useSettings } from '../../hooks/useSettings';
 import LoadingSpinner from '../LoadingSpinner';
 import toast from 'react-hot-toast';
 
-const SystemLogsWidget = ({ isInteracting }) => {
+const SystemLogsWidget = () => {
   const { settings, setSetting } = useSettings();
   const [availableContainers, setAvailableContainers] = useState([]);
   const [selectedContainerId, setSelectedContainerId] = useState('');
@@ -43,7 +43,7 @@ const SystemLogsWidget = ({ isInteracting }) => {
       abortControllerRef.current.abort();
     }
 
-    if (!selectedContainerId || isInteracting) {
+    if (!selectedContainerId) {
       setLogs('');
       setIsStreaming(false);
       return;
@@ -87,7 +87,7 @@ const SystemLogsWidget = ({ isInteracting }) => {
         abortControllerRef.current.abort();
       }
     };
-  }, [selectedContainerId, isInteracting]);
+  }, [selectedContainerId]);
 
   const handleContainerChange = async (e) => {
     const newContainerId = e.target.value;
@@ -130,7 +130,6 @@ const SystemLogsWidget = ({ isInteracting }) => {
             value={selectedContainerId}
             onChange={handleContainerChange}
             className={inputStyles}
-            disabled={isInteracting}
           >
             {availableContainers.map(c => (
               <option key={c.id} value={c.id}>
@@ -154,14 +153,6 @@ const SystemLogsWidget = ({ isInteracting }) => {
       </div>
     );
   };
-
-  if (isInteracting) {
-    return (
-      <div className="flex-grow flex items-center justify-center h-full">
-        <LoadingSpinner size={32} />
-      </div>
-    );
-  }
 
   return (
     <div className="h-full flex flex-col">

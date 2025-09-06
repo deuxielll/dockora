@@ -6,7 +6,7 @@ import LoadingSpinner from '../LoadingSpinner';
 import { useNavigate } from 'react-router-dom';
 import FileViewerModal from '../modals/FileViewerModal';
 
-const FileActivityWidget = ({ isInteracting }) => {
+const FileActivityWidget = () => {
   const [recentFiles, setRecentFiles] = useState([]);
   const [newSharedCount, setNewSharedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -15,9 +15,6 @@ const FileActivityWidget = ({ isInteracting }) => {
   const navigate = useNavigate();
 
   const fetchData = useCallback(async () => {
-    // Only fetch data if not interacting
-    if (isInteracting) return;
-
     setIsLoading(true);
     setError(null);
     try {
@@ -33,7 +30,7 @@ const FileActivityWidget = ({ isInteracting }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [isInteracting]);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -120,14 +117,6 @@ const FileActivityWidget = ({ isInteracting }) => {
       </div>
     );
   };
-
-  if (isInteracting) {
-    return (
-      <div className="flex-grow flex items-center justify-center h-full">
-        <LoadingSpinner size={32} />
-      </div>
-    );
-  }
 
   return (
     <div className="h-full flex flex-col">
