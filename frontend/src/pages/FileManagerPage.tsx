@@ -25,7 +25,7 @@ const FileManagerPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const [emptySpaceContextMenu, setEmptySpaceContextMenu] = useState(null);
-  const [selectedItems, setSelectedItems] = new Set();
+  const [selectedItems, setSelectedItems] = useState(new Set());
   const [selectionAnchor, setSelectionAnchor] = useState(null);
   const [draggedOverItem, setDraggedOverItem] = useState(null);
   const [copiedItems, setCopiedItems] = useState([]);
@@ -512,7 +512,6 @@ const FileManagerPage = () => {
             sortColumn={sortColumn}
             sortDirection={sortDirection}
             onSort={handleSort}
-            onEmptySpaceContextMenu={handleEmptySpaceContextMenu} // Pass the handler
           />
         </div>
       </div>

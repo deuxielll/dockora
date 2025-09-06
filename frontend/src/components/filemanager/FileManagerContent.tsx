@@ -52,7 +52,6 @@ const FileManagerContent = ({
   sortColumn, // New prop
   sortDirection, // New prop
   onSort, // New prop
-  onEmptySpaceContextMenu, // New prop
 }) => {
   const panelClasses = "bg-dark-bg shadow-neo";
   const inputStyles = "w-full p-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition placeholder:text-gray-500";
@@ -116,7 +115,7 @@ const FileManagerContent = ({
         </div>
       )}
 
-      <div className="overflow-y-auto flex-grow no-scrollbar" onContextMenu={onEmptySpaceContextMenu}> {/* Added onContextMenu here */}
+      <div className="overflow-y-auto flex-grow no-scrollbar" onClick={(e) => e.stopPropagation()}>
         {isMySharesView ? (
           <MySharesView 
             onRefreshFileManager={onRefreshMyShares} 
