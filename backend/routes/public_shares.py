@@ -38,6 +38,7 @@ def get_public_share_details(token):
                 # Add directories
                 for name in dirs:
                     full_path = os.path.join(root, name)
+                    if not os.path.exists(full_path): continue # Explicit check for sub-items
                     # The 'path' for the frontend should be relative to the sharer's base_path
                     relative_path_for_frontend = '/' + os.path.relpath(full_path, base_path).replace('\\', '/')
                     all_shared_content.append({
@@ -50,6 +51,7 @@ def get_public_share_details(token):
                 # Add files
                 for name in files:
                     full_path = os.path.join(root, name)
+                    if not os.path.exists(full_path): continue # Explicit check for sub-items
                     stat_info = os.stat(full_path)
                     # The 'path' for the frontend should be relative to the sharer's base_path
                     relative_path_for_frontend = '/' + os.path.relpath(full_path, base_path).replace('\\', '/')
