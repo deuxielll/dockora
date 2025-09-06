@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { getContainers, manageContainer, getContainerLogs } from "../services/api";
-import { Trash2, FileText, Cpu, MemoryStick, Network, Pencil, Edit, Loader } from "lucide-react"; // Added Loader icon
+import { Trash2, FileText, Cpu, MemoryStick, Network, Pencil, Edit, Loader } from "lucide-react";
 import LogModal from "./modals/LogModal";
 import ActionDropdown from "./ActionDropdown";
 import RenameContainerModal from "./modals/RenameContainerModal";
@@ -38,11 +38,14 @@ const ContainerView = ({ onCreateStack }) => {
   const fetchContainers = useCallback(async () => {
     try {
       const res = await getContainers();
-      setContainers(res.data);
+      // Only update state if the data has actually changed
+      if (JSON.stringify(res.data) !== JSON.stringify(containers)) {
+        setContainers(res.data);
+      }
     } catch (err) {
       console.error("Error fetching containers:", err);
     }
-  }, []);
+  }, [containers]); // Include containers in dependency array for comparison
 
   const handleAction = async (id, act) => {
     setActionLoadingStates(prev => ({ ...prev, [id]: true })); // Set loading for this container
