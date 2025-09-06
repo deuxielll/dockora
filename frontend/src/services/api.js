@@ -47,6 +47,30 @@ export const getContainers = () => api.get("/containers");
 export const createContainer = (data) => api.post("/containers/create", data);
 export const manageContainer = (id, action) => api.post(`/containers/${id}/${action}`);
 export const getContainerLogs = (id) => api.get(`/containers/${id}/logs`);
+export const streamContainerLogs = async (id, onChunk) => {
+  const response = await fetch(`${API_URL}/containers/${id}/stream-logs`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+
+  if (!response.body) {
+    throw new Error("Response has no body");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value, { stream: true });
+    onChunk(chunk);
+  }
+
+  if (!response.ok) {
+    throw new Error(`Failed to stream logs with status: ${response.status}`);
+  }
+};
 export const renameContainer = (id, name) => api.post(`/containers/${id}/rename`, { name });
 export const recreateContainer = (id, data) => api.post(`/containers/${id}/recreate`, data);
 

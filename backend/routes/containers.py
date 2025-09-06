@@ -169,6 +169,21 @@ def get_logs(id):
         return jsonify({"logs": container.logs(tail=100).decode("utf-8")})
     except Exception as e: return jsonify({"error": str(e)}), 500
 
+@containers_bp.route("/containers/<id>/stream-logs", methods=["GET"])
+@admin_required
+def stream_logs(id):
+    def generate():
+        try:
+            container = client.containers.get(id)
+            for line in container.logs(stream=True, follow=True, tail=50): # Start with last 50 lines
+                yield line.decode('utf-8')
+        except docker.errors.NotFound:
+            yield f"[DOCKORA_STREAM_ERROR]Container '{id}' not found.\n"
+        except Exception as e:
+            yield f"[DOCKORA_STREAM_ERROR]An error occurred while streaming logs: {str(e)}\n"
+
+    return Response(stream_with_context(generate()), mimetype='text/plain')
+
 def parse_ports(port_strings):
     port_dict = {}
     if not port_strings: return None

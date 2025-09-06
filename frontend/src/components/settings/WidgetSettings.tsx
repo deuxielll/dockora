@@ -13,6 +13,7 @@ const WIDGETS_CONFIG = {
   downloadClient: { title: 'Download Client', defaultVisible: true },
   appLauncher: { title: 'App Launcher', defaultVisible: true },
   fileActivity: { title: 'File Activity', defaultVisible: true },
+  systemLogs: { title: 'System Logs', defaultVisible: true }, // New widget
 };
 
 const WidgetSettings = () => {
@@ -27,6 +28,9 @@ const WidgetSettings = () => {
     url: '',
     username: '',
     password: ''
+  });
+  const [systemLogsWidgetConfig, setLocalSystemLogsWidgetConfig] = useState({
+    defaultContainerId: ''
   });
 
   // Sync local states with global settings on load/change
@@ -45,6 +49,14 @@ const WidgetSettings = () => {
           setLocalDownloadClientConfig(prev => ({...prev, ...parsedConfig}));
         } catch (e) {
           console.error("Failed to parse download client config", e);
+        }
+      }
+      if (settings.systemLogsWidgetConfig) {
+        try {
+          const parsedConfig = JSON.parse(settings.systemLogsWidgetConfig);
+          setLocalSystemLogsWidgetConfig(prev => ({...prev, ...parsedConfig}));
+        } catch (e) {
+          console.error("Failed to parse system logs widget config", e);
         }
       }
     }
@@ -99,6 +111,19 @@ const WidgetSettings = () => {
     }
   }, [downloadClientConfig, setSetting, settings.downloadClientConfig]);
 
+  const handleSystemLogsWidgetConfigChange = useCallback(async (e) => {
+    const { name, value } = e.target;
+    const updatedConfig = { ...systemLogsWidgetConfig, [name]: value };
+    setLocalSystemLogsWidgetConfig(updatedConfig); // Optimistic UI update
+    try {
+      await setSetting('systemLogsWidgetConfig', JSON.stringify(updatedConfig));
+      toast.success('System Logs widget settings updated.');
+    } catch (err) {
+      toast.error('Failed to update System Logs widget settings.');
+      setLocalSystemLogsWidgetConfig(settings.systemLogsWidgetConfig ? JSON.parse(settings.systemLogsWidgetConfig) : { defaultContainerId: '' }); // Revert on error
+    }
+  }, [systemLogsWidgetConfig, setSetting, settings.systemLogsWidgetConfig]);
+
   const handleReset = async () => {
     if (window.confirm('Are you sure you want to reset all widget settings to default?')) {
       try {
@@ -110,6 +135,7 @@ const WidgetSettings = () => {
           setSetting('weatherProvider', 'openmeteo'),
           setSetting('weatherApiKey', ''),
           setSetting('downloadClientConfig', JSON.stringify({ type: 'none', url: '', username: '', password: '' })),
+          setSetting('systemLogsWidgetConfig', JSON.stringify({ defaultContainerId: '' })), // Reset new setting
           setSetting('widgetLayouts', null) // Also reset layouts
         ]);
         toast.success('Widget settings reset to default!');
@@ -136,6 +162,7 @@ const WidgetSettings = () => {
 
   const isWeatherWidgetEnabled = localWidgetVisibility.weather !== false;
   const isDownloadClientWidgetEnabled = localWidgetVisibility.downloadClient !== false;
+  const isSystemLogsWidgetEnabled = localWidgetVisibility.systemLogs !== false; // New check
 
   return (
     <SettingsCard title="Widgets">
@@ -223,6 +250,18 @@ const WidgetSettings = () => {
                 </div>
               </>
             )}
+          </>
+        )}
+
+        {isSystemLogsWidgetEnabled && (
+          <>
+            <hr className="my-8 border-gray-700/50" />
+            <h4 className="text-lg font-semibold mb-4 text-gray-300">System Logs Widget Settings</h4>
+            <div className="mb-6">
+              <label htmlFor="defaultContainerId" className="block text-sm font-medium mb-2 text-gray-400">Default Container ID (for logs)</label>
+              <input type="text" id="defaultContainerId" name="defaultContainerId" value={systemLogsWidgetConfig.defaultContainerId} onChange={handleSystemLogsWidgetConfigChange} className={inputStyles} placeholder="e.g., dockora-backend" />
+              <p className="text-xs text-gray-400 mt-1">Set a default container to display logs from when the widget loads.</p>
+            </div>
           </>
         )}
         
