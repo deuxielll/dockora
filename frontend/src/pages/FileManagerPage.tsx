@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash, getSharedWithMeItems, downloadSharedWithMeFile, unshareFileWithUsers, updateLastViewedSharedFilesTimestamp, copyItems, getSharedByMeItems, shareFileWithAdmin } from '../services/api';
+import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash, getSharedWithMeItems, downloadSharedWithMeFile, unshareFileWithUsers, updateLastViewedSharedFilesTimestamp, copyItems, getSharedByMeItems } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import Sidebar from '../components/Sidebar';
 import FileManagerContent from '../components/filemanager/FileManagerContent';
@@ -320,19 +320,6 @@ const FileManagerPage = () => {
     }
   };
 
-  const handleShareWithAdmin = async () => {
-    const pathsToShare = Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id).path);
-    if (pathsToShare.length === 0) return;
-
-    try {
-      const res = await shareFileWithAdmin(pathsToShare);
-      toast.success(res.data.message || `${pathsToShare.length} item(s) shared with admin(s).`);
-      setSelectedItems(new Set()); // Clear selection after sharing
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Failed to share with admin(s).');
-    }
-  };
-
   const handleContextMenu = (event, item) => {
     event.preventDefault();
     event.stopPropagation();
@@ -474,6 +461,7 @@ const FileManagerPage = () => {
       <div className="flex h-full p-4 sm:p-6 pb-28">
         <Sidebar onNavigate={setCurrentPath} currentUser={currentUser} />
         <div className="flex-1 flex flex-col overflow-hidden ml-6">
+          {/* Removed: <h2 className="text-2xl font-bold text-gray-200 mb-6">File Manager</h2> */}
           <FileManagerContent
             currentUser={currentUser}
             currentPath={currentPath}
@@ -554,7 +542,6 @@ const FileManagerPage = () => {
         onView={() => handleItemDoubleClick(singleSelectedItem)}
         onSharePublic={() => setItemsToSharePublic(Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id).path))}
         onShareWithUsers={() => setItemsToShareWithUsers(Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id).path))}
-        onShareWithAdmin={handleShareWithAdmin} // New prop
         onCopyPath={handleCopyMultiplePaths}
         onRename={() => setItemToRename(singleSelectedItem)}
         onDelete={handleDeleteMultiple}

@@ -1,39 +1,33 @@
 import React from 'react';
-import { Eye, Share2, Copy, Edit, Trash2, RotateCcw, Users, Download, ClipboardPaste, Scissors, FolderInput, UserCog } from 'lucide-react'; // Added UserCog
+import { Eye, Share2, Copy, Edit, Trash2, RotateCcw, Users, Download, ClipboardPaste, Scissors, FolderInput } from 'lucide-react'; // Added FolderInput
 
 const ItemContextMenu = ({
   contextMenu,
   isTrashView,
   isSharedWithMeView,
-  isMySharesView,
+  isMySharesView, // New prop
   selectedCount,
   singleSelectedItem,
   onView,
-  onSharePublic,
-  onShareWithUsers,
-  onShareWithAdmin, // New prop
+  onSharePublic, // For public links
+  onShareWithUsers, // For user-to-user sharing
   onCopyPath,
   onRename,
   onDelete,
   onRestore,
   onClose,
   onDownloadShared,
-  onCopy,
-  onCut,
-  onPaste,
-  hasCopiedItems,
-  hasCutItems,
-  onMove,
+  onCopy, // New prop
+  onCut, // New prop
+  onPaste, // New prop
+  hasCopiedItems, // New prop
+  hasCutItems, // New prop
+  onMove, // New prop
 }) => {
   if (!contextMenu || selectedCount === 0) return null;
 
   const canPaste = (hasCopiedItems || hasCutItems) && !isTrashView && !isSharedWithMeView && !isMySharesView;
   const canMove = !isTrashView && !isSharedWithMeView && !isMySharesView;
-
-  // Determine if the current user is an admin (assuming currentUser is available in context or passed as prop)
-  // For now, we'll assume the current user is NOT an admin if this menu is shown for sharing with admin.
-  // A more robust check would involve passing currentUser.role as a prop.
-  const isCurrentUserAdmin = false; // Placeholder, replace with actual check if currentUser.role is available
 
   return (
     <div
@@ -56,7 +50,7 @@ const ItemContextMenu = ({
           <li><button onClick={() => { onCopyPath(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Copy size={16} /><span>Copy Path(s)</span></button></li>
           <li><button onClick={() => { onDelete(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md"><Trash2 size={16} /><span>Remove from list ({selectedCount})</span></button></li>
         </ul>
-      ) : isMySharesView ? (
+      ) : isMySharesView ? ( // New context menu for My Shares
         <ul className="space-y-1">
           <li><button onClick={() => { onCopyPath(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Copy size={16} /><span>Copy Path(s)</span></button></li>
           <li><button onClick={() => { onDelete(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md"><Trash2 size={16} /><span>Unshare ({selectedCount})</span></button></li>
@@ -71,9 +65,6 @@ const ItemContextMenu = ({
           )}
           {selectedCount > 0 && (
             <li><button onClick={() => { onShareWithUsers(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Users size={16} /><span>Share with Users ({selectedCount})</span></button></li>
-          )}
-          {selectedCount > 0 && !isCurrentUserAdmin && ( // Only show if not admin
-            <li><button onClick={() => { onShareWithAdmin(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><UserCog size={16} /><span>Share with Admin ({selectedCount})</span></button></li>
           )}
           <li><button onClick={() => { onCopy(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Copy size={16} /><span>Copy ({selectedCount})</span></button></li>
           <li><button onClick={() => { onCut(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Scissors size={16} /><span>Cut ({selectedCount})</span></button></li>
