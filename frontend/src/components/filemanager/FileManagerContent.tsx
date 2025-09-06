@@ -52,8 +52,6 @@ const FileManagerContent = ({
   sortColumn, // New prop
   sortDirection, // New prop
   onSort, // New prop
-  onEmptySpaceContextMenu, // New prop
-  onEmptySpaceClick, // New prop
 }) => {
   const panelClasses = "bg-dark-bg shadow-neo";
   const inputStyles = "w-full p-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition placeholder:text-gray-500";
@@ -65,8 +63,6 @@ const FileManagerContent = ({
       onDragLeave={onDragLeave}
       onDrop={onDrop}
       onDragEnd={onDragEnd}
-      onContextMenu={onEmptySpaceContextMenu} // Right-click on empty space
-      onClick={onEmptySpaceClick} // Click on empty space
     >
       {isDragging && (
         <div className="absolute inset-0 bg-accent/10 border-2 border-dashed border-accent rounded-xl flex items-center justify-center z-10 pointer-events-none shadow-neo">
