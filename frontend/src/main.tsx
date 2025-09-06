@@ -16,9 +16,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <SettingsProvider>
           <NotificationsProvider>
             <DeploymentProvider>
-              <ToastProvider>
-                <App />
-              </ToastProvider>
+              <App />
+              <ToastProvider />
             </DeploymentProvider>
           </NotificationsProvider>
         </SettingsProvider>
