@@ -20,7 +20,7 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 // Define WIDGETS_CONFIG here, consistent with WidgetSettings.tsx
 const WIDGETS_CONFIG = {
-  deploymentStatus: { component: DeploymentStatusWidget, title: 'Deployment Status', defaultVisible: true, defaultLayout: { h: 2.5, minH: 2, minW: 1 } },
+  deploymentStatus: { component: DeploymentStatusWidget, title: 'Deployment Status', defaultVisible: true, defaultLayout: { h: 2, minH: 2, minW: 1 } },
   systemUsage: { component: SystemUsageWidget, title: 'System Usage', defaultVisible: true, defaultLayout: { h: 1.5, minH: 1.5, minW: 1 } },
   weather: { component: WeatherWidget, title: 'Weather', defaultVisible: true, defaultLayout: { h: 1.5, minH: 1.5, minW: 1 } },
   time: { component: TimeWidget, title: 'Time & Date', defaultVisible: true, defaultLayout: { h: 2, minH: 2, minW: 1 } },

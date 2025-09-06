@@ -20,13 +20,13 @@ const DeploymentItem = ({ deployment }) => {
   };
 
   return (
-    <div className="bg-dark-bg shadow-neo p-4 rounded-lg">
+    <div className="bg-dark-bg-secondary shadow-neo-inset p-3 rounded-lg">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
           {getStatusIcon()}
           <div>
-            <p className="font-semibold text-gray-200">{deployment.name}</p>
-            <p className="text-sm text-gray-400 capitalize">
+            <p className="font-semibold text-gray-200 text-sm">{deployment.name}</p>
+            <p className="text-xs text-gray-400 capitalize">
               {deployment.status}
             </p>
           </div>
@@ -34,22 +34,22 @@ const DeploymentItem = ({ deployment }) => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-2 rounded-full hover:shadow-neo-inset transition-all"
+            className="p-1 rounded-full hover:shadow-neo-inset transition-all"
             title={isExpanded ? "Collapse" : "Expand"}
           >
-            {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
           <button
             onClick={() => clearDeployment(deployment.id)}
-            className="p-2 rounded-full hover:shadow-neo-inset transition-all text-red-500"
+            className="p-1 rounded-full hover:shadow-neo-inset transition-all text-red-500"
             title="Clear"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
       </div>
       {isExpanded && (
-        <pre className="mt-4 text-xs overflow-y-auto bg-gray-900 p-4 rounded-lg max-h-60 whitespace-pre-wrap font-mono text-gray-300 shadow-neo-inset no-scrollbar">
+        <pre className="mt-3 text-xs overflow-y-auto bg-gray-900 p-3 rounded-lg max-h-32 whitespace-pre-wrap font-mono text-gray-300 shadow-neo-inset no-scrollbar">
           {deployment.output}
         </pre>
       )}
@@ -69,8 +69,8 @@ const DeploymentStatusWidget = () => {
   }
 
   return (
-    <>
-      <div className="flex justify-end -mt-2 mb-2">
+    <div className="h-full flex flex-col">
+      <div className="flex justify-end -mt-2 mb-2 flex-shrink-0">
         <button
           onClick={clearAllDeployments}
           className="flex items-center gap-1 text-sm font-semibold text-red-500 p-2 rounded-lg hover:bg-red-900/30 transition-colors"
@@ -78,12 +78,12 @@ const DeploymentStatusWidget = () => {
           <Trash2 size={14} /> Clear All
         </button>
       </div>
-      <div className="space-y-3 max-h-96 overflow-y-auto pr-2 no-scrollbar">
+      <div className="flex-grow overflow-y-auto space-y-3 pr-2 no-scrollbar">
         {deployments.map(d => (
           <DeploymentItem key={d.id} deployment={d} />
         ))}
       </div>
-    </>
+    </div>
   );
 };
 
