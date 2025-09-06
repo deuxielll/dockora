@@ -57,7 +57,8 @@ const FileViewerModal = ({ item, onClose }) => {
                     setMediaUrl(objectUrl);
                 }
             } catch (err) {
-                setError(err.response?.data?.error || 'Failed to load file.');
+                const errorMessage = err.response?.data?.error || 'Failed to load file.';
+                setError(errorMessage);
             } finally {
                 setIsLoading(false);
             }
@@ -74,7 +75,23 @@ const FileViewerModal = ({ item, onClose }) => {
 
     const renderContent = () => {
         if (isLoading) return <div className="flex-grow flex items-center justify-center"><LoadingSpinner /></div>;
-        if (error) return <div className="flex-grow flex items-center justify-center text-red-500">{error}</div>;
+        
+        const isFileTooLarge = error.includes("File is too large to display");
+
+        if (error && !isFileTooLarge) return <div className="flex-grow flex items-center justify-center text-red-500">{error}</div>;
+
+        if (isFileTooLarge || fileType === 'unsupported') {
+            return (
+                <div className="text-center p-8">
+                    <p className="mb-4 text-gray-400">
+                        {isFileTooLarge ? "This file is too large to display a preview." : "No preview available for this file type."}
+                    </p>
+                    <a href={downloadUrl} download={item.name} className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors">
+                        <Download size={16} /> Download File
+                    </a>
+                </div>
+            );
+        }
 
         switch (fileType) {
             case 'video':
@@ -92,14 +109,7 @@ const FileViewerModal = ({ item, onClose }) => {
                     </div>
                 );
             default:
-                return (
-                    <div className="text-center p-8">
-                        <p className="mb-4 text-gray-400">No preview available for this file type.</p>
-                        <a href={downloadUrl} download={item.name} className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors">
-                            <Download size={16} /> Download File
-                        </a>
-                    </div>
-                );
+                return null; // Should be caught by isFileTooLarge or fileType === 'unsupported'
         }
     };
     
