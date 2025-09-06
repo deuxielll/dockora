@@ -1,10 +1,33 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { unshareFileWithUsers } from '../../services/api';
+import { getSharedByMeItems, unshareFileWithUsers, viewSharedWithMeFile, downloadSharedWithMeFile } from '../../services/api';
 import LoadingSpinner from '../LoadingSpinner';
 import { Folder, FileText, Users, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const MySharesView = ({ items, isLoading, error, selectedItems, setSelectedItems, onItemClick, onItemDoubleClick, onItemContextMenu, searchTerm, sortColumn, sortDirection, onSort }) => {
+const MySharesView = ({ onRefreshFileManager, selectedItems, setSelectedItems, onItemClick, onItemDoubleClick, onItemContextMenu, searchTerm, sortColumn, sortDirection, onSort }) => {
+  const [sharedItems, setSharedItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const fetchSharedItems = useCallback(async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const res = await getSharedByMeItems();
+      setSharedItems(res.data);
+      setSelectedItems(new Set()); // Clear selection on refresh
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to load your shared items.');
+      console.error("Error fetching shared by me items:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [setSelectedItems]);
+
+  useEffect(() => {
+    fetchSharedItems();
+  }, [fetchSharedItems]);
+
   const handleUnshareSelected = async () => {
     if (selectedItems.size === 0) return;
 
@@ -12,7 +35,8 @@ const MySharesView = ({ items, isLoading, error, selectedItems, setSelectedItems
       try {
         await unshareFileWithUsers(Array.from(selectedItems));
         toast.success(`${selectedItems.size} item(s) unshared successfully.`);
-        // No need to call onRefreshFileManager here, parent will re-fetch items
+        fetchSharedItems(); // Refresh the list
+        onRefreshFileManager(); // Notify parent to refresh main file view if needed
       } catch (err) {
         toast.error(err.response?.data?.error || 'Failed to unshare item(s).');
       }
@@ -29,8 +53,10 @@ const MySharesView = ({ items, isLoading, error, selectedItems, setSelectedItems
 
   const formatDate = (isoString) => new Date(isoString).toLocaleString();
 
+  const getItemIdentifier = (item) => item.id; // For MySharesView, item.id is the UserFileShare ID
+
   // Filter items based on search term
-  const filteredItems = items.filter(item =>
+  const filteredItems = sharedItems.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
