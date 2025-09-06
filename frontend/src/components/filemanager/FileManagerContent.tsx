@@ -6,6 +6,7 @@ import FileManagerActions from './FileManagerActions';
 import FileTable from './FileTable';
 import MySharesView from './MySharesView';
 import toast from 'react-hot-toast';
+import { Search } from 'lucide-react'; // Import Search icon
 
 const FileManagerContent = ({
   currentUser,
@@ -45,8 +46,14 @@ const FileManagerContent = ({
   onDrop,
   onDragEnd,
   onRefreshMyShares,
+  searchTerm, // New prop
+  setSearchTerm, // New prop
+  sortColumn, // New prop
+  sortDirection, // New prop
+  onSort, // New prop
 }) => {
   const panelClasses = "bg-dark-bg shadow-neo";
+  const inputStyles = "w-full p-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition placeholder:text-gray-500";
 
   return (
     <div
@@ -92,6 +99,21 @@ const FileManagerContent = ({
         )}
         <input type="file" multiple ref={fileInputRef} onChange={(e) => onUploadClick(e.target.files)} className="hidden" />
       </div>
+
+      {/* Search Input */}
+      {!isTrashView && !isSharedWithMeView && !isMySharesView && (
+        <div className="relative mb-4 flex-shrink-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-200" size={20} />
+          <input
+            type="text"
+            placeholder="Search files..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className={`${inputStyles} pl-10`}
+          />
+        </div>
+      )}
+
       <div className="overflow-y-auto flex-grow no-scrollbar" onClick={(e) => e.stopPropagation()}>
         {isMySharesView ? (
           <MySharesView onRefreshFileManager={onRefreshMyShares} />
@@ -111,6 +133,10 @@ const FileManagerContent = ({
             onItemDragEnter={onItemDragEnter}
             onItemDragLeave={onItemDragLeave}
             onDropOnItem={onDropOnItem}
+            searchTerm={searchTerm} // Pass search term
+            sortColumn={sortColumn} // Pass sort column
+            sortDirection={sortDirection} // Pass sort direction
+            onSort={onSort} // Pass sort handler
           />
         )}
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash, getSharedWithMeItems, downloadSharedWithMeFile, unshareFileWithUsers, updateLastViewedSharedFilesTimestamp, copyItems } from '../services/api';
+import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash, getSharedWithMeItems, downloadSharedWithMeFile, unshareFileWithUsers, updateLastViewedSharedFilesTimestamp, copyItems, getSharedByMeItems } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import Sidebar from '../components/Sidebar';
 import FileManagerContent from '../components/filemanager/FileManagerContent';
@@ -32,6 +32,11 @@ const FileManagerPage = () => {
   const [cutItems, setCutItems] = useState([]);
   const fileInputRef = useRef(null);
 
+  // New states for search and sort
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortColumn, setSortColumn] = useState('name');
+  const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
+
   const isTrashView = currentPath === 'trash';
   const isSharedWithMeView = currentPath === 'shared-with-me';
   const isMySharesView = currentPath === 'my-shares';
@@ -53,6 +58,9 @@ const FileManagerPage = () => {
       }
       setItems(res.data);
       setSelectedItems(new Set());
+      setSearchTerm(''); // Reset search term on path change
+      setSortColumn('name'); // Reset sort on path change
+      setSortDirection('asc'); // Reset sort on path change
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to load directory.');
       if (path !== '/' && path !== 'trash' && path !== 'shared-with-me' && path !== 'my-shares') setCurrentPath('/');
@@ -372,6 +380,15 @@ const FileManagerPage = () => {
     document.body.classList.remove('grabbing');
   };
 
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
   const selectedCount = selectedItems.size;
   const singleSelectedItem = selectedCount === 1 ? items.find(i => getItemIdentifier(i) === Array.from(selectedItems)[0]) : null;
 
@@ -450,6 +467,11 @@ const FileManagerPage = () => {
             onDrop={handleDrop}
             onDragEnd={handleDragEnd}
             onRefreshMyShares={() => fetchItems(currentPath)}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onSort={handleSort}
           />
         </div>
       </div>
