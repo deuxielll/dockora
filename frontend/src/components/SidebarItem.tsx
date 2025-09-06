@@ -1,20 +1,21 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { ChevronRight, Folder, Loader } from 'lucide-react';
 import { browseFiles, uploadFile } from '../services/api';
+import toast from 'react-hot-toast'; // Import toast for notifications
 
-const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate }) => {
+const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate, depth = 0 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [subfolders, setSubfolders] = useState([]);
-    const [isLoading, setIsLoading] = useState(false); // Set to false initially, only load on expand
+    const [subItems, setSubItems] = useState([]); // Renamed from subfolders to subItems
+    const [isLoading, setIsLoading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
-    const [hasSubfolders, setHasSubfolders] = useState(false);
+    const [hasChildren, setHasChildren] = useState(false); // Renamed from hasSubfolders to hasChildren
 
-    const isSpecialSection = path === 'trash' || path === 'shared-with-me';
+    const isSpecialSection = path === 'trash' || path === 'shared-with-me' || path === 'my-shares';
 
     const fetchContents = useCallback(async () => {
         if (isSpecialSection) {
-            setSubfolders([]); // Special sections don't have browsable subfolders in this context
-            setHasSubfolders(false);
+            setSubItems([]);
+            setHasChildren(false);
             setIsLoading(false);
             return;
         }
@@ -22,28 +23,29 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate }) => {
         try {
             const res = await browseFiles(path);
             const folders = res.data.filter(item => item.type === 'dir');
-            setSubfolders(folders);
-            setHasSubfolders(folders.length > 0);
+            setSubItems(folders);
+            setHasChildren(folders.length > 0);
         } catch (err) {
             console.error(`Failed to fetch contents for ${path}:`, err);
-            setHasSubfolders(false);
+            setHasChildren(false);
         } finally {
             setIsLoading(false);
         }
     }, [path, isSpecialSection]);
 
     useEffect(() => {
-        // Only fetch contents for regular folders on initial render if not collapsed
-        if (!isCollapsed && !isSpecialSection) {
+        // Only fetch contents for regular folders on initial render if not collapsed and not a special section
+        // And only if it's a top-level item or already expanded
+        if (!isCollapsed && !isSpecialSection && (depth === 0 || isExpanded)) {
             fetchContents();
         }
-    }, [fetchContents, isCollapsed, isSpecialSection]);
+    }, [fetchContents, isCollapsed, isSpecialSection, depth, isExpanded]);
 
     const handleToggleExpand = (e) => {
         e.stopPropagation();
         if (isCollapsed || isSpecialSection) return;
         setIsExpanded(!isExpanded);
-        if (!isExpanded && subfolders.length === 0) { // Fetch subfolders only when expanding for the first time
+        if (!isExpanded && subItems.length === 0) { // Fetch subfolders only when expanding for the first time
             fetchContents();
         }
     };
@@ -56,8 +58,8 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate }) => {
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
-        if (isSpecialSection) {
-            toast.error("Cannot upload files to this section.");
+        if (isSpecialSection || !isExpanded) { // Only allow drop if it's an expanded folder
+            toast.error("Cannot upload files to this section or unexpanded folder.");
             return;
         }
         const files = Array.from(e.dataTransfer.files);
@@ -81,8 +83,10 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate }) => {
     const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
     const handleDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
 
+    const itemPadding = `pl-${4 + depth * 4}`; // Increase padding for nested items
+
     return (
-        <div 
+        <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -91,13 +95,13 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate }) => {
             <div
                 onClick={handleNavigate}
                 title={name}
-                className={`flex items-center p-3 rounded-lg cursor-pointer transition-all ${isExpanded && !isCollapsed && !isSpecialSection ? 'shadow-neo-inset' : 'hover:shadow-neo-inset'}`}
+                className={`flex items-center ${itemPadding} py-3 rounded-lg cursor-pointer transition-all ${isExpanded && !isCollapsed && !isSpecialSection ? 'shadow-neo-inset' : 'hover:shadow-neo-inset'}`}
             >
                 <Icon size={20} className="text-gray-300" />
                 {!isCollapsed && (
                     <>
                         <span className="ml-4 font-semibold flex-grow text-gray-200">{name}</span>
-                        {hasSubfolders && !isSpecialSection && (
+                        {hasChildren && !isSpecialSection && (
                             <button onClick={handleToggleExpand} className="p-1 rounded-full hover:bg-gray-500/20">
                                 <ChevronRight size={16} className={`transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                             </button>
@@ -106,18 +110,23 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate }) => {
                 )}
             </div>
             {!isCollapsed && isExpanded && !isSpecialSection && (
-                <div className="pl-8 py-1 space-y-1">
+                <div className="py-1 space-y-1">
                     {isLoading ? (
-                        <div className="flex items-center gap-2 p-2 text-sm text-gray-400">
+                        <div className={`flex items-center gap-2 ${itemPadding} py-2 text-sm text-gray-400`}>
                             <Loader size={16} className="animate-spin" /> Loading...
                         </div>
-                    ) : subfolders.length > 0 ? subfolders.map(item => (
-                        <div key={item.name} className="flex items-center gap-2 p-2 text-sm text-gray-200">
-                            <Folder size={16} />
-                            <span className="truncate">{item.name}</span>
-                        </div>
+                    ) : subItems.length > 0 ? subItems.map(item => (
+                        <SidebarItem
+                            key={item.path}
+                            name={item.name}
+                            icon={Folder} // All sub-items here are folders
+                            path={item.path}
+                            isCollapsed={isCollapsed}
+                            onNavigate={onNavigate}
+                            depth={depth + 1}
+                        />
                     )) : (
-                        <p className="p-2 text-xs text-gray-400">No subfolders</p>
+                        <p className={`${itemPadding} py-2 text-xs text-gray-400`}>No subfolders</p>
                     )}
                 </div>
             )}

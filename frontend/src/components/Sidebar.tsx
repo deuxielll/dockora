@@ -40,6 +40,7 @@ const Sidebar = ({ onNavigate, currentUser }) => {
                         path={section.path}
                         isCollapsed={isCollapsed}
                         onNavigate={onNavigate}
+                        depth={0} // Pass initial depth
                     />
                 ))}
             </nav>
