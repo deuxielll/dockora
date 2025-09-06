@@ -1,6 +1,7 @@
 import React from 'react';
 import KeyValueEditor from './KeyValueEditor';
 import { Trash2, Cpu, MemoryStick } from 'lucide-react';
+import Slider from '../Slider'; // Import the new Slider component
 
 const ServiceEditor = ({ service, updateService, removeService }) => {
   const handleFieldChange = (field, value) => {
@@ -90,19 +91,19 @@ const ServiceEditor = ({ service, updateService, removeService }) => {
           placeholder="network_name"
         />
         <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div>
-            <label htmlFor={`service-cpu-${service.id}`} className="block text-sm font-medium mb-2 text-gray-400 flex items-center gap-2">
-              <Cpu size={16} /> CPU Limit (e.g., 0.5, 1, 2)
-            </label>
-            <input
-              id={`service-cpu-${service.id}`}
-              type="text"
-              value={service.cpu_limit}
-              onChange={(e) => handleFieldChange('cpu_limit', e.target.value)}
-              className={inputStyles}
-              placeholder="e.g., 1.0 for 1 core, leave blank for unlimited"
-            />
-          </div>
+          {/* CPU Limit Slider */}
+          <Slider
+            label={<><Cpu size={16} /> CPU Limit</>}
+            value={service.cpu_limit}
+            onChange={(val) => handleFieldChange('cpu_limit', val)}
+            min={0.1}
+            max={4.0}
+            step={0.1}
+            unit="Cores"
+            placeholder="e.g., 1.0"
+            onClear={() => handleFieldChange('cpu_limit', '')}
+          />
+          {/* Memory Limit Input (kept as text for flexibility) */}
           <div>
             <label htmlFor={`service-memory-${service.id}`} className="block text-sm font-medium mb-2 text-gray-400 flex items-center gap-2">
               <MemoryStick size={16} /> Memory Limit (e.g., 512MB, 1GB)
