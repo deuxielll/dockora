@@ -128,7 +128,7 @@ const FileTable = ({
           <tr
             key={getItemIdentifier(item)}
             draggable={!isTrashView && !isSharedWithMeView}
-            onDragStart={(e) => onDragStart(e, item)} {/* Corrected to use onDragStart prop */}
+            onDragStart={(e) => onDragStart(e, item)}
             onDragEnter={(e) => onItemDragEnter(e, item)}
             onDragLeave={onItemDragLeave}
             onDragOver={(e) => e.preventDefault()}
