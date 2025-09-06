@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash, getSharedWithMeItems, downloadSharedWithMeFile, unshareFileWithUsers, updateLastViewedSharedFilesTimestamp, copyItems, getSharedByMeItems, browseSharedWithMeFolder } from '../services/api';
+import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash, getSharedWithMeItems, downloadSharedWithMeFile, unshareFileWithUsers, updateLastViewedSharedFilesTimestamp, copyItems, getSharedByMeItems } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import Sidebar from '../components/Sidebar';
 import FileManagerContent from '../components/filemanager/FileManagerContent';
@@ -40,10 +40,6 @@ const FileManagerPage = () => {
   // New state for MoveItemModal
   const [itemsToMove, setItemsToMove] = useState(null);
 
-  // States for browsing within a shared folder
-  const [currentSharedItemId, setCurrentSharedItemId] = useState(null); // The ID of the UserFileShare entry
-  const [currentSharedVirtualPath, setCurrentSharedVirtualPath] = useState('/'); // The virtual path within that shared item
-
   const isTrashView = currentPath === 'trash';
   const isSharedWithMeView = currentPath === 'shared-with-me';
   const isMySharesView = currentPath === 'my-shares';
@@ -55,31 +51,15 @@ const FileManagerPage = () => {
       let res;
       if (path === 'trash') {
         res = await getTrashItems();
-        setItems(res.data);
-        setCurrentSharedItemId(null);
-        setCurrentSharedVirtualPath('/');
       } else if (path === 'shared-with-me') {
-        // If we are at the top level of 'Shared with me'
-        if (!currentSharedItemId) {
-          res = await getSharedWithMeItems();
-          await updateLastViewedSharedFilesTimestamp();
-          setItems(res.data);
-        } else {
-          // If we are browsing inside a shared folder
-          res = await browseSharedWithMeFolder(currentSharedItemId, currentSharedVirtualPath);
-          setItems(res.data.contents);
-        }
+        res = await getSharedWithMeItems();
+        await updateLastViewedSharedFilesTimestamp();
       } else if (path === 'my-shares') {
         res = await getSharedByMeItems(); // MySharesView now fetches its own data, but we need to populate `items` for context menu logic
-        setItems(res.data); // Set items for context menu logic
-        setCurrentSharedItemId(null);
-        setCurrentSharedVirtualPath('/');
       } else {
         res = await browseFiles(path);
-        setItems(res.data);
-        setCurrentSharedItemId(null);
-        setCurrentSharedVirtualPath('/');
       }
+      setItems(res.data);
       setSelectedItems(new Set());
       setSearchTerm(''); // Reset search term on path change
       setSortColumn('name'); // Reset sort on path change
@@ -90,7 +70,7 @@ const FileManagerPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentSharedItemId, currentSharedVirtualPath]);
+  }, []);
 
   const closeAllContextMenus = useCallback(() => {
     setContextMenu(null);
@@ -126,25 +106,14 @@ const FileManagerPage = () => {
 
   const getItemIdentifier = (item) => {
     if (isTrashView) return item.trashed_name;
-    if (isSharedWithMeView) {
-      // For shared-with-me, combine share_id and virtual_path for unique identifier
-      return `${item.id}-${item.virtual_path}`;
-    }
+    if (isSharedWithMeView) return item.id;
     if (isMySharesView) return item.id;
     return item.path;
   };
 
   const handleItemDoubleClick = async (item) => {
     if (item.type === 'dir') {
-      if (isSharedWithMeView) {
-        // For shared-with-me, navigate into the shared folder
-        setCurrentSharedItemId(item.id);
-        setCurrentSharedVirtualPath(item.virtual_path);
-        // Re-fetch items for the new virtual path
-        fetchItems('shared-with-me');
-        return;
-      }
-      if (isMySharesView) {
+      if (isSharedWithMeView || isMySharesView) {
         toast.error("Cannot browse subfolders directly in this view. Please download or view the item.");
         return;
       }
@@ -154,23 +123,34 @@ const FileManagerPage = () => {
     }
   };
 
-  const goUp = () => {
-    if (isSharedWithMeView) {
-      if (currentSharedVirtualPath === '/') {
-        // If at the root of a shared item, go back to the top-level shared-with-me list
-        setCurrentSharedItemId(null);
-        setCurrentSharedVirtualPath('/');
-        fetchItems('shared-with-me');
-      } else {
-        // Navigate up one level within the shared item
-        const lastSlashIndex = currentSharedVirtualPath.lastIndexOf('/');
-        const parentVirtualPath = lastSlashIndex === 0 ? '/' : currentSharedVirtualPath.substring(0, lastSlashIndex);
-        setCurrentSharedVirtualPath(parentVirtualPath);
-        fetchItems('shared-with-me');
-      }
-    } else if (currentPath !== '/') {
-      setCurrentPath(currentPath.substring(0, currentPath.lastIndexOf('/')) || '/');
+  const handleItemClick = (item, e) => {
+    e.stopPropagation();
+    const itemIdentifier = getItemIdentifier(item);
+
+    if (e.shiftKey && selectionAnchor) {
+      const anchorIndex = items.findIndex(i => getItemIdentifier(i) === getItemIdentifier(selectionAnchor));
+      const currentIndex = items.findIndex(i => getItemIdentifier(i) === itemIdentifier);
+      const start = Math.min(anchorIndex, currentIndex);
+      const end = Math.max(anchorIndex, currentIndex);
+      const newSelectedItems = e.ctrlKey ? new Set(selectedItems) : new Set();
+      for (let i = start; i <= end; i++) newSelectedItems.add(getItemIdentifier(items[i]));
+      setSelectedItems(newSelectedItems);
+    } else if (e.ctrlKey) {
+      const newSelectedItems = new Set(selectedItems);
+      if (newSelectedItems.has(itemIdentifier)) newSelectedItems.delete(itemIdentifier);
+      else newSelectedItems.add(itemIdentifier);
+      setSelectedItems(newSelectedItems);
+      setSelectionAnchor(item);
+    } else {
+      setSelectedItems(new Set([itemIdentifier]));
+      setSelectionAnchor(item);
+      setCopiedItems([]);
+      setCutItems([]);
     }
+  };
+
+  const goUp = () => {
+    if (currentPath !== '/') setCurrentPath(currentPath.substring(0, currentPath.lastIndexOf('/')) || '/');
   };
 
   const handleCreate = async (name) => {
@@ -214,7 +194,6 @@ const FileManagerPage = () => {
 
       if (window.confirm(confirmMessage)) {
         try {
-          // For shared-with-me, itemsToDelete are share_ids
           await unshareFileWithUsers(itemsToDelete);
           toast.success(`${itemsToDelete.length} item(s) removed/unshared successfully.`);
           fetchItems(currentPath);
@@ -279,10 +258,7 @@ const FileManagerPage = () => {
   const handleCopyMultiplePaths = () => {
     const pathsToCopy = Array.from(selectedItems).map(id => {
       const item = items.find(i => getItemIdentifier(i) === id);
-      if (isSharedWithMeView) {
-        // For shared-with-me, construct a path that includes sharer and virtual path
-        return `${item.sharer_name}:${item.path}${item.virtual_path}`;
-      }
+      if (isSharedWithMeView) return `${item.sharer_name}:${item.path}`;
       if (isMySharesView) {
         // For MySharesView, the 'path' is relative to the sharer, so we show sharer:path
         const sharedItem = items.find(i => i.id === id);
@@ -456,8 +432,7 @@ const FileManagerPage = () => {
     }
     setViewingFile({
       name: item.name,
-      path: item.id, // This is the share_id
-      virtual_path: item.virtual_path, // This is the virtual path within the shared item
+      path: item.id,
       type: item.type,
       isShared: true,
       sharer_name: item.sharer_name
@@ -466,7 +441,7 @@ const FileManagerPage = () => {
 
   const handleDownloadSharedFile = async (item) => {
     try {
-      const response = await downloadSharedWithMeFile(item.id, item.virtual_path);
+      const response = await downloadSharedWithMeFile(item.id);
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -486,6 +461,7 @@ const FileManagerPage = () => {
       <div className="flex h-full p-4 sm:p-6 pb-28">
         <Sidebar onNavigate={setCurrentPath} currentUser={currentUser} />
         <div className="flex-1 flex flex-col overflow-hidden ml-6">
+          {/* Removed: <h2 className="text-2xl font-bold text-gray-200 mb-6">File Manager</h2> */}
           <FileManagerContent
             currentUser={currentUser}
             currentPath={currentPath}
@@ -530,9 +506,6 @@ const FileManagerPage = () => {
             sortColumn={sortColumn}
             sortDirection={sortDirection}
             onSort={handleSort}
-            // New props for shared-with-me navigation
-            currentSharedItemId={currentSharedItemId}
-            currentSharedVirtualPath={currentSharedVirtualPath}
           />
         </div>
       </div>

@@ -52,8 +52,6 @@ const FileManagerContent = ({
   sortColumn, // New prop
   sortDirection, // New prop
   onSort, // New prop
-  currentSharedItemId, // New prop
-  currentSharedVirtualPath, // New prop
 }) => {
   const panelClasses = "bg-dark-bg shadow-neo";
   const inputStyles = "w-full p-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition placeholder:text-gray-500";
@@ -79,8 +77,6 @@ const FileManagerContent = ({
             isTrashView={isTrashView}
             isSharedWithMeView={isSharedWithMeView}
             isMySharesView={isMySharesView}
-            currentSharedItemId={currentSharedItemId} // Pass to Breadcrumbs
-            currentSharedVirtualPath={currentSharedVirtualPath} // Pass to Breadcrumbs
           />
           {selectedCount > 0 && !isMySharesView && <p className="text-sm text-gray-200 mt-1">{selectedCount} item(s) selected</p>}
         </div>

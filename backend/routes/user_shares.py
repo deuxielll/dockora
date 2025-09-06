@@ -7,44 +7,8 @@ from models import User, UserFileShare, Notification
 from extensions import db
 from datetime import datetime # Import datetime for error logging
 import zipfile # New import
-import io # New import for in-memory zipping
 
 user_shares_bp = Blueprint('user_shares', __name__)
-
-# Helper to resolve the real path of a shared item, including sub-paths within a shared folder
-def _resolve_shared_item_real_path(share_entry, virtual_sub_path=None):
-    """
-    Resolves the real file system path for a shared item, including navigation into sub-paths
-    within a shared directory. Ensures path traversal is prevented.
-    
-    Args:
-        share_entry (UserFileShare): The database entry for the shared item.
-        virtual_sub_path (str, optional): The path relative to the shared item's root.
-                                          E.g., if share_entry.path is '/home/user/docs',
-                                          and virtual_sub_path is '/subfolder/file.txt',
-                                          this would resolve to '/home/user/docs/subfolder/file.txt'.
-    Returns:
-        str: The resolved real path, or None if invalid/inaccessible.
-    """
-    # First, resolve the real path of the original shared item (file or folder)
-    original_shared_real_path = resolve_path_for_user(share_entry.sharer_user_id, share_entry.path)
-    
-    if not original_shared_real_path or not os.path.exists(original_shared_real_path):
-        return None
-
-    if not virtual_sub_path or virtual_sub_path == '/':
-        return original_shared_real_path
-    
-    # If a sub-path is provided, append it to the original shared item's real path
-    # and then resolve to prevent path traversal.
-    target_real_path = os.path.join(original_shared_real_path, virtual_sub_path.lstrip('/'))
-    resolved_target_real_path = os.path.realpath(target_real_path)
-
-    # Ensure the resolved path is still within the original shared item's boundaries
-    if not resolved_target_real_path.startswith(os.path.realpath(original_shared_real_path)):
-        return None
-        
-    return resolved_target_real_path
 
 @user_shares_bp.route("/files/share-with-user", methods=["POST"])
 @login_required
@@ -147,7 +111,7 @@ def get_shared_with_me_items():
 
     for share in shared_items:
         try:
-            real_path = _resolve_shared_item_real_path(share) # Use the new helper
+            real_path = resolve_path_for_user(share.sharer_user_id, share.path)
             if not real_path or not os.path.exists(real_path):
                 continue
             
@@ -162,76 +126,21 @@ def get_shared_with_me_items():
                 display_name = "Home Directory"
 
             result.append({
-                "id": share.id, # This is the UserFileShare ID
+                "id": share.id,
                 "name": display_name,
-                "path": share.path, # Original path relative to sharer's home
+                "path": share.path,
                 "type": item_type,
                 "size": stat_info.st_size,
                 "modified_at": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
                 "sharer_id": share.sharer_user_id,
                 "sharer_name": sharer_name,
-                "shared_at": share.shared_at.isoformat(),
-                "virtual_path": "/" # Top-level shared items are at virtual root "/"
+                "shared_at": share.shared_at.isoformat()
             })
         except Exception as e:
             print(f"Error processing shared-with-me item {share.id} (path: {share.path}): {e}")
             continue
 
     return jsonify(result)
-
-@user_shares_bp.route("/files/shared-with-me/<int:share_id>/browse-folder", methods=["GET"])
-@login_required
-def browse_shared_with_me_folder(share_id):
-    current_user_id = session.get('user_id')
-    if not current_user_id:
-        return jsonify({"error": "Authentication required"}), 401
-
-    share_entry = UserFileShare.query.filter_by(id=share_id, recipient_user_id=current_user_id).first()
-    if not share_entry:
-        return jsonify({"error": "Shared item not found or access denied"}), 404
-
-    virtual_sub_path = request.args.get('virtual_sub_path', '/')
-    real_target_path = _resolve_shared_item_real_path(share_entry, virtual_sub_path)
-
-    if not real_target_path or not os.path.exists(real_target_path):
-        return jsonify({"error": "Path not found or inaccessible within shared item."}), 404
-    
-    if not os.path.isdir(real_target_path):
-        return jsonify({"error": "Cannot browse a file as a directory."}), 400
-
-    items_to_display = []
-    for item_name in sorted(os.listdir(real_target_path), key=str.lower):
-        full_item_real_path = os.path.join(real_target_path, item_name)
-        if not os.path.exists(full_item_real_path):
-            continue
-        
-        item_type = 'dir' if os.path.isdir(full_item_real_path) else 'file'
-        item_size = os.path.getsize(full_item_real_path) if item_type == 'file' else 0
-        
-        # Construct the virtual path for this item relative to the shared item's root
-        item_virtual_path = os.path.join(virtual_sub_path, item_name).replace('\\', '/')
-        
-        items_to_display.append({
-            "id": share_id, # Keep the top-level share_id for all items within this shared folder
-            "name": item_name,
-            "path": share_entry.path, # Original path relative to sharer's home
-            "type": item_type,
-            "size": item_size,
-            "modified_at": datetime.fromtimestamp(os.stat(full_item_real_path).st_mtime).isoformat(),
-            "sharer_id": share_entry.sharer_user_id,
-            "sharer_name": User.query.get(share_entry.sharer_user_id).username,
-            "shared_at": share_entry.shared_at.isoformat(),
-            "virtual_path": item_virtual_path # The virtual path within the shared item
-        })
-        
-    items_to_display.sort(key=lambda x: (x['type'] != 'dir', x['name'].lower()))
-
-    return jsonify({
-        "share_id": share_id,
-        "name": os.path.basename(share_entry.path),
-        "current_virtual_path": virtual_sub_path,
-        "contents": items_to_display
-    })
 
 @user_shares_bp.route("/files/shared-by-me", methods=["GET"])
 @login_required
@@ -285,8 +194,6 @@ def get_shared_by_me_items():
 @login_required
 def view_shared_with_me_file():
     share_id = request.args.get('share_id')
-    virtual_sub_path = request.args.get('virtual_sub_path', '/')
-
     if not share_id:
         return jsonify({"error": "Share ID is required"}), 400
 
@@ -296,7 +203,7 @@ def view_shared_with_me_file():
     if not share_entry:
         return jsonify({"error": "Shared item not found or access denied"}), 404
 
-    real_path = _resolve_shared_item_real_path(share_entry, virtual_sub_path)
+    real_path = resolve_path_for_user(share_entry.sharer_user_id, share_entry.path)
     if not real_path or not os.path.isfile(real_path):
         return jsonify({"error": "File not found or inaccessible"}), 404
     
@@ -309,8 +216,6 @@ def view_shared_with_me_file():
 @login_required
 def download_shared_with_me_file():
     share_id = request.args.get('share_id')
-    virtual_sub_path = request.args.get('virtual_sub_path', '/')
-
     if not share_id:
         return jsonify({"error": "Share ID is required"}), 400
 
@@ -320,26 +225,12 @@ def download_shared_with_me_file():
     if not share_entry:
         return jsonify({"error": "Shared item not found or access denied"}), 404
 
-    real_path = _resolve_shared_item_real_path(share_entry, virtual_sub_path)
+    real_path = resolve_path_for_user(share_entry.sharer_user_id, share_entry.path)
     if not real_path or not os.path.exists(real_path):
         return jsonify({"error": "File not found or inaccessible"}), 404
     
     try:
-        if os.path.isdir(real_path):
-            # If it's a directory, zip its contents
-            memory_file = io.BytesIO()
-            with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
-                archive_base_name = os.path.basename(real_path)
-                for root, _, files in os.walk(real_path):
-                    for file in files:
-                        file_real_path = os.path.join(root, file)
-                        archive_path = os.path.join(archive_base_name, os.path.relpath(file_real_path, real_path))
-                        zf.write(file_real_path, archive_path)
-            memory_file.seek(0)
-            return send_file(memory_file, download_name=f'{archive_base_name}.zip', as_attachment=True)
-        else:
-            # If it's a file, send the file directly
-            return send_file(real_path, as_attachment=True, download_name=os.path.basename(real_path))
+        return send_file(real_path, as_attachment=True, download_name=os.path.basename(real_path))
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -347,8 +238,6 @@ def download_shared_with_me_file():
 @login_required
 def get_shared_with_me_file_content():
     share_id = request.args.get('share_id')
-    virtual_sub_path = request.args.get('virtual_sub_path', '/')
-
     if not share_id:
         return jsonify({"error": "Share ID is required"}), 400
 
@@ -358,7 +247,7 @@ def get_shared_with_me_file_content():
     if not share_entry:
         return jsonify({"error": "Shared item not found or access denied"}), 404
 
-    real_path = _resolve_shared_item_real_path(share_entry, virtual_sub_path)
+    real_path = resolve_path_for_user(share_entry.sharer_user_id, share_entry.path)
     if not real_path or not os.path.isfile(real_path):
         return jsonify({"error": "File not found or inaccessible"}), 404
     

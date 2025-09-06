@@ -41,8 +41,7 @@ const FileManagerActions = ({
           <button onClick={onCreateFolder} className={actionButtonStyles}><FolderPlus size={16} /> New Folder</button>
         </>
       )}
-      {/* The 'Up' button is now always available for browsing, but disabled at root */}
-      <button onClick={onGoUp} disabled={currentPath === '/' && !isSharedWithMeView} className={actionButtonStyles}><ArrowUp size={16} /> Up</button>
+      {!isTrashView && !isSharedWithMeView && <button onClick={onGoUp} disabled={currentPath === '/'} className={actionButtonStyles}><ArrowUp size={16} /> Up</button>}
     </div>
   );
 };
