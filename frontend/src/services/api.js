@@ -26,6 +26,9 @@ export const updateCurrentUserProfile = (data) => api.put('/user/profile', data)
 export const uploadAvatar = (formData) => api.post('/user/avatar', formData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });
+export const uploadAlarmSound = (formData) => api.post('/user/alarm-sound', formData, { // New: Upload custom alarm sound
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
 
 // Settings
 export const getUserSettings = () => api.get("/settings");

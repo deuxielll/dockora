@@ -16,8 +16,8 @@ from routes.containers import containers_bp
 from routes.files import files_bp
 from routes.system import system_bp
 from routes.apps import apps_bp, start_app_refresh_scheduler
-from routes.download_client import download_client_bp # New import
-from routes.ssh import ssh_bp # New import
+from routes.download_client import download_client_bp
+from routes.ssh import ssh_bp
 
 def create_app():
     app = Flask(__name__, template_folder='templates')
@@ -39,8 +39,8 @@ def create_app():
     app.register_blueprint(files_bp)
     app.register_blueprint(system_bp, url_prefix='/api')
     app.register_blueprint(apps_bp, url_prefix='/api')
-    app.register_blueprint(download_client_bp, url_prefix='/api') # Register new blueprint
-    app.register_blueprint(ssh_bp, url_prefix='/api') # Register new blueprint
+    app.register_blueprint(download_client_bp, url_prefix='/api')
+    app.register_blueprint(ssh_bp, url_prefix='/api')
 
     return app
 
@@ -71,6 +71,7 @@ if __name__ == "__main__":
         os.makedirs(os.path.realpath('/data/home'), exist_ok=True)
         os.makedirs('/data/.trash', exist_ok=True)
         os.makedirs('/data/avatars', exist_ok=True)
+        os.makedirs('/data/alarm_sounds', exist_ok=True) # New: Create alarm sounds directory
         
         scheduler_thread = threading.Thread(target=start_app_refresh_scheduler, args=(app,), daemon=True)
         scheduler_thread.start()

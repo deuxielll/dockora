@@ -74,11 +74,13 @@ def update_current_user_profile():
     })
 
 AVATAR_UPLOAD_FOLDER = '/data/avatars'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALARM_SOUND_UPLOAD_FOLDER = '/data/alarm_sounds' # New: Alarm sound upload folder
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'} # Renamed for clarity
+ALLOWED_AUDIO_EXTENSIONS = {'mp3', 'wav', 'ogg'} # New: Allowed audio extensions
 
-def allowed_file(filename):
+def allowed_file(filename, allowed_extensions):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+           filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
 @users_bp.route("/user/avatar", methods=["POST"])
 @login_required
@@ -93,12 +95,12 @@ def upload_avatar():
     file = request.files['file']
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
-    if file and allowed_file(file.filename):
+    if file and allowed_file(file.filename, ALLOWED_IMAGE_EXTENSIONS): # Use ALLOWED_IMAGE_EXTENSIONS
         filename = secure_filename(file.filename)
         extension = filename.rsplit('.', 1)[1].lower()
         new_filename = f"user_{user.id}.{extension}"
         
-        for ext in ALLOWED_EXTENSIONS:
+        for ext in ALLOWED_IMAGE_EXTENSIONS: # Iterate through image extensions
             old_file = os.path.join(AVATAR_UPLOAD_FOLDER, f"user_{user.id}.{ext}")
             if os.path.exists(old_file) and old_file != os.path.join(AVATAR_UPLOAD_FOLDER, new_filename):
                 os.remove(old_file)
@@ -110,6 +112,48 @@ def upload_avatar():
         return jsonify({"success": True, "avatar_url": user.avatar_url})
     
     return jsonify({"error": "File type not allowed"}), 400
+
+# New route for uploading custom alarm sounds
+@users_bp.route("/user/alarm-sound", methods=["POST"])
+@login_required
+def upload_alarm_sound():
+    user_id = session.get('user_id')
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    
+    if file and allowed_file(file.filename, ALLOWED_AUDIO_EXTENSIONS): # Use ALLOWED_AUDIO_EXTENSIONS
+        os.makedirs(ALARM_SOUND_UPLOAD_FOLDER, exist_ok=True) # Ensure directory exists
+        filename = secure_filename(file.filename)
+        extension = filename.rsplit('.', 1)[1].lower()
+        new_filename = f"user_{user.id}_alarm.{extension}" # Unique filename per user for alarm sound
+
+        # Remove any existing custom alarm sound for this user
+        for ext in ALLOWED_AUDIO_EXTENSIONS:
+            old_file = os.path.join(ALARM_SOUND_UPLOAD_FOLDER, f"user_{user.id}_alarm.{ext}")
+            if os.path.exists(old_file) and old_file != os.path.join(ALARM_SOUND_UPLOAD_FOLDER, new_filename):
+                os.remove(old_file)
+
+        file.save(os.path.join(ALARM_SOUND_UPLOAD_FOLDER, new_filename))
+        
+        # Update user setting with the new custom alarm sound URL
+        setting = UserSetting.query.filter_by(user_id=user_id, key='customAlarmSoundUrl').first()
+        if setting:
+            setting.value = f"/alarm_sounds/{new_filename}"
+        else:
+            setting = UserSetting(user_id=user_id, key='customAlarmSoundUrl', value=f"/alarm_sounds/{new_filename}")
+            db.session.add(setting)
+        
+        db.session.commit()
+        return jsonify({"success": True, "custom_alarm_sound_url": setting.value})
+    
+    return jsonify({"error": "File type not allowed. Only MP3, WAV, OGG are supported."}), 400
 
 @users_bp.route("/users", methods=["GET"])
 @login_required

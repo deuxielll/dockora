@@ -7,6 +7,7 @@ from routes.trash_operations import trash_operations_bp
 from routes.public_shares import public_shares_bp
 from routes.user_shares import user_shares_bp
 from routes.file_activity import file_activity_bp
+from routes.users import ALARM_SOUND_UPLOAD_FOLDER # New: Import ALARM_SOUND_UPLOAD_FOLDER
 
 files_bp = Blueprint('files', __name__)
 
@@ -15,6 +16,11 @@ AVATAR_FOLDER = '/data/avatars'
 @files_bp.route("/avatars/<path:filename>")
 def serve_avatar(filename):
     return send_from_directory(AVATAR_FOLDER, filename)
+
+# New route to serve custom alarm sounds
+@files_bp.route("/alarm_sounds/<path:filename>")
+def serve_alarm_sound(filename):
+    return send_from_directory(ALARM_SOUND_UPLOAD_FOLDER, filename)
 
 # Register sub-blueprints
 files_bp.register_blueprint(file_operations_bp, url_prefix='/api')
