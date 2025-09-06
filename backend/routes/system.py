@@ -93,10 +93,10 @@ def network_stats():
         online_status = True
     except requests.RequestException as e:
         current_app.logger.warning(f"Online status check failed: {e}")
-        errors.append(f"Online check failed: {e}")
+        errors.append("No internet connection") # Explicitly add this error
         online_status = False
 
-    # Get public IP and location
+    # Get public IP and location - only if online
     if online_status:
         try:
             geo_res = requests.get('http://ip-api.com/json/?fields=status,message,country,city,query', timeout=2)
@@ -113,7 +113,7 @@ def network_stats():
         except requests.RequestException as e:
             current_app.logger.warning(f"Public IP/location lookup failed: {e}")
             errors.append(f"Public IP/location lookup failed: {e}")
-            # Fallback to local IP as 'public' if external fails
+            # Fallback to local IP as 'public' if external fails (this is a bit misleading, but keeps a value)
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 s.connect(("8.8.8.8", 80))
@@ -123,11 +123,11 @@ def network_stats():
                 current_app.logger.warning(f"Local IP fallback failed: {e}")
                 errors.append(f"Local IP fallback failed: {e}")
 
-        # Latency and Packet Loss using ping
+        # Latency and Packet Loss using ping - only if online
         try:
             ping_output = subprocess.run(['ping', '-c', '4', '-W', '1', '8.8.8.8'], capture_output=True, text=True, check=True)
             
-            latency_match = re.search(r'min/avg/max/mdev = [\d.]+/([\d.]+)/[\d.]+/[\d.]+ ms', ping_output.stdout)
+            latency_match = re.search(r'min/avg/max/mdev = [\d.]+/([\d.]+)/[\d.]+/[.\d]+ ms', ping_output.stdout)
             if latency_match:
                 ping_latency = float(latency_match.group(1))
             else:
@@ -149,8 +149,15 @@ def network_stats():
             errors.append(f"Error during ping: {e}")
             ping_latency = "N/A"
             packet_loss = "N/A"
+    else:
+        # If offline, ensure these are explicitly N/A
+        public_ip = "N/A"
+        location = "N/A"
+        ping_latency = "N/A"
+        packet_loss = "N/A"
 
-    # Get local IP, subnet, gateway, connection type
+
+    # Get local IP, subnet, gateway, connection type (always attempt, as it's local)
     try:
         stats_if = psutil.net_if_stats()
         addrs = psutil.net_if_addrs()
@@ -291,7 +298,12 @@ def qbittorrent_login(config):
             # Only set the Referer for subsequent requests in the session
             qbit_session.headers.update({'Referer': origin_and_referer})
             return True
-    except (requests.RequestException, KeyError): pass
+    except requests.RequestException: # Catch network errors specifically
+        current_app.logger.error("qBittorrent login failed due to network error.")
+        return False
+    except KeyError:
+        current_app.logger.error("qBittorrent login failed due to unexpected response format.")
+        return False
     return False
 
 def transmission_request(config, method, args=None):
@@ -314,7 +326,12 @@ def transmission_request(config, method, args=None):
             res = requests.post(url, json=payload, headers=headers, auth=auth, timeout=5)
         res.raise_for_status()
         return res.json()
-    except requests.RequestException as e: raise e
+    except requests.RequestException as e:
+        current_app.logger.error(f"Transmission RPC request failed due to network error: {e}")
+        raise ConnectionError("Failed to connect to Transmission client (network error).") from e
+    except Exception as e:
+        current_app.logger.error(f"Transmission RPC request failed: {e}")
+        raise e
 
 @system_bp.route("/download-client/stats", methods=["GET"])
 @login_required
@@ -345,6 +362,11 @@ def get_download_client_stats():
             return jsonify({"dl_speed": stats.get('downloadSpeed', 0), "up_speed": stats.get('uploadSpeed', 0)})
         
         else: return jsonify({"error": "Unsupported client type."}), 400
+    except ConnectionError as e: # Catch specific network error from transmission_request
+        if client_type == 'qbittorrent':
+            qbit_auth_cookie = None
+            qbit_session = requests.Session()
+        return jsonify({"error": str(e)}), 500
     except (requests.RequestException, json.JSONDecodeError, KeyError, ValueError) as e:
         if client_type == 'qbittorrent':
             qbit_auth_cookie = None
@@ -395,6 +417,11 @@ def get_torrents():
             } for t in sorted_torrents[:5]]
             return jsonify(normalized_torrents)
 
+    except ConnectionError as e: # Catch specific network error from transmission_request
+        if client_type == 'qbittorrent':
+            qbit_auth_cookie = None
+            qbit_session = requests.Session()
+        return jsonify({"error": str(e)}), 500
     except (requests.RequestException, json.JSONDecodeError, KeyError, ValueError) as e:
         if client_type == 'qbittorrent':
             qbit_auth_cookie = None
@@ -447,6 +474,8 @@ def torrent_action():
             transmission_request(config, action_map[action], args)
             return jsonify({"success": True})
 
+    except ConnectionError as e: # Catch specific network error from transmission_request
+        return jsonify({"error": str(e)}), 500
     except (requests.RequestException, json.JSONDecodeError, KeyError, ValueError) as e:
         return jsonify({"error": str(e)}), 500
 

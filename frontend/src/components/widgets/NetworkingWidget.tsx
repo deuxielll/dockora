@@ -132,7 +132,56 @@ const NetworkingWidget = () => {
       return <div className="flex-grow flex items-center justify-center text-sm text-gray-500">Could not load network data.</div>;
     }
 
-    // Display detailed errors if present
+    // Display prominent "No internet connection" if offline
+    if (!stats.online_status) {
+      return (
+        <div className="flex-grow flex flex-col items-center justify-center text-center text-red-500 p-4">
+          <WifiOff size={48} className="mb-4" />
+          <p className="font-bold text-lg">No Internet Connection</p>
+          <p className="text-sm text-gray-400 mt-2">
+            You are currently offline. Local network services may still be available.
+          </p>
+          {stats.errors && stats.errors.length > 0 && (
+            <div className="mt-4 text-xs text-gray-400">
+              <p className="font-semibold">Details:</p>
+              {stats.errors.map((err, index) => (
+                <p key={index}>{err}</p>
+              ))}
+            </div>
+          )}
+          {/* Still display local network info if available */}
+          <div className="flex flex-col gap-2 text-sm text-gray-400 mt-4 w-full max-w-xs">
+            <div className="flex justify-between items-center w-full">
+              <div className="flex items-center gap-2">
+                {stats.connection_type === 'wifi' && <Wifi size={16} />}
+                {stats.connection_type === 'lan' && <Server size={16} />}
+                <span className="capitalize">{stats.connection_type}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <WifiOff size={16} className="text-red-500" />
+                <span className="text-red-400">Offline</span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center w-full">
+              <div className="flex items-center gap-2">
+                <Server size={16} />
+                <span>Local IP:</span>
+              </div>
+              <span>{stats.local_ip}</span>
+            </div>
+            <div className="flex justify-between items-center w-full">
+              <div className="flex items-center gap-2">
+                <MapPin size={16} />
+                <span>Gateway:</span>
+              </div>
+              <span>{stats.gateway}</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Display detailed errors if present (when online but other issues)
     if (stats.errors && stats.errors.length > 0) {
       return (
         <div className="flex-grow flex flex-col items-center justify-center text-center text-red-500 text-sm p-4">

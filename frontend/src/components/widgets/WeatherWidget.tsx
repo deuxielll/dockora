@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Sun, Cloud, CloudRain, CloudSnow, Wind, Loader, Zap, CloudFog, Droplets, Umbrella, CloudSun } from 'lucide-react';
+import { Settings, Sun, Cloud, CloudRain, CloudSnow, Wind, Loader, Zap, CloudFog, Droplets, Umbrella, CloudSun, WifiOff } from 'lucide-react';
 import axios from 'axios';
 import { useSettings } from '../../hooks/useSettings';
 
@@ -95,8 +95,13 @@ const WeatherWidget = () => {
           });
         }
       } catch (err) {
-        if (err.response?.status === 401) setError("Invalid API Key.");
-        else setError("Could not fetch weather data.");
+        if (axios.isAxiosError(err) && err.code === 'ERR_NETWORK') {
+          setError("No internet connection. Could not fetch weather data.");
+        } else if (err.response?.status === 401) {
+          setError("Invalid API Key.");
+        } else {
+          setError("Could not fetch weather data.");
+        }
         console.error("Weather fetch error:", err);
       } finally {
         setIsLoading(false);
@@ -109,6 +114,15 @@ const WeatherWidget = () => {
   const renderContent = () => {
     if (isLoading) {
       return <div className="flex-grow flex items-center justify-center"><Loader className="animate-spin text-blue-500" /></div>;
+    }
+    if (error && error.includes("No internet connection")) {
+      return (
+        <div className="flex-grow flex flex-col items-center justify-center text-center text-red-500 p-4">
+          <WifiOff size={48} className="mb-4" />
+          <p className="font-bold text-lg">No Internet Connection</p>
+          <p className="text-sm text-gray-400 mt-2">{error}</p>
+        </div>
+      );
     }
     if (provider === 'openweathermap' && !apiKey) {
       return (

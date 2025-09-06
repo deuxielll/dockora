@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowDown, ArrowUp, Settings, Loader } from 'lucide-react';
+import { ArrowDown, ArrowUp, Settings, Loader, WifiOff } from 'lucide-react';
 import { useSettings } from '../../hooks/useSettings';
 import { getDownloadClientStats, getTorrents, torrentAction } from '../../services/api';
 import TorrentItem from './download-client/TorrentItem';
@@ -27,6 +27,7 @@ const DownloadClientWidget = () => {
       setIsLoading(false);
       setStats(null);
       setTorrents([]);
+      setError(null); // Clear any previous errors
       return;
     }
     try {
@@ -38,7 +39,8 @@ const DownloadClientWidget = () => {
       setTorrents(torrentsRes.data);
       setError(null);
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to fetch client data.");
+      const errorMessage = err.response?.data?.error || err.message || "Failed to fetch client data.";
+      setError(errorMessage);
       console.error("Download client error:", err);
     } finally {
       if (isLoading) setIsLoading(false);
@@ -83,6 +85,15 @@ const DownloadClientWidget = () => {
           <Settings size={48} className="text-gray-200 mb-4" />
           <p className="font-semibold text-gray-200">Download Client</p>
           <p className="text-sm text-gray-400">No client configured in Settings.</p>
+        </div>
+      );
+    }
+    if (error && error.includes("network error")) {
+      return (
+        <div className="flex-grow flex flex-col items-center justify-center text-center text-red-500 p-4">
+          <WifiOff size={48} className="mb-4" />
+          <p className="font-bold text-lg">No Internet Connection</p>
+          <p className="text-sm text-gray-400 mt-2">{error}</p>
         </div>
       );
     }
