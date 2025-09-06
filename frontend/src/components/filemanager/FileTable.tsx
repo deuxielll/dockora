@@ -14,7 +14,7 @@ const FileTable = ({
   onItemClick,
   onItemDoubleClick,
   onItemContextMenu,
-  onDragStart,
+  onDragStart, // This prop is now correctly named and passed
   onItemDragEnter,
   onItemDragLeave,
   onDropOnItem,
@@ -78,7 +78,7 @@ const FileTable = ({
     return null;
   };
 
-  if (isLoading) return <FileTableSkeleton />;
+  if (isLoading) return <FileTableSkeleton />; // Use the new skeleton here
   if (error) return <div className="text-center py-12 text-red-500">{error}</div>;
   if (sortedItems.length === 0) {
     let message = 'This directory is empty.';
@@ -142,7 +142,7 @@ const FileTable = ({
               {item.type === 'dir' ? <Folder size={20} className="text-blue-400" /> : <FileText size={20} className="text-gray-400" />}
               <span className="font-medium text-gray-200 truncate">{item.name}</span>
               {item.is_shared && !isTrashView && !isSharedWithMeView && (
-                <span className="w-2 h-2 bg-accent rounded-full ml-2" title="This item is shared. Check 'My Shares' for details."></span>
+                <span className="w-2 h-2 bg-accent rounded-full ml-2" title="Shared by you"></span>
               )}
             </td>
             {isTrashView && <td className="p-4 text-sm hidden lg:table-cell truncate text-gray-300" title={item.original_path}>{item.original_path}</td>}
