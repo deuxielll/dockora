@@ -33,12 +33,12 @@ const DashboardLayout = () => {
   const { currentUser } = useAuth();
   const activeTab = location.pathname === '/' ? 'home' : location.pathname.split('/')[1];
   const isFileManager = activeTab === 'files';
-  const isSettingsPage = activeTab === 'settings'; // New check for settings page
+  // Removed isSettingsPage check from here, as SettingsPage will manage its own scrolling.
 
   return (
     <div className="flex h-screen text-black dark:text-gray-200 font-sans">
       <div className="flex-1 flex flex-col overflow-hidden">
-        <main className={`flex-1 overflow-x-hidden ${isFileManager ? '' : 'p-4 sm:p-6 pb-32'} ${isSettingsPage ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}`}>
+        <main className={`flex-1 overflow-x-hidden ${isFileManager ? '' : 'p-4 sm:p-6 pb-32'} overflow-y-auto no-scrollbar`}>
           <Suspense fallback={<LoadingSpinner />}>
             <Outlet />
           </Suspense>
