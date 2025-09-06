@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { useSettings } from '../hooks/useSettings';
+import { AppWindow } from 'lucide-react'; // Re-introducing Lucide React for fallback
 
 // Map common app names to external SVG icon URLs (from Simple Icons CDN)
 const iconMap: { [key: string]: string } = {
@@ -49,9 +50,6 @@ const iconMap: { [key: string]: string } = {
   dockora: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/docker.svg', // Using docker icon for dockora
 };
 
-// A generic fallback icon (simple app window SVG data URL)
-const defaultFallbackIconUrl = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWFwcC13aW5kb3ciPjxyZWN0IHdpZHRoPSI3IiBoZWlnaHQ9IjciIHg9IjMiIHk9IjMiIHJ4PSIxIiByeT0iMSIvPjxyZWN0IHdpZHRoPSI3IiBoZWlnaHQ9IjciIHg9IjE0IiB5PSIzIiByeT0iMSIgcnk9IjEiLz48cmVjdCB3aWR0aD0iNyIgaGVpZ2h0PSI3IiB4PSIxNCIgeT0iMTQiIHJ4PSIxIiByeT0iMSIvPjxyZl9lY3Qgd2lkdGg9IjciIGhlaWdodD0iNyIgeD0iMyIgeT0iMTQiIHJ4PSIxIiByeT0iMSIvPjwvc3ZnPg==';
-
 const AppIcon = ({ appId, appName }) => {
   const { settings } = useSettings();
   const customAppIcons = useMemo(() => {
@@ -74,15 +72,21 @@ const AppIcon = ({ appId, appName }) => {
     return null;
   }, [appName]);
 
-  // Priority: Custom URL > Auto-detected URL > Default Fallback
-  const finalIconUrl = customIconUrl || autoDetectedIconUrl || defaultFallbackIconUrl;
+  // Priority: Custom URL > Auto-detected URL > Lucide React Fallback
+  const finalIconUrl = customIconUrl || autoDetectedIconUrl;
 
   return (
-    <img
-      src={finalIconUrl}
-      alt={`${appName} icon`}
-      className="w-full h-full object-contain p-1"
-    />
+    <>
+      {finalIconUrl ? (
+        <img
+          src={finalIconUrl}
+          alt={`${appName} icon`}
+          className="w-full h-full object-contain p-1"
+        />
+      ) : (
+        <AppWindow size={32} className="text-gray-400" /> // Lucide React fallback
+      )}
+    </>
   );
 };
 
