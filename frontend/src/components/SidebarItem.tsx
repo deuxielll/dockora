@@ -1,46 +1,14 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Folder, Loader } from 'lucide-react'; // Removed ChevronRight
-import { browseFiles, uploadFile } from '../services/api';
+import React, { useState, useCallback } from 'react';
+import { Folder } from 'lucide-react';
+import { uploadFile } from '../services/api';
 import toast from 'react-hot-toast'; // Import toast for notifications
 
 const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate, depth = 0 }) => {
-    // Removed isExpanded state
-    const [subItems, setSubItems] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
-    const [hasChildren, setHasChildren] = useState(false);
 
     const isSpecialSection = path === 'trash' || path === 'shared-with-me' || path === 'my-shares';
 
-    const fetchContents = useCallback(async () => {
-        if (isSpecialSection) {
-            setSubItems([]);
-            setHasChildren(false);
-            setIsLoading(false);
-            return;
-        }
-        setIsLoading(true);
-        try {
-            const res = await browseFiles(path);
-            const folders = res.data.filter(item => item.type === 'dir');
-            setSubItems(folders);
-            setHasChildren(folders.length > 0);
-        } catch (err) {
-            console.error(`Failed to fetch contents for ${path}:`, err);
-            setHasChildren(false);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [path, isSpecialSection]);
-
-    useEffect(() => {
-        // Always fetch contents for non-special folders if not collapsed
-        if (!isCollapsed && !isSpecialSection) {
-            fetchContents();
-        }
-    }, [fetchContents, isCollapsed, isSpecialSection]);
-
-    // Removed handleToggleExpand
+    // Removed fetchContents, useEffect, isExpanded, subItems, isLoading, hasChildren states and related logic
 
     const handleNavigate = () => {
         onNavigate(path);
@@ -50,7 +18,7 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate, depth = 
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
-        if (isSpecialSection) { // Only check for special sections, as folders are always 'open'
+        if (isSpecialSection) {
             toast.error("Cannot upload files to this section.");
             return;
         }
@@ -64,7 +32,7 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate, depth = 
             });
             try {
                 await Promise.all(uploadPromises);
-                fetchContents(); // Refresh contents after upload
+                // No need to call fetchContents here as subfolders are not displayed
                 toast.success(`${files.length} file(s) uploaded to ${name}.`);
             } catch (err) {
                 toast.error(err.response?.data?.error || 'An error occurred during upload.');
@@ -97,28 +65,7 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate, depth = 
                     </>
                 )}
             </div>
-            {/* Always render sub-items if not collapsed and not a special section */}
-            {!isCollapsed && !isSpecialSection && hasChildren && (
-                <div className="py-1 space-y-1">
-                    {isLoading ? (
-                        <div className={`flex items-center gap-2 ${itemPadding} py-2 text-sm text-gray-400`}>
-                            <Loader size={16} className="animate-spin" /> Loading...
-                        </div>
-                    ) : subItems.length > 0 ? subItems.map(item => (
-                        <SidebarItem
-                            key={item.path}
-                            name={item.name}
-                            icon={Folder} // All sub-items here are folders
-                            path={item.path}
-                            isCollapsed={isCollapsed}
-                            onNavigate={onNavigate}
-                            depth={depth + 1}
-                        />
-                    )) : (
-                        <p className={`${itemPadding} py-2 text-xs text-gray-400`}>No subfolders</p>
-                    )}
-                </div>
-            )}
+            {/* Removed conditional rendering for sub-items */}
         </div>
     );
 };
