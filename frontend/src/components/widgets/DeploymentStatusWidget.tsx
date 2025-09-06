@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useDeployment } from '../../hooks/useDeployment';
 import { Loader, CheckCircle, XCircle, ChevronDown, ChevronUp, Trash2, X } from 'lucide-react';
-import DeploymentStatusWidgetSkeleton from './skeletons/DeploymentStatusWidgetSkeleton';
 
 const DeploymentItem = ({ deployment }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -60,17 +59,6 @@ const DeploymentItem = ({ deployment }) => {
 
 const DeploymentStatusWidget = () => {
   const { deployments, clearAllDeployments } = useDeployment();
-  const [isLoading, setIsLoading] = useState(true); // Add isLoading state
-
-  // Simulate loading for initial render
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500); // Adjust as needed
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return <DeploymentStatusWidgetSkeleton />;
-  }
 
   if (deployments.length === 0) {
     return (

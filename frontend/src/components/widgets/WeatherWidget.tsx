@@ -4,7 +4,6 @@ import axios from 'axios';
 import { useSettings } from '../../hooks/useSettings';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import LoadingSpinner from '../LoadingSpinner';
-import WeatherWidgetSkeleton from './skeletons/WeatherWidgetSkeleton';
 
 const OwmWeatherIcon = ({ code, ...props }) => {
   if (!code) return <CloudSun {...props} />;
@@ -40,7 +39,7 @@ const getWeatherDescription = (code) => {
   return codes[code] || 'Unknown';
 };
 
-const WeatherWidget = () => {
+const WeatherWidget = ({ isInteracting }) => {
   const [weatherData, setWeatherData] = useLocalStorage('dockora-weather-data', null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,6 +78,8 @@ const WeatherWidget = () => {
   useEffect(() => {
     if (!coords) return;
     if (provider === 'openweathermap' && !apiKey) return;
+    // Only fetch weather if not interacting
+    if (isInteracting) return;
 
     const fetchWeather = async () => {
       setIsFetchingNew(true);
@@ -120,11 +121,11 @@ const WeatherWidget = () => {
     fetchWeather();
     const interval = setInterval(fetchWeather, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [apiKey, coords, provider, setWeatherData]);
+  }, [apiKey, coords, provider, setWeatherData, isInteracting]);
 
   const renderContent = () => {
     if (isLoading && !weatherData) { // Only show full loading spinner if no cached data
-      return <WeatherWidgetSkeleton />;
+      return <div className="flex-grow flex items-center justify-center"><Loader className="animate-spin text-blue-500" /></div>;
     }
     if (error && error.includes("Location access denied")) {
       return (
@@ -264,6 +265,9 @@ const WeatherWidget = () => {
 
   return (
     <div className="h-full flex flex-col">
+      <div className="flex items-center justify-end text-gray-200 -mt-2 mb-2 flex-shrink-0">
+        <p className="text-sm font-semibold">{weatherData?.isOwm ? weatherData.name : weatherData?.locationName}</p>
+      </div>
       {renderContent()}
     </div>
   );

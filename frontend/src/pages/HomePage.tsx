@@ -34,7 +34,7 @@ const WIDGETS_CONFIG = {
 const HomePage = () => {
   const { currentUser } = useAuth();
   const { settings, setSetting, isLoading: isSettingsLoading } = useSettings();
-  // Removed isInteracting state and related functions
+  const [isInteracting, setIsInteracting] = useState(false); // New state for drag/resize interaction
 
   const isLayoutLocked = useMemo(() => {
     return settings.lockWidgetLayout === 'true';
@@ -120,7 +120,19 @@ const HomePage = () => {
     setSetting('widgetLayouts', JSON.stringify(allLayouts));
   };
 
-  // Removed handleDragResizeStart and handleDragResizeStop
+  const handleDragResizeStart = () => {
+    if (!isLayoutLocked) {
+      setIsInteracting(true);
+      document.body.classList.add('grabbing'); // Add grabbing cursor globally
+    }
+  };
+
+  const handleDragResizeStop = () => {
+    if (!isLayoutLocked) {
+      setIsInteracting(false);
+      document.body.classList.remove('grabbing'); // Remove grabbing cursor globally
+    }
+  };
 
   const handleHideWidget = (widgetKey) => {
     const newVisibility = { ...widgetVisibility, [widgetKey]: false };
@@ -163,7 +175,10 @@ const HomePage = () => {
           margin={[24, 24]}
           containerPadding={[0, 0]}
           onLayoutChange={handleLayoutChange}
-          // Removed onDragStart, onDragStop, onResizeStart, onResizeStop
+          onDragStart={handleDragResizeStart}
+          onDragStop={handleDragResizeStop}
+          onResizeStart={handleDragResizeStart}
+          onResizeStop={handleDragResizeStop}
           draggableHandle=".drag-handle"
           isDraggable={!isLayoutLocked}
           isResizable={!isLayoutLocked}
@@ -177,7 +192,7 @@ const HomePage = () => {
                   title={WIDGETS_CONFIG[key].title}
                   onHide={handleHideWidget}
                   isLocked={isLayoutLocked}
-                  // Removed isInteracting prop
+                  isInteracting={isInteracting}
                 >
                   <WidgetComponent />
                 </WidgetWrapper>

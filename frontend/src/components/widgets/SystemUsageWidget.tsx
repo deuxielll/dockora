@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Cpu, MemoryStick, HardDrive, Loader } from 'lucide-react';
 import { getSystemStats } from '../../services/api';
 import LoadingSpinner from '../LoadingSpinner';
-import SystemUsageWidgetSkeleton from './skeletons/SystemUsageWidgetSkeleton';
 
 const StatCircle = ({ percentage, label }) => {
   const colorClass = percentage > 80 
@@ -44,29 +43,33 @@ const StatCircle = ({ percentage, label }) => {
   );
 };
 
-const SystemUsageWidget = () => {
+const SystemUsageWidget = ({ isInteracting }) => {
   const [stats, setStats] = useState({ cpu_usage: 0, memory_usage_percent: 0, disk_usage_percent: 0 });
-  const [isLoading, setIsLoading] = useState(true); // Add isLoading state
 
   useEffect(() => {
+    // Only fetch stats if not interacting
+    if (isInteracting) return; 
+
     const fetchStats = async () => {
       try {
         const res = await getSystemStats();
         setStats(res.data);
       } catch (error) {
         console.error("Failed to fetch system stats:", error);
-      } finally {
-        setIsLoading(false); // Set loading to false after first fetch
       }
     };
 
     fetchStats();
     const interval = setInterval(fetchStats, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isInteracting]);
 
-  if (isLoading) {
-    return <SystemUsageWidgetSkeleton />;
+  if (isInteracting) {
+    return (
+      <div className="flex-grow flex items-center justify-center h-full">
+        <LoadingSpinner size={32} />
+      </div>
+    );
   }
 
   return (
