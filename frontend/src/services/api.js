@@ -125,16 +125,9 @@ export const deleteShare = (token) => api.post('/files/unshare', { token });
 export const shareFileWithUsers = (paths, recipient_user_ids) => api.post('/files/share-with-user', { paths, recipient_user_ids });
 export const unshareFileWithUsers = (share_ids) => api.post('/files/unshare-with-user', { share_ids });
 export const getSharedWithMeItems = () => api.get('/files/shared-with-me');
-export const getSharedWithMeFolderContents = (share_id, sub_path) => api.get(`/files/shared-with-me/browse-content?share_id=${share_id}&sub_path=${encodeURIComponent(sub_path)}`);
-export const viewSharedWithMeFile = (share_id, sub_path) => api.get(`/files/shared-with-me/view?share_id=${share_id}&sub_path=${encodeURIComponent(sub_path)}`, { responseType: 'blob' });
-export const downloadSharedWithMeFile = (share_id, sub_path, file_name = null) => {
-  let url = `/files/shared-with-me/download?share_id=${share_id}&sub_path=${encodeURIComponent(sub_path)}`;
-  if (file_name) {
-    url += `&file_name=${encodeURIComponent(file_name)}`;
-  }
-  return api.get(url, { responseType: 'blob' });
-};
-export const getSharedWithMeFileContent = (share_id, sub_path) => api.get(`/files/shared-with-me/content?share_id=${share_id}&sub_path=${encodeURIComponent(sub_path)}`);
+export const viewSharedWithMeFile = (share_id) => api.get(`/files/shared-with-me/view?share_id=${share_id}`, { responseType: 'blob' });
+export const downloadSharedWithMeFile = (share_id) => api.get(`/files/shared-with-me/download?share_id=${share_id}`, { responseType: 'blob' });
+export const getSharedWithMeFileContent = (share_id) => api.get(`/files/shared-with-me/content?share_id=${share_id}`);
 export const getSharedByMeItems = () => api.get('/files/shared-by-me');
 
 // New File Manager Activity APIs

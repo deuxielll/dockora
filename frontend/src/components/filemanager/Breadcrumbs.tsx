@@ -4,29 +4,20 @@ const Breadcrumbs = ({ currentPath, setCurrentPath, isTrashView, isSharedWithMeV
   if (isTrashView) {
     return <div className="flex items-center gap-2 text-sm text-gray-200">Trash</div>;
   }
+  if (isSharedWithMeView) {
+    return <div className="flex items-center gap-2 text-sm text-gray-200">Shared with me</div>;
+  }
   if (isMySharesView) {
     return <div className="flex items-center gap-2 text-sm text-gray-200">My Shares</div>;
   }
 
   const parts = currentPath.split('/').filter(Boolean);
-  const breadcrumbs = [];
+  const breadcrumbs = [{ name: 'root', path: '/' }];
 
-  if (isSharedWithMeView) {
-    breadcrumbs.push({ name: 'Shared with me', path: 'shared-with-me' });
-    let currentSharedPath = 'shared-with-me';
-    // Skip the 'shared-with-me' part itself
-    for (let i = 1; i < parts.length; i++) {
-      const part = parts[i];
-      currentSharedPath += `/${part}`;
-      breadcrumbs.push({ name: part, path: currentSharedPath });
-    }
-  } else {
-    breadcrumbs.push({ name: 'root', path: '/' });
-    let path = '';
-    for (const part of parts) {
-      path += `/${part}`;
-      breadcrumbs.push({ name: part, path });
-    }
+  let path = '';
+  for (const part of parts) {
+    path += `/${part}`;
+    breadcrumbs.push({ name: part, path });
   }
 
   return (
