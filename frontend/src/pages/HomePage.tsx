@@ -65,7 +65,7 @@ const HomePage = () => {
   }), [widgetVisibility, isDownloadClientConfigured]);
 
   const generateDefaultLayouts = useCallback(() => {
-    const breakpoints = { lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 };
+    const breakpoints = { lg: 3, md: 2, sm: 1, xs: 1, xxs: 0 };
     const newLayouts = {};
     for (const [breakpoint, cols] of Object.entries(breakpoints)) {
       newLayouts[breakpoint] = [];
@@ -120,17 +120,15 @@ const HomePage = () => {
   };
 
   const handleDragResizeStart = () => {
-    if (!isLayoutLocked) {
-      setIsInteracting(true);
-      document.body.classList.add('grabbing');
-    }
+    if (isLayoutLocked) return;
+    setIsInteracting(true);
+    document.body.classList.add('grabbing');
   };
 
   const handleDragResizeStop = () => {
-    if (!isLayoutLocked) {
-      setIsInteracting(false);
-      document.body.classList.remove('grabbing');
-    }
+    if (isLayoutLocked) return;
+    setIsInteracting(false);
+    document.body.classList.remove('grabbing');
   };
 
   const handleHideWidget = (widgetKey) => {
