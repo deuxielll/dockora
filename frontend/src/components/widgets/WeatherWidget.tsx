@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Sun, Cloud, CloudRain, CloudSnow, Wind, Loader, Zap, CloudFog, Droplets, Umbrella, CloudSun, WifiOff } from 'lucide-react';
+import { Settings, Sun, Cloud, CloudRain, CloudSnow, Wind, Loader, Zap, CloudFog, Droplets, Umbrella, CloudSun, WifiOff, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 import { useSettings } from '../../hooks/useSettings';
+import { useLocalStorage } from '../../hooks/useLocalStorage'; // Import useLocalStorage
 
 const OwmWeatherIcon = ({ code, ...props }) => {
   if (!code) return <CloudSun {...props} />;
@@ -38,9 +39,10 @@ const getWeatherDescription = (code) => {
 };
 
 const WeatherWidget = () => {
-  const [weatherData, setWeatherData] = useState(null);
+  const [weatherData, setWeatherData] = useLocalStorage('dockora-weather-data', null); // Use localStorage
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingNew, setIsFetchingNew] = useState(false); // New state for active fetching
   const { settings } = useSettings();
   const apiKey = settings.weatherApiKey;
   const provider = settings.weatherProvider || 'openmeteo';
@@ -49,6 +51,7 @@ const WeatherWidget = () => {
   useEffect(() => {
     if (provider === 'openweathermap' && !apiKey) {
       setIsLoading(false);
+      setError("API key setup is required in Settings.");
       return;
     }
 
@@ -76,55 +79,62 @@ const WeatherWidget = () => {
     if (provider === 'openweathermap' && !apiKey) return;
 
     const fetchWeather = async () => {
-      setIsLoading(true);
-      setError(null);
+      setIsFetchingNew(true); // Start fetching
       try {
+        let newWeatherData;
         if (provider === 'openweathermap') {
           const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${coords.lat}&lon=${coords.lon}&appid=${apiKey}&units=metric`);
-          setWeatherData({ ...response.data, isOwm: true });
+          newWeatherData = { ...response.data, isOwm: true, timestamp: Date.now() };
         } else { // openmeteo
           const [weatherRes, geoRes] = await Promise.all([
             axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current=temperature_2m,relativehumidity_2m,apparent_temperature,precipitation,weathercode,windspeed_10m,uv_index&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum&forecast_days=7&timezone=auto`),
             axios.get(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${coords.lat}&longitude=${coords.lon}&localityLanguage=en`)
           ]);
           
-          setWeatherData({
+          newWeatherData = {
               ...weatherRes.data,
               locationName: geoRes.data.city || geoRes.data.locality || 'Unknown Location',
               isOwm: false,
-          });
+              timestamp: Date.now(),
+          };
         }
+        setWeatherData(newWeatherData); // Update localStorage and state
+        setError(null); // Clear any previous errors
       } catch (err) {
         if (axios.isAxiosError(err) && err.code === 'ERR_NETWORK') {
-          setError("No internet connection. Could not fetch weather data.");
+          setError("No internet connection. Displaying cached data.");
         } else if (err.response?.status === 401) {
-          setError("Invalid API Key.");
+          setError("Invalid API Key. Displaying cached data.");
         } else {
-          setError("Could not fetch weather data.");
+          setError("Could not fetch weather data. Displaying cached data.");
         }
         console.error("Weather fetch error:", err);
       } finally {
-        setIsLoading(false);
+        setIsLoading(false); // Initial load is complete
+        setIsFetchingNew(false); // Fetching finished
       }
     };
 
+    // Fetch immediately, then set up interval
     fetchWeather();
-  }, [apiKey, coords, provider]);
+    const interval = setInterval(fetchWeather, 5 * 60 * 1000); // Refresh every 5 minutes
+    return () => clearInterval(interval);
+  }, [apiKey, coords, provider, setWeatherData]);
 
   const renderContent = () => {
-    if (isLoading) {
+    if (isLoading && !weatherData) { // Only show full loading spinner if no cached data
       return <div className="flex-grow flex items-center justify-center"><Loader className="animate-spin text-blue-500" /></div>;
     }
-    if (error && error.includes("No internet connection")) {
+    if (error && error.includes("Location access denied")) {
       return (
         <div className="flex-grow flex flex-col items-center justify-center text-center text-red-500 p-4">
-          <WifiOff size={48} className="mb-4" />
-          <p className="font-bold text-lg">No Internet Connection</p>
+          <Settings size={48} className="mb-4" />
+          <p className="font-bold text-lg">Location Access Denied</p>
           <p className="text-sm text-gray-400 mt-2">{error}</p>
         </div>
       );
     }
-    if (provider === 'openweathermap' && !apiKey) {
+    if (provider === 'openweathermap' && !apiKey && !weatherData) {
       return (
         <div className="flex-grow flex flex-col items-center justify-center text-center p-2">
           <Settings size={48} className="text-gray-400 mb-4" />
@@ -133,105 +143,122 @@ const WeatherWidget = () => {
         </div>
       );
     }
-    if (error) {
+    if (!weatherData && error) { // If no data and there's an error
       return <div className="flex-grow flex items-center justify-center text-center text-red-500 text-sm">{error}</div>;
     }
-    if (weatherData) {
-      if (weatherData.isOwm) {
-        return (
-          <div className="flex-grow flex items-center justify-center text-center">
-            <div className="flex items-center gap-4">
-              <OwmWeatherIcon code={weatherData.weather[0].main} size={48} />
-              <div>
-                <p className="text-4xl font-bold text-gray-200 text-shadow-neo">{Math.round(weatherData.main.temp)}°C</p>
-                <p className="text-sm text-gray-400 capitalize">{weatherData.weather[0].description}</p>
-              </div>
-            </div>
-          </div>
-        );
-      }
+    if (!weatherData) { // If still no data after loading (e.g., initial fetch failed and no cached data)
+      return <div className="flex-grow flex items-center justify-center text-center text-sm text-gray-500">Waiting for location...</div>;
+    }
 
-      const { current, daily } = weatherData;
+    // Display cached data with a warning if there's an error fetching new data
+    const displayError = error && !isFetchingNew;
+    const lastUpdated = weatherData.timestamp ? new Date(weatherData.timestamp).toLocaleTimeString() : 'N/A';
+
+    if (weatherData.isOwm) {
       return (
-        <div className="flex-grow flex flex-col text-center overflow-y-auto no-scrollbar pr-2">
-          <div className="flex items-center justify-center gap-4 mb-2">
-            <div className="text-yellow-400">
-              <MeteoWeatherIcon code={current.weathercode} size={48} />
+        <div className="flex-grow flex flex-col items-center justify-center text-center">
+          {displayError && (
+            <div className="flex items-center text-yellow-500 text-xs mb-2">
+              <AlertTriangle size={14} className="mr-1" />
+              <span>{error} (Last updated: {lastUpdated})</span>
             </div>
+          )}
+          <div className="flex items-center gap-4">
+            <OwmWeatherIcon code={weatherData.weather[0].main} size={48} />
             <div>
-              <p className="text-4xl font-bold text-gray-200 text-shadow-neo">{Math.round(current.temperature_2m)}°C</p>
-              <p className="text-sm text-gray-400 capitalize">
-                {getWeatherDescription(current.weathercode)}
-              </p>
+              <p className="text-4xl font-bold text-gray-200 text-shadow-neo">{Math.round(weatherData.main.temp)}°C</p>
+              <p className="text-sm text-gray-400 capitalize">{weatherData.weather[0].description}</p>
             </div>
-          </div>
-          <p className="text-xs text-gray-400 mb-4">Feels like {Math.round(current.apparent_temperature)}°C</p>
-
-          <div className="grid grid-cols-4 gap-2 text-xs mb-4">
-            <div className="flex flex-col items-center">
-              <Droplets size={16} className="text-blue-400 mb-1" />
-              <span className="text-gray-200">{current.relativehumidity_2m}%</span>
-              <span className="text-gray-400">Humidity</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <Wind size={16} className="text-gray-400 mb-1" />
-              <span className="text-gray-200">{Math.round(current.windspeed_10m)} km/h</span>
-              <span className="text-gray-400">Wind</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <Umbrella size={16} className="text-cyan-400 mb-1" />
-              <span className="text-gray-200">{current.precipitation} mm</span>
-              <span className="text-gray-400">Precip.</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <Sun size={16} className="text-yellow-400 mb-1" />
-              <span className="text-gray-200">{Math.round(current.uv_index)}</span>
-              <span className="text-gray-400">UV Index</span>
-            </div>
-          </div>
-
-          <div className="space-y-2 text-sm">
-            {daily.time.slice(1).map((date, index) => {
-              const i = index + 1;
-              const precipSum = daily.precipitation_sum[i];
-              const snowSum = daily.snowfall_sum[i];
-              
-              return (
-                <div key={date} className="flex justify-between items-center">
-                  <span className="font-semibold w-10 text-left text-gray-200">{new Date(date).toLocaleDateString('en-US', { weekday: 'short' })}</span>
-                  
-                  <div className="flex items-center gap-2 text-cyan-400 w-20 justify-center">
-                    {snowSum > 0 ? (
-                      <>
-                        <CloudSnow size={16} />
-                        <span className="text-gray-200">{snowSum.toFixed(1)} cm</span>
-                      </>
-                    ) : precipSum > 0 ? (
-                      <>
-                        <CloudRain size={16} />
-                        <span className="text-gray-200">{precipSum.toFixed(1)} mm</span>
-                      </>
-                    ) : (
-                      <span className="w-16 h-4"></span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <div className="text-yellow-400">
-                      <MeteoWeatherIcon code={daily.weathercode[i]} size={24} />
-                    </div>
-                    <span className="text-gray-200 w-8 text-right">{Math.round(daily.temperature_2m_min[i])}°</span>
-                    <span className="text-gray-200">/</span>
-                    <span className="font-semibold w-8 text-right text-gray-200">{Math.round(daily.temperature_2m_max[i])}°</span>
-                  </div>
-                </div>
-              );
-            })}
           </div>
         </div>
       );
     }
-    return <div className="flex-grow flex items-center justify-center text-center text-sm text-gray-500">Waiting for location...</div>;
+
+    const { current, daily } = weatherData;
+    return (
+      <div className="flex-grow flex flex-col text-center overflow-y-auto no-scrollbar pr-2">
+        {displayError && (
+          <div className="flex items-center text-yellow-500 text-xs mb-2">
+            <AlertTriangle size={14} className="mr-1" />
+            <span>{error} (Last updated: {lastUpdated})</span>
+          </div>
+        )}
+        <div className="flex items-center justify-center gap-4 mb-2">
+          <div className="text-yellow-400">
+            <MeteoWeatherIcon code={current.weathercode} size={48} />
+          </div>
+          <div>
+            <p className="text-4xl font-bold text-gray-200 text-shadow-neo">{Math.round(current.temperature_2m)}°C</p>
+            <p className="text-sm text-gray-400 capitalize">
+              {getWeatherDescription(current.weathercode)}
+            </p>
+          </div>
+        </div>
+        <p className="text-xs text-gray-400 mb-4">Feels like {Math.round(current.apparent_temperature)}°C</p>
+
+        <div className="grid grid-cols-4 gap-2 text-xs mb-4">
+          <div className="flex flex-col items-center">
+            <Droplets size={16} className="text-blue-400 mb-1" />
+            <span className="text-gray-200">{current.relativehumidity_2m}%</span>
+            <span className="text-gray-400">Humidity</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <Wind size={16} className="text-gray-400 mb-1" />
+            <span className="text-gray-200">{Math.round(current.windspeed_10m)} km/h</span>
+            <span className="text-gray-400">Wind</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <Umbrella size={16} className="text-cyan-400 mb-1" />
+            <span className="text-gray-200">{current.precipitation} mm</span>
+            <span className="text-gray-400">Precip.</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <Sun size={16} className="text-yellow-400 mb-1" />
+            <span className="text-gray-200">{Math.round(current.uv_index)}</span>
+            <span className="text-gray-400">UV Index</span>
+          </div>
+        </div>
+
+        <div className="space-y-2 text-sm">
+          {daily.time.slice(1).map((date, index) => {
+            const i = index + 1;
+            const precipSum = daily.precipitation_sum[i];
+            const snowSum = daily.snowfall_sum[i];
+            
+            return (
+              <div key={date} className="flex justify-between items-center">
+                <span className="font-semibold w-10 text-left text-gray-200">{new Date(date).toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                
+                <div className="flex items-center gap-2 text-cyan-400 w-20 justify-center">
+                  {snowSum > 0 ? (
+                    <>
+                      <CloudSnow size={16} />
+                      <span className="text-gray-200">{snowSum.toFixed(1)} cm</span>
+                    </>
+                  ) : precipSum > 0 ? (
+                    <>
+                      <CloudRain size={16} />
+                      <span className="text-gray-200">{precipSum.toFixed(1)} mm</span>
+                    </>
+                  ) : (
+                    <span className="w-16 h-4"></span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="text-yellow-400">
+                    <MeteoWeatherIcon code={daily.weathercode[i]} size={24} />
+                  </div>
+                  <span className="text-gray-200 w-8 text-right">{Math.round(daily.temperature_2m_min[i])}°</span>
+                  <span className="text-gray-200">/</span>
+                  <span className="font-semibold w-8 text-right text-gray-200">{Math.round(daily.temperature_2m_max[i])}°</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   return (
