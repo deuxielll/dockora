@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getSharedByMeItems, unshareFileWithUsers } from '../../services/api';
+import { getSharedByMeItems, unshareFileWithUsers, viewSharedWithMeFile, downloadSharedWithMeFile } from '../../services/api';
 import LoadingSpinner from '../LoadingSpinner';
-import { Folder, FileText, Users, Trash2 } from 'lucide-react';
+import { Folder, FileText, Users, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const MySharesView = ({ onRefreshFileManager, selectedItems, setSelectedItems }) => {
+const MySharesView = ({ onRefreshFileManager, selectedItems, setSelectedItems, onItemClick, onItemDoubleClick, onItemContextMenu, searchTerm, sortColumn, sortDirection, onSort }) => {
   const [sharedItems, setSharedItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -27,16 +27,6 @@ const MySharesView = ({ onRefreshFileManager, selectedItems, setSelectedItems })
   useEffect(() => {
     fetchSharedItems();
   }, [fetchSharedItems]);
-
-  const handleShareToggle = (shareId) => {
-    const newSelection = new Set(selectedItems);
-    if (newSelection.has(shareId)) {
-      newSelection.delete(shareId);
-    } else {
-      newSelection.add(shareId);
-    }
-    setSelectedItems(newSelection);
-  };
 
   const handleUnshareSelected = async () => {
     if (selectedItems.size === 0) return;
@@ -63,9 +53,50 @@ const MySharesView = ({ onRefreshFileManager, selectedItems, setSelectedItems })
 
   const formatDate = (isoString) => new Date(isoString).toLocaleString();
 
+  const getItemIdentifier = (item) => item.id; // For MySharesView, item.id is the UserFileShare ID
+
+  // Filter items based on search term
+  const filteredItems = sharedItems.filter(item =>
+    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Sort items
+  const sortedItems = [...filteredItems].sort((a, b) => {
+    let aValue, bValue;
+
+    switch (sortColumn) {
+      case 'name':
+        aValue = a.name.toLowerCase();
+        bValue = b.name.toLowerCase();
+        break;
+      case 'size':
+        aValue = a.type === 'file' ? a.size : (a.type === 'dir' ? -1 : 0); // Directories first, then files by size
+        bValue = b.type === 'file' ? b.size : (b.type === 'dir' ? -1 : 0);
+        break;
+      case 'modified_at': // Using shared_at for sorting
+        aValue = new Date(a.shared_at).getTime();
+        bValue = new Date(b.shared_at).getTime();
+        break;
+      default:
+        aValue = a.name.toLowerCase();
+        bValue = b.name.toLowerCase();
+    }
+
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const renderSortIcon = (column) => {
+    if (sortColumn === column) {
+      return sortDirection === 'asc' ? <ArrowUp size={14} className="ml-1" /> : <ArrowDown size={14} className="ml-1" />;
+    }
+    return null;
+  };
+
   if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingSpinner /></div>;
   if (error) return <div className="text-center py-12 text-red-500">{error}</div>;
-  if (sharedItems.length === 0) {
+  if (sortedItems.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center text-gray-400">
         <Users size={48} className="mb-4" />
@@ -89,18 +120,32 @@ const MySharesView = ({ onRefreshFileManager, selectedItems, setSelectedItems })
         <thead>
           <tr className="border-b border-gray-700/50">
             <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 w-12"></th> {/* Checkbox column */}
-            <th className="p-4 text-sm font-semibold tracking-wider text-gray-200">Item Name</th>
+            <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 cursor-pointer hover:text-accent transition-colors" onClick={() => onSort('name')}>
+              <div className="flex items-center">
+                Item Name {renderSortIcon('name')}
+              </div>
+            </th>
             <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden lg:table-cell">Original Path</th>
             <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden md:table-cell">Shared With</th>
-            <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden sm:table-cell">Date Shared</th>
-            <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden md:table-cell">Size</th>
+            <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden sm:table-cell cursor-pointer hover:text-accent transition-colors" onClick={() => onSort('modified_at')}>
+              <div className="flex items-center">
+                Date Shared {renderSortIcon('modified_at')}
+              </div>
+            </th>
+            <th className="p-4 text-sm font-semibold tracking-wider text-gray-200 hidden md:table-cell cursor-pointer hover:text-accent transition-colors" onClick={() => onSort('size')}>
+              <div className="flex items-center">
+                Size {renderSortIcon('size')}
+              </div>
+            </th>
           </tr>
         </thead>
         <tbody>
-          {sharedItems.map((item) => (
+          {sortedItems.map((item) => (
             <tr
               key={item.id}
-              onClick={() => handleShareToggle(item.id)}
+              onClick={(e) => onItemClick(item, e)}
+              onDoubleClick={() => onItemDoubleClick(item)}
+              onContextMenu={(e) => onItemContextMenu(e, item)}
               className={`transition-colors duration-200 cursor-pointer hover:shadow-neo-inset ${selectedItems.has(item.id) ? 'shadow-neo-inset bg-blue-500/10' : ''}`}
             >
               <td className="p-4">

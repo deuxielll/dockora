@@ -78,9 +78,9 @@ const FileManagerContent = ({
             isSharedWithMeView={isSharedWithMeView}
             isMySharesView={isMySharesView}
           />
-          {selectedCount > 0 && !isMySharesView && <p className="text-sm text-gray-200 mt-1">{selectedCount} item(s) selected</p>}
+          {selectedCount > 0 && <p className="text-sm text-gray-200 mt-1">{selectedCount} item(s) selected</p>}
         </div>
-        {!isMySharesView && (
+        {!isMySharesView && ( // Hide FileManagerActions for MySharesView
           <FileManagerActions
             isTrashView={isTrashView}
             isSharedWithMeView={isSharedWithMeView}
@@ -119,8 +119,15 @@ const FileManagerContent = ({
         {isMySharesView ? (
           <MySharesView 
             onRefreshFileManager={onRefreshMyShares} 
-            selectedItems={selectedItems} // Pass selectedItems
-            setSelectedItems={setSelectedItems} // Pass setSelectedItems
+            selectedItems={selectedItems} 
+            setSelectedItems={setSelectedItems}
+            onItemClick={onItemClick}
+            onItemDoubleClick={onItemDoubleClick}
+            onItemContextMenu={onItemContextMenu}
+            searchTerm={searchTerm}
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onSort={onSort}
           />
         ) : (
           <FileTable
