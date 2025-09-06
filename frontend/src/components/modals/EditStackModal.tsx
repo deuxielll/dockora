@@ -3,11 +3,12 @@ import { X } from "lucide-react";
 import { getStack, updateStack } from "../../services/api";
 import { useDeployment } from '../../hooks/useDeployment';
 import LoadingSpinner from "../LoadingSpinner";
+import EnvEditorCard from "../stackcreator/EnvEditorCard"; // New import
 
 const EditStackModal = ({ stackName, onClose, onSuccess }) => {
   const { addDeployment, updateDeployment } = useDeployment();
   const [composeContent, setComposeContent] = useState("");
-  const [envContent, setEnvContent] = useState("");
+  const [envContent, setEnvContent] = useState(""); // Use state for envContent
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -18,7 +19,7 @@ const EditStackModal = ({ stackName, onClose, onSuccess }) => {
       try {
         const res = await getStack(stackName);
         setComposeContent(res.data.compose || "");
-        setEnvContent(res.data.env || "");
+        setEnvContent(res.data.env || ""); // Set envContent from API
       } catch (err) {
         setError(err.response?.data?.error || `Failed to load stack ${stackName}.`);
       } finally {
@@ -39,7 +40,7 @@ const EditStackModal = ({ stackName, onClose, onSuccess }) => {
     onClose();
 
     try {
-      const res = await updateStack(stackName, { compose: composeContent, env: envContent });
+      const res = await updateStack(stackName, { compose: composeContent, env: envContent }); // Pass envContent
       updateDeployment(deploymentId, 'success', res.data.output || "Stack update successful.");
       onSuccess();
     } catch (err) {
@@ -76,13 +77,10 @@ const EditStackModal = ({ stackName, onClose, onSuccess }) => {
               />
             </div>
             <div className="mb-6 flex-grow flex flex-col">
-              <label htmlFor="env" className="block text-sm font-medium mb-2 text-gray-400">.env (Optional)</label>
-              <textarea
-                id="env"
-                value={envContent}
-                onChange={(e) => setEnvContent(e.target.value)}
-                className={`${inputStyles} font-mono text-sm flex-grow`}
-                rows={5}
+              <EnvEditorCard // Use EnvEditorCard here
+                envContent={envContent}
+                setEnvContent={setEnvContent}
+                disabled={isSaving}
               />
             </div>
             {error && <pre className="text-red-500 text-xs mb-4 bg-red-900/30 p-3 rounded-lg whitespace-pre-wrap">{error}</pre>}

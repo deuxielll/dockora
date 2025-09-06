@@ -11,8 +11,9 @@ import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 import NetworksEditorCard from '../components/stackcreator/NetworksEditorCard';
 import StackNameCard from '../components/stackcreator/StackNameCard';
-import StackControlsCard from '../components/stackcreator/StackControlsCard'; // New import
-import ServicesEditorCard from '../components/stackcreator/ServicesEditorCard'; // New import
+import StackControlsCard from '../components/stackcreator/StackControlsCard';
+import ServicesEditorCard from '../components/stackcreator/ServicesEditorCard';
+import EnvEditorCard from '../components/stackcreator/EnvEditorCard'; // New import
 
 // Lazy load widgets
 const SystemUsageWidget = lazy(() => import('../components/widgets/SystemUsageWidget'));
@@ -23,9 +24,10 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
   const [stackName, setStackName] = useState('');
   const [services, setServices] = useState([]);
   const [networks, setNetworks] = useState([]);
+  const [envContent, setEnvContent] = useState(''); // New state for .env content
   const [error, setError] = useState('');
   const [isDeploying, setIsDeploying] = useState(false);
-  const [editorMode, setEditorMode] = useState('visual'); // 'visual' or 'yaml'
+  const [editorMode, setEditorMode] = useState('visual'); // 'visual' or 'yaml' for docker-compose
   const [rawYaml, setRawYaml] = useState('services:\n');
   const [deploymentId, setDeploymentId] = useState(null);
 
@@ -190,7 +192,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
     };
 
     try {
-      await createStack({ name: stackName, compose: yamlContent }, onChunk);
+      await createStack({ name: stackName, compose: yamlContent, env: envContent }, onChunk);
     } catch (err) {
       const errorMessage = `\n--- CLIENT ERROR ---\n${err.message || "An unexpected error occurred."}`;
       fullLog += errorMessage;
@@ -206,10 +208,10 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
   const isFinished = deployment && (deployment.status === 'success' || deployment.status === 'error');
 
   return (
-    <div className="h-full flex flex-col overflow-y-auto"> {/* Make the page itself scrollable */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-8 p-4 sm:p-6"> {/* Added padding here */}
-        {/* Left content area: Stack Name Card, Controls Card, Services Editor Card, and Networks Card */}
-        <div className="w-full lg:w-3/5 flex flex-col gap-8 h-full"> {/* Left column container, now h-full */}
+    <div className="h-full flex flex-col overflow-y-auto">
+      <div className="flex-1 flex flex-col lg:flex-row gap-8 p-4 sm:p-6">
+        {/* Left content area: Stack Name Card, Controls Card, Services Editor Card, Networks Card, and Env Editor Card */}
+        <div className="w-full lg:w-3/5 flex flex-col gap-8 h-full">
           <StackNameCard
             stackName={stackName}
             setStackName={setStackName}
@@ -240,12 +242,19 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
             rawYaml={rawYaml}
             setRawYaml={setRawYaml}
             disabled={deploymentId !== null}
-            className="flex-1" /* This card will grow and scroll internally */
+            className="flex-1"
           />
 
           <NetworksEditorCard
             networks={networks}
             setNetworks={setNetworks}
+            disabled={deploymentId !== null}
+            className="flex-shrink-0"
+          />
+
+          <EnvEditorCard // New Env Editor Card
+            envContent={envContent}
+            setEnvContent={setEnvContent}
             disabled={deploymentId !== null}
             className="flex-shrink-0"
           />
