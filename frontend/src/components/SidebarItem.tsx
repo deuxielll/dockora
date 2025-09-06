@@ -1,14 +1,14 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { ChevronRight, Folder, Loader } from 'lucide-react';
+import { Folder, Loader } from 'lucide-react'; // Removed ChevronRight
 import { browseFiles, uploadFile } from '../services/api';
 import toast from 'react-hot-toast'; // Import toast for notifications
 
 const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate, depth = 0 }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [subItems, setSubItems] = useState([]); // Renamed from subfolders to subItems
+    // Removed isExpanded state
+    const [subItems, setSubItems] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
-    const [hasChildren, setHasChildren] = useState(false); // Renamed from hasSubfolders to hasChildren
+    const [hasChildren, setHasChildren] = useState(false);
 
     const isSpecialSection = path === 'trash' || path === 'shared-with-me' || path === 'my-shares';
 
@@ -34,21 +34,13 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate, depth = 
     }, [path, isSpecialSection]);
 
     useEffect(() => {
-        // Only fetch contents for regular folders on initial render if not collapsed and not a special section
-        // And only if it's a top-level item or already expanded
-        if (!isCollapsed && !isSpecialSection && (depth === 0 || isExpanded)) {
+        // Always fetch contents for non-special folders if not collapsed
+        if (!isCollapsed && !isSpecialSection) {
             fetchContents();
         }
-    }, [fetchContents, isCollapsed, isSpecialSection, depth, isExpanded]);
+    }, [fetchContents, isCollapsed, isSpecialSection]);
 
-    const handleToggleExpand = (e) => {
-        e.stopPropagation();
-        if (isCollapsed || isSpecialSection) return;
-        setIsExpanded(!isExpanded);
-        if (!isExpanded && subItems.length === 0) { // Fetch subfolders only when expanding for the first time
-            fetchContents();
-        }
-    };
+    // Removed handleToggleExpand
 
     const handleNavigate = () => {
         onNavigate(path);
@@ -58,8 +50,8 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate, depth = 
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
-        if (isSpecialSection || !isExpanded) { // Only allow drop if it's an expanded folder
-            toast.error("Cannot upload files to this section or unexpanded folder.");
+        if (isSpecialSection) { // Only check for special sections, as folders are always 'open'
+            toast.error("Cannot upload files to this section.");
             return;
         }
         const files = Array.from(e.dataTransfer.files);
@@ -95,21 +87,18 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate, depth = 
             <div
                 onClick={handleNavigate}
                 title={name}
-                className={`flex items-center ${itemPadding} py-3 rounded-lg cursor-pointer transition-all ${isExpanded && !isCollapsed && !isSpecialSection ? 'shadow-neo-inset' : 'hover:shadow-neo-inset'}`}
+                className={`flex items-center ${itemPadding} py-3 rounded-lg cursor-pointer transition-all hover:shadow-neo-inset`}
             >
                 <Icon size={20} className="text-gray-300" />
                 {!isCollapsed && (
                     <>
                         <span className="ml-4 font-semibold flex-grow text-gray-200">{name}</span>
-                        {hasChildren && !isSpecialSection && (
-                            <button onClick={handleToggleExpand} className="p-1 rounded-full hover:bg-gray-500/20">
-                                <ChevronRight size={16} className={`transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                            </button>
-                        )}
+                        {/* Removed expand/collapse button */}
                     </>
                 )}
             </div>
-            {!isCollapsed && isExpanded && !isSpecialSection && (
+            {/* Always render sub-items if not collapsed and not a special section */}
+            {!isCollapsed && !isSpecialSection && hasChildren && (
                 <div className="py-1 space-y-1">
                     {isLoading ? (
                         <div className={`flex items-center gap-2 ${itemPadding} py-2 text-sm text-gray-400`}>
