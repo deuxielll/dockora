@@ -24,11 +24,11 @@ const ForgotPasswordPage = () => {
   };
 
   const inputStyles = "w-full p-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition placeholder:text-gray-500";
-  const buttonStyles = "w-full px-6 py-3 bg-dark-bg text-accent rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
+  const buttonStyles = "w-full px-6 py-3 bg-dark-bg-secondary text-accent rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-dark-bg shadow-neo rounded-2xl p-8">
+      <div className="w-full max-w-sm bg-dark-bg-secondary shadow-neo rounded-2xl p-8">
         <h1 className="text-3xl font-bold text-center text-gray-200 mb-2">Reset Password</h1>
         <p className="text-center text-gray-400 mb-8">Enter your email to receive a reset link.</p>
         {message ? (

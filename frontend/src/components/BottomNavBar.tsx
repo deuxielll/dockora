@@ -3,7 +3,7 @@ import { Home, Container, Settings, Folder } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const BottomNavBar = ({ activeTab, currentUser }) => {
-  const panelClasses = "bg-dark-bg shadow-neo";
+  const panelClasses = "bg-dark-bg-secondary shadow-neo";
   const navigate = useNavigate();
 
   const baseNavItems = [

@@ -4,7 +4,7 @@ import { Trash2, Tag, Hash, HardDrive } from "lucide-react";
 
 const ImageView = () => {
   const [images, setImages] = useState([]);
-  const panelClasses = "bg-dark-bg shadow-neo";
+  const panelClasses = "bg-dark-bg-secondary shadow-neo";
 
   const fetchImages = useCallback(async () => {
     try {
@@ -39,7 +39,7 @@ const ImageView = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const iconButtonStyles = "p-2 bg-dark-bg rounded-full shadow-neo active:shadow-neo-inset transition-all disabled:opacity-50 disabled:cursor-not-allowed";
+  const iconButtonStyles = "p-2 bg-dark-bg-secondary rounded-full shadow-neo active:shadow-neo-inset transition-all disabled:opacity-50 disabled:cursor-not-allowed";
 
   return (
     <div>

@@ -35,7 +35,7 @@ const FileManagerPage = () => {
   const [selectionAnchor, setSelectionAnchor] = useState(null);
   const [draggedOverItem, setDraggedOverItem] = useState(null);
   const fileInputRef = useRef(null);
-  const panelClasses = "bg-dark-bg shadow-neo";
+  const panelClasses = "bg-dark-bg-secondary shadow-neo";
   
   const isTrashView = currentPath === 'trash';
   const isSharedWithMeView = currentPath === 'shared-with-me';

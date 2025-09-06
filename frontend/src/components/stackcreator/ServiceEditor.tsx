@@ -24,14 +24,14 @@ const ServiceEditor = ({ service, updateService, removeService }) => {
   };
 
   const inputStyles = "w-full p-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition";
-  const panelClasses = "bg-dark-bg shadow-neo";
+  const panelClasses = "bg-dark-bg-secondary shadow-neo";
 
   return (
     <div className={`p-6 rounded-xl ${panelClasses} relative`}>
       <button
         type="button"
         onClick={() => removeService(service.id)}
-        className="absolute top-4 right-4 p-2 bg-dark-bg rounded-full shadow-neo active:shadow-neo-inset transition-all text-red-500"
+        className="absolute top-4 right-4 p-2 bg-dark-bg-secondary rounded-full shadow-neo active:shadow-neo-inset transition-all text-red-500"
         title="Delete Service"
       >
         <Trash2 size={18} />

@@ -20,7 +20,7 @@ const Sidebar = ({ onNavigate, currentUser }) => {
         { name: 'Trash', icon: Trash2, path: 'trash' },
     ];
 
-    const panelClasses = "bg-dark-bg shadow-neo";
+    const panelClasses = "bg-dark-bg-secondary shadow-neo";
 
     return (
         <div className={`hidden md:flex flex-col h-full p-4 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} ${panelClasses} rounded-xl`}>

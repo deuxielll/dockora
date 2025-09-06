@@ -1,7 +1,7 @@
 import React from 'react';
 
 const ContainerCardSkeleton = () => {
-  const panelClasses = "bg-dark-bg shadow-neo";
+  const panelClasses = "bg-dark-bg-secondary shadow-neo";
   const skeletonBase = "bg-gray-700/50 rounded animate-pulse";
 
   return (

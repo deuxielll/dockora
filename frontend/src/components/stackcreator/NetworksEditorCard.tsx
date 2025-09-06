@@ -2,7 +2,7 @@ import React from 'react';
 import KeyValueEditor from './KeyValueEditor';
 
 const NetworksEditorCard = ({ networks, setNetworks, disabled, className = '' }) => {
-  const panelClasses = "bg-dark-bg shadow-neo";
+  const panelClasses = "bg-dark-bg-secondary shadow-neo";
 
   return (
     <div className={`p-6 rounded-xl ${panelClasses} ${className}`}>
