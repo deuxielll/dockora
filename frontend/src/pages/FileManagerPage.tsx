@@ -35,6 +35,7 @@ const FileManagerPage = () => {
   const [selectionAnchor, setSelectionAnchor] = useState(null);
   const [draggedOverItem, setDraggedOverItem] = useState(null);
   const [copiedItems, setCopiedItems] = useState([]); // New state for copied items
+  const [cutItems, setCutItems] = useState([]); // New state for cut items
   const fileInputRef = useRef(null);
   const panelClasses = "bg-dark-bg shadow-neo";
   
@@ -145,6 +146,7 @@ const FileManagerPage = () => {
         setSelectedItems(new Set([itemIdentifier]));
         setSelectionAnchor(item);
         setCopiedItems([]); // Clear copied items on new single selection
+        setCutItems([]); // Clear cut items on new single selection
     }
   };
 
@@ -278,20 +280,34 @@ const FileManagerPage = () => {
   const handleCopy = () => {
     const pathsToCopy = Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id).path);
     setCopiedItems(pathsToCopy);
+    setCutItems([]); // Clear cut items when copying
     toast.success(`${pathsToCopy.length} item(s) copied.`);
   };
 
+  const handleCut = () => {
+    const pathsToCut = Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id).path);
+    setCutItems(pathsToCut);
+    setCopiedItems([]); // Clear copied items when cutting
+    toast.success(`${pathsToCut.length} item(s) cut.`);
+  };
+
   const handlePaste = async () => {
-    if (copiedItems.length === 0) return;
+    if (copiedItems.length === 0 && cutItems.length === 0) return;
     if (isTrashView || isSharedWithMeView || isMySharesView) {
       toast.error("Cannot paste into this view.");
       return;
     }
 
     try {
-      await copyItems(copiedItems, currentPath);
-      toast.success(`${copiedItems.length} item(s) pasted successfully.`);
-      setCopiedItems([]);
+      if (cutItems.length > 0) {
+        await moveItems(cutItems, currentPath);
+        toast.success(`${cutItems.length} item(s) moved successfully.`);
+        setCutItems([]);
+      } else if (copiedItems.length > 0) {
+        await copyItems(copiedItems, currentPath);
+        toast.success(`${copiedItems.length} item(s) pasted successfully.`);
+        setCopiedItems([]);
+      }
       fetchItems(currentPath);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to paste item(s).');
@@ -428,6 +444,7 @@ const FileManagerPage = () => {
                 if (!e.ctrlKey && !e.shiftKey) { // Only clear if Ctrl/Shift not held
                     setSelectedItems(new Set()); 
                     setCopiedItems([]); // Clear copied items on general click
+                    setCutItems([]); // Clear cut items on general click
                 }
                 closeAllContextMenus(); 
             }}
@@ -525,17 +542,20 @@ const FileManagerPage = () => {
         onRestore={handleRestoreMultiple}
         onClose={closeAllContextMenus}
         onDownloadShared={() => handleDownloadSharedFile(singleSelectedItem)}
-        onCopy={handleCopy} // Pass handleCopy
-        onPaste={handlePaste} // Pass handlePaste
-        hasCopiedItems={copiedItems.length > 0} // Indicate if there are copied items
+        onCopy={handleCopy}
+        onCut={handleCut}
+        onPaste={handlePaste}
+        hasCopiedItems={copiedItems.length > 0}
+        hasCutItems={cutItems.length > 0}
       />
       <EmptySpaceContextMenu
         contextMenu={emptySpaceContextMenu}
         onCreateFile={() => setShowCreateModal({ type: 'file' })}
         onCreateFolder={() => setShowCreateModal({ type: 'dir' })}
         onClose={closeAllContextMenus}
-        onPaste={handlePaste} // Pass handlePaste
-        hasCopiedItems={copiedItems.length > 0} // Indicate if there are copied items
+        onPaste={handlePaste}
+        hasCopiedItems={copiedItems.length > 0}
+        hasCutItems={cutItems.length > 0}
       />
     </>
   );

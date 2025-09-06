@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, Share2, Copy, Edit, Trash2, RotateCcw, Users, Download, ClipboardPaste } from 'lucide-react';
+import { Eye, Share2, Copy, Edit, Trash2, RotateCcw, Users, Download, ClipboardPaste, Scissors } from 'lucide-react';
 
 const ItemContextMenu = ({
   contextMenu,
@@ -18,12 +18,14 @@ const ItemContextMenu = ({
   onClose,
   onDownloadShared,
   onCopy, // New prop
+  onCut, // New prop
   onPaste, // New prop
   hasCopiedItems, // New prop
+  hasCutItems, // New prop
 }) => {
   if (!contextMenu || selectedCount === 0) return null;
 
-  const canPaste = hasCopiedItems && !isTrashView && !isSharedWithMeView && !isMySharesView;
+  const canPaste = (hasCopiedItems || hasCutItems) && !isTrashView && !isSharedWithMeView && !isMySharesView;
 
   return (
     <div
@@ -63,9 +65,10 @@ const ItemContextMenu = ({
             <li><button onClick={() => { onShareWithUsers(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Users size={16} /><span>Share with Users ({selectedCount})</span></button></li>
           )}
           <li><button onClick={() => { onCopy(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Copy size={16} /><span>Copy ({selectedCount})</span></button></li>
+          <li><button onClick={() => { onCut(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Scissors size={16} /><span>Cut ({selectedCount})</span></button></li>
           <li><button onClick={() => { onCopyPath(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Copy size={16} /><span>Copy Path(s)</span></button></li>
           {canPaste && (
-            <li><button onClick={() => { onPaste(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><ClipboardPaste size={16} /><span>Paste ({hasCopiedItems ? 'items' : ''})</span></button></li>
+            <li><button onClick={() => { onPaste(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><ClipboardPaste size={16} /><span>Paste ({hasCutItems ? 'Cut' : 'Copy'})</span></button></li>
           )}
           {singleSelectedItem && (
             <li><button onClick={() => { onRename(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Edit size={16} /><span>Rename</span></button></li>
