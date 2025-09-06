@@ -14,7 +14,7 @@ const FileTable = ({
   onItemClick,
   onItemDoubleClick,
   onItemContextMenu,
-  onDragStart,
+  onDragStart, // This prop is now correctly named and passed
   onItemDragEnter,
   onItemDragLeave,
   onDropOnItem,
@@ -128,7 +128,7 @@ const FileTable = ({
           <tr
             key={getItemIdentifier(item)}
             draggable={!isTrashView && !isSharedWithMeView}
-            onDragStart={(e) => onItemDragStart(e, item)}
+            onDragStart={(e) => onDragStart(e, item)} {/* Corrected to use onDragStart prop */}
             onDragEnter={(e) => onItemDragEnter(e, item)}
             onDragLeave={onItemDragLeave}
             onDragOver={(e) => e.preventDefault()}

@@ -341,18 +341,32 @@ const FileManagerPage = () => {
       e.preventDefault();
       return;
     }
+
     const itemIdentifier = getItemIdentifier(item);
-    const draggedItems = selectedItems.has(itemIdentifier) ? Array.from(selectedItems) : [itemIdentifier];
-    if (!selectedItems.has(itemIdentifier)) setSelectedItems(new Set(draggedItems));
+    let itemsToDrag = [];
+
+    // If the dragged item is already part of the selection, drag all selected items.
+    // Otherwise, just drag the single item.
+    if (selectedItems.has(itemIdentifier)) {
+      itemsToDrag = Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id));
+    } else {
+      itemsToDrag = [item];
+      setSelectedItems(new Set([itemIdentifier])); // Select the dragged item if not already selected
+    }
+    
+    const draggedPaths = itemsToDrag.map(i => i.path);
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('application/json', JSON.stringify(draggedItems));
+    e.dataTransfer.setData('application/json', JSON.stringify(draggedPaths));
 
     const dragPreview = document.createElement('div');
     dragPreview.id = 'drag-preview';
-    const iconHTML = item.type === 'dir'
+    const iconHTML = itemsToDrag[0].type === 'dir'
       ? `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-400"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`
       : `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
-    dragPreview.innerHTML = `${iconHTML}<span>${draggedItems.length > 1 ? `${draggedItems.length} items` : item.name}</span>`;
+    
+    const previewText = itemsToDrag.length > 1 ? `${itemsToDrag.length} items` : itemsToDrag[0].name;
+    dragPreview.innerHTML = `${iconHTML}<span>${previewText}</span>`;
+    
     document.body.appendChild(dragPreview);
     e.dataTransfer.setDragImage(dragPreview, 10, 10);
     setTimeout(() => document.body.removeChild(dragPreview), 0);
