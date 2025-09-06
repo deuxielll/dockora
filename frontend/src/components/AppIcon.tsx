@@ -1,52 +1,56 @@
+"use client";
+
 import React, { useMemo } from 'react';
-import * as LucideIcons from 'lucide-react';
 import { useSettings } from '../hooks/useSettings';
 
-// Map common app names to Lucide icons
-const iconMap = {
-  nginx: LucideIcons.Globe,
-  apache: LucideIcons.Globe,
-  wordpress: LucideIcons.BookOpen,
-  mysql: LucideIcons.Database,
-  postgres: LucideIcons.Database,
-  mongo: LucideIcons.Database,
-  redis: LucideIcons.Server,
-  grafana: LucideIcons.BarChart2,
-  prometheus: LucideIcons.Activity,
-  portainer: LucideIcons.Container,
-  jenkins: LucideIcons.Hammer,
-  gitlab: LucideIcons.Gitlab,
-  gitea: LucideIcons.GitFork,
-  vscode: LucideIcons.Code,
-  jupyter: LucideIcons.Book,
-  nextcloud: LucideIcons.Cloud,
-  plex: LucideIcons.PlayCircle,
-  emby: LucideIcons.PlayCircle,
-  jellyfin: LucideIcons.PlayCircle,
-  sonarr: LucideIcons.Tv,
-  radarr: LucideIcons.Film,
-  lidarr: LucideIcons.Music,
-  prowlarr: LucideIcons.Search,
-  qbittorrent: LucideIcons.Download,
-  transmission: LucideIcons.Download,
-   calibre: LucideIcons.Book,
-  uptime: LucideIcons.HeartPulse,
-  adguard: LucideIcons.Shield,
-  pihole: LucideIcons.Shield,
-  traefik: LucideIcons.GitPullRequest,
-  caddy: LucideIcons.Lock,
-  vaultwarden: LucideIcons.Lock,
-  bitwarden: LucideIcons.Lock,
-  homeassistant: LucideIcons.Home,
-  node: LucideIcons.SquareTerminal,
-  python: LucideIcons.Code,
-  php: LucideIcons.Code,
-  java: LucideIcons.Coffee,
-  go: LucideIcons.Code,
-  rust: LucideIcons.Code,
-  docker: LucideIcons.Container,
-  dockora: LucideIcons.Ship,
+// Map common app names to external SVG icon URLs (from Simple Icons CDN)
+const iconMap: { [key: string]: string } = {
+  nginx: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/nginx.svg',
+  apache: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/apache.svg',
+  wordpress: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/wordpress.svg',
+  mysql: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/mysql.svg',
+  postgres: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/postgresql.svg',
+  mongo: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/mongodb.svg',
+  redis: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/redis.svg',
+  grafana: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/grafana.svg',
+  prometheus: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/prometheus.svg',
+  portainer: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/portainer.svg',
+  jenkins: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/jenkins.svg',
+  gitlab: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/gitlab.svg',
+  gitea: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/gitea.svg',
+  vscode: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/visualstudiocode.svg',
+  jupyter: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/jupyter.svg',
+  nextcloud: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/nextcloud.svg',
+  plex: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/plex.svg',
+  emby: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/emby.svg',
+  jellyfin: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/jellyfin.svg',
+  sonarr: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/sonarr.svg',
+  radarr: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/radarr.svg',
+  lidarr: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/lidarr.svg',
+  prowlarr: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/prowlarr.svg',
+  qbittorrent: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/qbittorrent.svg',
+  transmission: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/transmission.svg',
+  calibre: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/calibre.svg',
+  uptime: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/uptimerobot.svg',
+  adguard: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/adguard.svg',
+  pihole: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/pihole.svg',
+  traefik: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/traefikproxy.svg',
+  caddy: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/caddyserver.svg',
+  vaultwarden: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/vaultwarden.svg',
+  bitwarden: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/bitwarden.svg',
+  homeassistant: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/homeassistant.svg',
+  node: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/nodedotjs.svg',
+  python: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/python.svg',
+  php: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/php.svg',
+  java: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/openjdk.svg',
+  go: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/go.svg',
+  rust: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/rust.svg',
+  docker: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/docker.svg',
+  dockora: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/docker.svg', // Using docker icon for dockora
 };
+
+// A generic fallback icon (simple app window SVG data URL)
+const defaultFallbackIconUrl = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWFwcC13aW5kb3ciPjxyZWN0IHdpZHRoPSI3IiBoZWlnaHQ9IjciIHg9IjMiIHk9IjMiIHJ4PSIxIiByeT0iMSIvPjxyZWN0IHdpZHRoPSI3IiBoZWlnaHQ9IjciIHg9IjE0IiB5PSIzIiByeT0iMSIgcnk9IjEiLz48cmVjdCB3aWR0aD0iNyIgaGVpZ2h0PSI3IiB4PSIxNCIgeT0iMTQiIHJ4PSIxIiByeT0iMSIvPjxyZl9lY3Qgd2lkdGg9IjciIGhlaWdodD0iNyIgeD0iMyIgeT0iMTQiIHJ4PSIxIiByeT0iMSIvPjwvc3ZnPg==';
 
 const AppIcon = ({ appId, appName }) => {
   const { settings } = useSettings();
@@ -60,27 +64,26 @@ const AppIcon = ({ appId, appName }) => {
 
   const customIconUrl = customAppIcons[appId];
 
-  const DefaultIcon = useMemo(() => {
+  const autoDetectedIconUrl = useMemo(() => {
     const lowerCaseAppName = appName.toLowerCase();
     for (const keyword in iconMap) {
       if (lowerCaseAppName.includes(keyword)) {
         return iconMap[keyword];
       }
     }
-    return LucideIcons.AppWindow; // Fallback icon
+    return null;
   }, [appName]);
 
-  if (customIconUrl) {
-    return (
-      <img
-        src={customIconUrl}
-        alt={`${appName} icon`}
-        className="w-full h-full object-contain p-1"
-      />
-    );
-  }
+  // Priority: Custom URL > Auto-detected URL > Default Fallback
+  const finalIconUrl = customIconUrl || autoDetectedIconUrl || defaultFallbackIconUrl;
 
-  return <DefaultIcon size={32} className="text-gray-300" />;
+  return (
+    <img
+      src={finalIconUrl}
+      alt={`${appName} icon`}
+      className="w-full h-full object-contain p-1"
+    />
+  );
 };
 
 export default AppIcon;
