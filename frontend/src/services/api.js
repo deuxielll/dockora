@@ -114,6 +114,7 @@ export const uploadFile = (formData) => api.post('/files/upload', formData, {
 export const deleteItem = (paths) => api.post('/files/delete', { paths });
 export const renameItem = (old_path, new_name) => api.post('/files/rename', { old_path, new_name });
 export const moveItems = (source_paths, destination_path) => api.post('/files/move', { source_paths, destination_path });
+export const copyItems = (source_paths, destination_path) => api.post('/files/copy', { source_paths, destination_path }); // New API call
 export const viewFile = (path) => api.get(`/files/view?path=${encodeURIComponent(path)}`, { responseType: 'blob' });
 
 // Sharing (Public Links)

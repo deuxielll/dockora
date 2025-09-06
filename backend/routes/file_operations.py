@@ -142,6 +142,57 @@ def move_items():
     if errors: return jsonify({"error": "\n".join(errors)}), 500
     return jsonify({"success": True})
 
+@file_operations_bp.route("/files/copy", methods=["POST"])
+@login_required
+def copy_items():
+    user, base_path, is_sandboxed = get_user_and_base_path()
+    if not user: return jsonify({"error": "User not found"}), 404
+    data = request.get_json()
+    source_paths = data.get('source_paths')
+    destination_path = data.get('destination_path')
+
+    if not source_paths or not destination_path or not isinstance(source_paths, list):
+        return jsonify({"error": "Source paths and destination path are required"}), 400
+
+    dest_real_path = resolve_user_path(base_path, is_sandboxed, destination_path)
+    if not dest_real_path or not os.path.isdir(dest_real_path):
+        return jsonify({"error": "Invalid destination directory"}), 400
+
+    errors = []
+    for source_user_path in source_paths:
+        source_real_path = resolve_user_path(base_path, is_sandboxed, source_user_path)
+        if not source_real_path or not os.path.exists(source_real_path):
+            errors.append(f"Source path not found: {source_user_path}")
+            continue
+
+        # Prevent copying a directory into itself
+        if os.path.isdir(source_real_path) and dest_real_path.startswith(source_real_path):
+            errors.append(f"Cannot copy a directory into itself: {source_user_path}")
+            continue
+
+        original_name = os.path.basename(source_real_path)
+        final_dest_path = os.path.join(dest_real_path, original_name)
+        
+        # Handle name collision: append (copy)
+        if os.path.exists(final_dest_path):
+            base_name, ext = os.path.splitext(original_name)
+            counter = 1
+            while os.path.exists(os.path.join(dest_real_path, f"{base_name} (copy{counter}){ext}")):
+                counter += 1
+            final_dest_path = os.path.join(dest_real_path, f"{base_name} (copy{counter}){ext}")
+
+        try:
+            if os.path.isdir(source_real_path):
+                shutil.copytree(source_real_path, final_dest_path)
+            else:
+                shutil.copy2(source_real_path, final_dest_path)
+        except Exception as e:
+            errors.append(f"Could not copy {source_user_path}: {e}")
+
+    if errors:
+        return jsonify({"error": "\n".join(errors)}), 500
+    return jsonify({"success": True, "message": "Items copied successfully."})
+
 @file_operations_bp.route("/files/view", methods=["GET"])
 @login_required
 def view_file():

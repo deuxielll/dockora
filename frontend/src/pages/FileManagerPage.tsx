@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash, getSharedWithMeItems, viewSharedWithMeFile, downloadSharedWithMeFile, getSharedWithMeFileContent, unshareFileWithUsers, getSharedByMeItems, updateLastViewedSharedFilesTimestamp } from '../services/api'; // Import updateLastViewedSharedFilesTimestamp
+import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash, getSharedWithMeItems, viewSharedWithMeFile, downloadSharedWithMeFile, getSharedWithMeFileContent, unshareFileWithUsers, getSharedByMeItems, updateLastViewedSharedFilesTimestamp, copyItems } from '../services/api'; // Import copyItems
 import FileViewerModal from '../components/modals/FileViewerModal';
 import CreateItemModal from '../components/modals/CreateItemModal';
 import RenameItemModal from '../components/modals/RenameItemModal';
@@ -34,6 +34,7 @@ const FileManagerPage = () => {
   const [selectedItems, setSelectedItems] = useState(new Set()); // Corrected line
   const [selectionAnchor, setSelectionAnchor] = useState(null);
   const [draggedOverItem, setDraggedOverItem] = useState(null);
+  const [copiedItems, setCopiedItems] = useState([]); // New state for copied items
   const fileInputRef = useRef(null);
   const panelClasses = "bg-dark-bg shadow-neo";
   
@@ -143,6 +144,7 @@ const FileManagerPage = () => {
     } else {
         setSelectedItems(new Set([itemIdentifier]));
         setSelectionAnchor(item);
+        setCopiedItems([]); // Clear copied items on new single selection
     }
   };
 
@@ -273,6 +275,29 @@ const FileManagerPage = () => {
       .catch(() => toast.error('Failed to copy paths.'));
   };
 
+  const handleCopy = () => {
+    const pathsToCopy = Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id).path);
+    setCopiedItems(pathsToCopy);
+    toast.success(`${pathsToCopy.length} item(s) copied.`);
+  };
+
+  const handlePaste = async () => {
+    if (copiedItems.length === 0) return;
+    if (isTrashView || isSharedWithMeView || isMySharesView) {
+      toast.error("Cannot paste into this view.");
+      return;
+    }
+
+    try {
+      await copyItems(copiedItems, currentPath);
+      toast.success(`${copiedItems.length} item(s) pasted successfully.`);
+      setCopiedItems([]);
+      fetchItems(currentPath);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to paste item(s).');
+    }
+  };
+
   const handleContextMenu = (event, item) => {
     event.preventDefault();
     event.stopPropagation();
@@ -289,6 +314,7 @@ const FileManagerPage = () => {
     if (event.target !== event.currentTarget) return;
     event.preventDefault();
     closeAllContextMenus();
+    setSelectedItems(new Set()); // Clear selection when right-clicking empty space
     if (!isTrashView && !isSharedWithMeView && !isMySharesView) setEmptySpaceContextMenu({ x: event.pageX, y: event.pageY });
   };
 
@@ -398,7 +424,13 @@ const FileManagerPage = () => {
             onDragLeave={() => setIsDragging(false)} 
             onDrop={handleDrop}
             onDragEnd={handleDragEnd}
-            onClick={() => { setSelectedItems(new Set()); closeAllContextMenus(); }}
+            onClick={(e) => { 
+                if (!e.ctrlKey && !e.shiftKey) { // Only clear if Ctrl/Shift not held
+                    setSelectedItems(new Set()); 
+                    setCopiedItems([]); // Clear copied items on general click
+                }
+                closeAllContextMenus(); 
+            }}
             onContextMenu={handleEmptySpaceContextMenu}
           >
             {isDragging && (
@@ -493,12 +525,17 @@ const FileManagerPage = () => {
         onRestore={handleRestoreMultiple}
         onClose={closeAllContextMenus}
         onDownloadShared={() => handleDownloadSharedFile(singleSelectedItem)}
+        onCopy={handleCopy} // Pass handleCopy
+        onPaste={handlePaste} // Pass handlePaste
+        hasCopiedItems={copiedItems.length > 0} // Indicate if there are copied items
       />
       <EmptySpaceContextMenu
         contextMenu={emptySpaceContextMenu}
         onCreateFile={() => setShowCreateModal({ type: 'file' })}
         onCreateFolder={() => setShowCreateModal({ type: 'dir' })}
         onClose={closeAllContextMenus}
+        onPaste={handlePaste} // Pass handlePaste
+        hasCopiedItems={copiedItems.length > 0} // Indicate if there are copied items
       />
     </>
   );

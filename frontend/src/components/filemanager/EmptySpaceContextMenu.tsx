@@ -1,8 +1,10 @@
 import React from 'react';
-import { FilePlus, FolderPlus } from 'lucide-react';
+import { FilePlus, FolderPlus, ClipboardPaste } from 'lucide-react';
 
-const EmptySpaceContextMenu = ({ contextMenu, onCreateFile, onCreateFolder, onClose }) => {
+const EmptySpaceContextMenu = ({ contextMenu, onCreateFile, onCreateFolder, onClose, onPaste, hasCopiedItems }) => {
   if (!contextMenu) return null;
+
+  const canPaste = hasCopiedItems; // Simplified for empty space, assuming it's not a special view
 
   return (
     <div
@@ -22,6 +24,14 @@ const EmptySpaceContextMenu = ({ contextMenu, onCreateFile, onCreateFolder, onCl
             <span>New Folder</span>
           </button>
         </li>
+        {canPaste && (
+          <li>
+            <button onClick={() => { onPaste(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md">
+              <ClipboardPaste size={16} />
+              <span>Paste ({hasCopiedItems ? 'items' : ''})</span>
+            </button>
+          </li>
+        )}
       </ul>
     </div>
   );
