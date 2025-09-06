@@ -71,7 +71,7 @@ const EditContainerResourcesModal = ({ container, onClose, onSuccess }) => {
 
   return (
     <div className="fixed inset-0 bg-dark-bg/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-dark-bg shadow-neo rounded-2xl p-6 w-full max-w-lg flex flex-col max-h-[90vh]">
+      <div className="bg-dark-bg shadow-neo rounded-2xl p-6 w-full max-w-md flex flex-col max-h-[90vh]">
         <div className="flex justify-between items-center mb-4">
           <h2 className="font-bold text-lg text-gray-200">Edit Resources for {container.name}</h2>
           <button onClick={onClose} className="p-2 rounded-full hover:shadow-neo-inset transition-all"><X size={20} /></button>
