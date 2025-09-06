@@ -25,7 +25,7 @@ const FileManagerPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const [emptySpaceContextMenu, setEmptySpaceContextMenu] = useState(null);
-  const [selectedItems, setSelectedItems] = useState(new Set());
+  const [selectedItems, setSelectedItems] = new Set(); // Initialize as empty Set
   const [selectionAnchor, setSelectionAnchor] = useState(null);
   const [draggedOverItem, setDraggedOverItem] = useState(null);
   const [copiedItems, setCopiedItems] = useState([]);
@@ -51,19 +51,15 @@ const FileManagerPage = () => {
       let res;
       if (path === 'trash') {
         res = await getTrashItems();
-        setItems(res.data);
       } else if (path === 'shared-with-me') {
         res = await getSharedWithMeItems();
         await updateLastViewedSharedFilesTimestamp();
-        setItems(res.data);
       } else if (path === 'my-shares') {
-        // MySharesView now fetches its own data, and manages its own selection
-        // We set items to empty here to ensure FileTable doesn't render for this view
-        setItems([]); 
+        res = await getSharedByMeItems(); // MySharesView now fetches its own data, but we need to populate `items` for context menu logic
       } else {
         res = await browseFiles(path);
-        setItems(res.data);
       }
+      setItems(res.data);
       setSelectedItems(new Set());
       setSearchTerm(''); // Reset search term on path change
       setSortColumn('name'); // Reset sort on path change
@@ -96,11 +92,8 @@ const FileManagerPage = () => {
     const handleKeyDown = (e) => {
       if (e.ctrlKey && e.key.toLowerCase() === 'a') {
         e.preventDefault();
-        // For MySharesView, the selection is managed internally, so we don't select all here.
-        if (!isMySharesView) {
-          const allItemIdentifiers = new Set(items.map(item => getItemIdentifier(item)));
-          setSelectedItems(allItemIdentifiers);
-        }
+        const allItemIdentifiers = new Set(items.map(item => getItemIdentifier(item)));
+        setSelectedItems(allItemIdentifiers);
       }
     };
     document.addEventListener('keydown', handleKeyDown);
@@ -109,12 +102,12 @@ const FileManagerPage = () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('click', closeAllContextMenus);
     };
-  }, [items, closeAllContextMenus, isMySharesView]);
+  }, [items, closeAllContextMenus]);
 
   const getItemIdentifier = (item) => {
     if (isTrashView) return item.trashed_name;
     if (isSharedWithMeView) return item.id;
-    if (isMySharesView) return item.id; // For MySharesView, item.id is the UserFileShare ID
+    if (isMySharesView) return item.id;
     return item.path;
   };
 
@@ -131,6 +124,16 @@ const FileManagerPage = () => {
   };
 
   const handleItemClick = (item, e) => {
+    // Prevent clearing selection on right-click (context menu trigger)
+    if (e.button === 2) { // Right-click
+      const itemIdentifier = getItemIdentifier(item);
+      if (!selectedItems.has(itemIdentifier)) {
+        setSelectedItems(new Set([itemIdentifier]));
+      }
+      setSelectionAnchor(item);
+      return;
+    }
+
     e.stopPropagation();
     const itemIdentifier = getItemIdentifier(item);
 
@@ -151,8 +154,18 @@ const FileManagerPage = () => {
     } else {
       setSelectedItems(new Set([itemIdentifier]));
       setSelectionAnchor(item);
-      // Do not clear copied/cut items on single click
+      setCopiedItems([]);
+      setCutItems([]);
     }
+  };
+
+  const handleEmptySpaceClick = (e) => {
+    e.stopPropagation(); // Prevent document click listener from firing immediately
+    setSelectedItems(new Set());
+    setContextMenu(null);
+    setEmptySpaceContextMenu(null);
+    setCopiedItems([]);
+    setCutItems([]);
   };
 
   const goUp = () => {
@@ -512,6 +525,8 @@ const FileManagerPage = () => {
             sortColumn={sortColumn}
             sortDirection={sortDirection}
             onSort={handleSort}
+            onEmptySpaceContextMenu={handleEmptySpaceContextMenu} // Pass new prop
+            onEmptySpaceClick={handleEmptySpaceClick} // Pass new prop
           />
         </div>
       </div>
