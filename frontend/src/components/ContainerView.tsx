@@ -32,7 +32,7 @@ const ContainerView = ({ onCreateStack }) => {
   const [containerToEdit, setContainerToEdit] = useState(null);
   const [filter, setFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
-  const panelClasses = "bg-dark-bg-secondary shadow-neo";
+  const panelClasses = "bg-dark-bg shadow-neo";
 
   const fetchContainers = useCallback(async () => {
     try {
@@ -135,7 +135,7 @@ const ContainerView = ({ onCreateStack }) => {
         className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none ${
           isActive
             ? "text-accent shadow-neo-inset"
-            : "text-gray-200 bg-dark-bg-secondary shadow-neo hover:shadow-neo-inset"
+            : "text-gray-200 bg-dark-bg shadow-neo hover:shadow-neo-inset"
         }`}
       >
         {label}
@@ -156,7 +156,7 @@ const ContainerView = ({ onCreateStack }) => {
     return "text-yellow-300 bg-yellow-900/50";
   };
 
-  const iconButtonStyles = "p-2 bg-dark-bg-secondary rounded-full shadow-neo active:shadow-neo-inset transition-all disabled:opacity-50 disabled:cursor-not-allowed";
+  const iconButtonStyles = "p-2 bg-dark-bg rounded-full shadow-neo active:shadow-neo-inset transition-all disabled:opacity-50 disabled:cursor-not-allowed";
 
   return (
     <div>

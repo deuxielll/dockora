@@ -76,7 +76,7 @@ const SettingsSidebar = ({ activeSection, onNavigate }) => {
     { id: 'user-management', label: 'User Management', icon: Users },
   ];
 
-  const panelClasses = "bg-dark-bg-secondary shadow-neo";
+  const panelClasses = "bg-dark-bg shadow-neo";
 
   return (
     <div className={`sticky top-4 h-[calc(100vh-4rem)] overflow-y-auto no-scrollbar p-4 rounded-xl ${panelClasses} w-64 flex-shrink-0`}>

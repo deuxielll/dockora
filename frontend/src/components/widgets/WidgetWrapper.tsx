@@ -2,7 +2,7 @@ import React from 'react';
 import { GripVertical } from 'lucide-react';
 
 const WidgetWrapper = ({ widgetId, title, onHide, children, isLocked, isInteracting }) => {
-  const panelClasses = "bg-dark-bg-secondary shadow-neo";
+  const panelClasses = "bg-dark-bg shadow-neo";
 
   // Clone children to inject isInteracting prop
   const childrenWithProps = React.Children.map(children, child => {

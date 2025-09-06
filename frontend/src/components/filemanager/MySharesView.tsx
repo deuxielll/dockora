@@ -81,7 +81,7 @@ const MySharesView = ({ onRefreshFileManager }) => {
         <button
           onClick={handleUnshareSelected}
           disabled={selectedShares.size === 0}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none bg-dark-bg-secondary text-red-500 shadow-neo active:shadow-neo-inset disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none bg-dark-bg text-red-500 shadow-neo active:shadow-neo-inset disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Trash2 size={16} /> Unshare Selected ({selectedShares.size})
         </button>
@@ -105,7 +105,7 @@ const MySharesView = ({ onRefreshFileManager }) => {
               className={`transition-colors duration-200 cursor-pointer hover:shadow-neo-inset ${selectedShares.has(item.id) ? 'shadow-neo-inset bg-blue-500/10' : ''}`}
             >
               <td className="p-4">
-                <div className="w-5 h-5 rounded bg-dark-bg-secondary shadow-neo-inset flex items-center justify-center">
+                <div className="w-5 h-5 rounded bg-dark-bg shadow-neo-inset flex items-center justify-center">
                   {selectedShares.has(item.id) && <div className="w-2.5 h-2.5 bg-accent rounded-sm shadow-neo" />}
                 </div>
               </td>

@@ -75,8 +75,8 @@ const SetupPage = () => {
   };
   
   const inputStyles = "w-full p-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition placeholder:text-gray-500";
-  const buttonStyles = "px-6 py-3 bg-dark-bg-secondary text-accent rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
-  const secondaryButtonStyles = "px-6 py-3 bg-dark-bg-secondary text-gray-300 rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
+  const buttonStyles = "px-6 py-3 bg-dark-bg text-accent rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
+  const secondaryButtonStyles = "px-6 py-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
 
   const renderStep1 = () => (
     <>
@@ -154,7 +154,7 @@ const SetupPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-dark-bg-secondary shadow-neo rounded-2xl p-8">
+      <div className="w-full max-w-md bg-dark-bg shadow-neo rounded-2xl p-8">
         {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
         {step === 1 ? renderStep1() : renderStep2()}
       </div>

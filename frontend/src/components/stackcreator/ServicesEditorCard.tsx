@@ -14,7 +14,7 @@ const ServicesEditorCard = ({
   disabled,
   className = '',
 }) => {
-  const panelClasses = "bg-dark-bg-secondary shadow-neo"; 
+  const panelClasses = "bg-dark-bg shadow-neo"; 
 
   return (
     <div className={`p-6 rounded-xl ${panelClasses} flex-1 flex flex-col ${className}`}>
@@ -31,7 +31,7 @@ const ServicesEditorCard = ({
                 />
               ))}
             </div>
-            <button onClick={addService} className="mt-6 flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none bg-dark-bg-secondary text-gray-300 shadow-neo active:shadow-neo-inset">
+            <button onClick={addService} className="mt-6 flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none bg-dark-bg text-gray-300 shadow-neo active:shadow-neo-inset">
               <Plus size={16} /> Add Service
             </button>
           </div>

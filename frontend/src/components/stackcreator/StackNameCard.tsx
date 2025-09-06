@@ -1,7 +1,7 @@
 import React from 'react';
 
 const StackNameCard = ({ stackName, setStackName, disabled, className = '' }) => {
-  const panelClasses = "bg-dark-bg-secondary shadow-neo";
+  const panelClasses = "bg-dark-bg shadow-neo";
   const inputStyles = "w-full p-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition";
 
   return (

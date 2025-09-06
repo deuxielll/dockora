@@ -13,9 +13,9 @@ const StackControlsCard = ({
   setError, // Passed down to handle potential errors from buttons
   className = ''
 }) => {
-  const panelClasses = "bg-dark-bg-secondary shadow-neo";
-  const primaryButtonStyles = "px-6 py-3 bg-dark-bg-secondary text-accent rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
-  const secondaryButtonStyles = "px-6 py-3 bg-dark-bg-secondary text-gray-300 rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
+  const panelClasses = "bg-dark-bg shadow-neo";
+  const primaryButtonStyles = "px-6 py-3 bg-dark-bg text-accent rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
+  const secondaryButtonStyles = "px-6 py-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
 
   const TabButton = ({ active, onClick, children, disabled = false }) => (
     <button
@@ -25,7 +25,7 @@ const StackControlsCard = ({
       className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none ${
         active
           ? "text-accent shadow-neo-inset"
-          : "text-gray-200 bg-dark-bg-secondary shadow-neo hover:shadow-neo-inset"
+          : "text-gray-200 bg-dark-bg shadow-neo hover:shadow-neo-inset"
       } disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:shadow-none`}
     >
       {children}

@@ -1,7 +1,7 @@
 import React from 'react';
 
 const SettingsCard = ({ title, children }) => {
-  const panelClasses = "bg-dark-bg-secondary shadow-neo";
+  const panelClasses = "bg-dark-bg shadow-neo";
 
   return (
     <div className={`p-8 rounded-xl ${panelClasses} break-inside-avoid mb-8`}>

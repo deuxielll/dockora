@@ -43,7 +43,7 @@ const NotificationPanel = ({ onClose }) => {
   };
 
   return (
-    <div className="absolute top-full right-0 mt-2 w-80 sm:w-96 bg-dark-bg-secondary shadow-neo rounded-2xl z-50">
+    <div className="absolute top-full right-0 mt-2 w-80 sm:w-96 bg-dark-bg shadow-neo rounded-2xl z-50">
       <div className="p-4 border-b border-gray-700/50 flex justify-between items-center">
         <h3 className="font-bold text-lg text-gray-200">Notifications</h3>
         <div className="flex items-center gap-2">
