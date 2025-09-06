@@ -10,7 +10,7 @@ import {
   updateLastViewedSharedFilesTimestamp, copyItems, getSharedByMeItems
 } from '../services/api';
 
-const useFileManager = () => {
+export const useFileManager = () => { // Added 'export' here
   const location = useLocation();
   const [currentPath, setCurrentPath] = useState(location.state?.path || '/');
   const [items, setItems] = useState([]);
@@ -411,5 +411,3 @@ const useFileManager = () => {
     handleSort, handleViewSharedFile, handleDownloadSharedFile,
   };
 };
-
-export default useFileManager;
