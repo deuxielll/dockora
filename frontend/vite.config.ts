@@ -1,16 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import path from 'path'; // Import path module
 
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    alias: {
-      'simple-icons': path.resolve(__dirname, 'node_modules/simple-icons'),
-    },
-  },
   optimizeDeps: {
-    include: ['xterm', 'xterm-addon-fit', 'simple-icons'],
+    include: ['xterm', 'xterm-addon-fit', 'simple-icons'], // Ensure 'simple-icons' is included here
+    // Removed 'exclude: ['simple-icons']' as it was preventing pre-bundling
   },
   build: {
     rollupOptions: {
