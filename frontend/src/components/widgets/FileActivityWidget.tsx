@@ -3,12 +3,16 @@ import { FileText, Folder, Share2, Clock, CheckCircle, Loader } from 'lucide-rea
 import { getRecentFileActivity, getNewSharedFilesCount } from '../../services/api';
 import { useInterval } from '../../hooks/useInterval';
 import LoadingSpinner from '../LoadingSpinner';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import FileViewerModal from '../modals/FileViewerModal'; // Import FileViewerModal
 
 const FileActivityWidget = () => {
   const [recentFiles, setRecentFiles] = useState([]);
   const [newSharedCount, setNewSharedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [viewingFile, setViewingFile] = useState(null); // State for file viewer modal
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -52,6 +56,14 @@ const FileActivityWidget = () => {
     return `${years}y ago`;
   };
 
+  const handleItemClick = (item) => {
+    if (item.type === 'dir') {
+      navigate('/files', { state: { path: item.path } });
+    } else {
+      setViewingFile(item);
+    }
+  };
+
   const renderContent = () => {
     if (isLoading) {
       return <div className="flex-grow flex items-center justify-center"><LoadingSpinner /></div>;
@@ -85,7 +97,11 @@ const FileActivityWidget = () => {
           <div className="space-y-2">
             <p className="text-sm font-semibold text-gray-400 mb-2">Recent Activity:</p>
             {recentFiles.map((item, index) => (
-              <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-dark-bg-secondary shadow-neo-inset">
+              <button
+                key={index}
+                onClick={() => handleItemClick(item)}
+                className="flex items-center justify-between p-2 rounded-lg bg-dark-bg-secondary shadow-neo-inset w-full text-left hover:shadow-neo active:shadow-neo-inset transition-all"
+              >
                 <div className="flex items-center gap-2 min-w-0">
                   {item.type === 'dir' ? <Folder size={16} className="text-blue-400 flex-shrink-0" /> : <FileText size={16} className="text-gray-400 flex-shrink-0" />}
                   <span className="text-sm font-medium text-gray-200 truncate" title={item.name}>{item.name}</span>
@@ -94,7 +110,7 @@ const FileActivityWidget = () => {
                   <Clock size={14} />
                   <span>{formatTimeAgo(item.modified_at)}</span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -105,6 +121,12 @@ const FileActivityWidget = () => {
   return (
     <div className="h-full flex flex-col">
       {renderContent()}
+      {viewingFile && (
+        <FileViewerModal
+          item={viewingFile}
+          onClose={() => setViewingFile(null)}
+        />
+      )}
     </div>
   );
 };

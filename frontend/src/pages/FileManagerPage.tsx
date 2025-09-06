@@ -14,10 +14,12 @@ import ItemContextMenu from '../components/filemanager/ItemContextMenu';
 import EmptySpaceContextMenu from '../components/filemanager/EmptySpaceContextMenu';
 import MySharesView from '../components/filemanager/MySharesView';
 import toast from 'react-hot-toast';
+import { useLocation } from 'react-router-dom'; // Import useLocation
 
 const FileManagerPage = () => {
   const { currentUser } = useAuth();
-  const [currentPath, setCurrentPath] = useState('/');
+  const location = useLocation(); // Initialize useLocation
+  const [currentPath, setCurrentPath] = useState(location.state?.path || '/'); // Initialize with state or default
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -74,6 +76,16 @@ const FileManagerPage = () => {
   useEffect(() => {
     fetchItems(currentPath);
   }, [currentPath, fetchItems]);
+
+  // New useEffect to handle navigation state changes
+  useEffect(() => {
+    if (location.state?.path && location.state.path !== currentPath) {
+      setCurrentPath(location.state.path);
+      // Clear the state after using it to prevent re-triggering on subsequent renders
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [location.state?.path, currentPath]);
+
 
   useEffect(() => {
     const handleKeyDown = (e) => {
