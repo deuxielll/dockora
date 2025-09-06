@@ -26,29 +26,20 @@ def get_public_share_details(token):
 
     for shared_item_entry in share.items:
         # Resolve the real path of the explicitly shared item (file or directory)
-        real_shared_item_path = resolve_user_path(base_path, is_sandboxed, shared_item_entry.path)
+        # This path is relative to the sharer's home directory
+        real_shared_item_path_in_sharer_home = resolve_user_path(base_path, is_sandboxed, shared_item_entry.path)
 
-        if not real_shared_item_path or not os.path.exists(real_shared_item_path):
+        if not real_shared_item_path_in_sharer_home or not os.path.exists(real_shared_item_path_in_sharer_home):
             continue # Skip if the shared item no longer exists
 
         # If it's a directory, traverse its contents
-        if os.path.isdir(real_shared_item_path):
-            for root, dirs, files in os.walk(real_shared_item_path):
-                # Calculate the relative path from the original shared item's path
-                # This is crucial for generating correct download/view links
-                relative_to_shared_entry = os.path.relpath(root, real_shared_item_path)
-                
+        if os.path.isdir(real_shared_item_path_in_sharer_home):
+            for root, dirs, files in os.walk(real_shared_item_path_in_sharer_home):
                 # Add directories
                 for name in dirs:
                     full_path = os.path.join(root, name)
-                    # Construct the path as it would appear relative to the sharer's home
-                    # This is the 'path' that the frontend will use for download/view
-                    relative_path_for_frontend = os.path.join(shared_item_entry.path, relative_to_shared_entry, name).replace('\\', '/')
-                    if relative_path_for_frontend.startswith('./'):
-                        relative_path_for_frontend = relative_path_for_frontend[2:]
-                    if relative_path_for_frontend.startswith('/'):
-                        relative_path_for_frontend = relative_path_for_frontend[1:]
-
+                    # The 'path' for the frontend should be relative to the sharer's base_path
+                    relative_path_for_frontend = '/' + os.path.relpath(full_path, base_path).replace('\\', '/')
                     all_shared_content.append({
                         "name": name,
                         "path": relative_path_for_frontend,
@@ -60,13 +51,8 @@ def get_public_share_details(token):
                 for name in files:
                     full_path = os.path.join(root, name)
                     stat_info = os.stat(full_path)
-                    # Construct the path as it would appear relative to the sharer's home
-                    relative_path_for_frontend = os.path.join(shared_item_entry.path, relative_to_shared_entry, name).replace('\\', '/')
-                    if relative_path_for_frontend.startswith('./'):
-                        relative_path_for_frontend = relative_path_for_frontend[2:]
-                    if relative_path_for_frontend.startswith('/'):
-                        relative_path_for_frontend = relative_path_for_frontend[1:]
-
+                    # The 'path' for the frontend should be relative to the sharer's base_path
+                    relative_path_for_frontend = '/' + os.path.relpath(full_path, base_path).replace('\\', '/')
                     all_shared_content.append({
                         "name": name,
                         "path": relative_path_for_frontend,
@@ -74,14 +60,11 @@ def get_public_share_details(token):
                         "size": stat_info.st_size
                     })
         else: # It's a file
-            stat_info = os.stat(real_shared_item_path)
-            # For a single file, its 'path' is just its original shared path
-            relative_path_for_frontend = shared_item_entry.path
-            if relative_path_for_frontend.startswith('/'):
-                relative_path_for_frontend = relative_path_for_frontend[1:]
-
+            stat_info = os.stat(real_shared_item_path_in_sharer_home)
+            # For a single file, its 'path' is its original shared path relative to sharer's home
+            relative_path_for_frontend = '/' + os.path.relpath(real_shared_item_path_in_sharer_home, base_path).replace('\\', '/')
             all_shared_content.append({
-                "name": os.path.basename(real_shared_item_path),
+                "name": os.path.basename(real_shared_item_path_in_sharer_home),
                 "path": relative_path_for_frontend,
                 "type": "file",
                 "size": stat_info.st_size

@@ -1,18 +1,16 @@
 import os
 from models import User
 from helpers import resolve_user_path
+from helpers.main_helpers import USER_HOMES_BASE_DIR
 
 def get_sharing_user_context(share):
     """
     Determines the base path and sandboxing status for the user who created a share.
+    For shared files, all users (including admins) are sandboxed to their home directory.
     """
     user = User.query.get_or_404(share.created_by_user_id)
-    if user.role == 'admin':
-        base_path = '/'
-        is_sandboxed = False
-    else:
-        base_path = os.path.join('/data/home', user.username)
-        is_sandboxed = True
+    base_path = os.path.join(USER_HOMES_BASE_DIR, user.username)
+    is_sandboxed = True # Always sandbox for shared content
     return user, base_path, is_sandboxed
 
 def validate_shared_path(share, requested_relative_path, base_path, is_sandboxed):
