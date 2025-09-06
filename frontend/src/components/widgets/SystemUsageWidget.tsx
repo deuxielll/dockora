@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Cpu, MemoryStick, HardDrive } from 'lucide-react';
+import { Cpu, MemoryStick, HardDrive, Loader } from 'lucide-react';
 import { getSystemStats } from '../../services/api';
+import LoadingSpinner from '../LoadingSpinner';
 
 const StatCircle = ({ percentage, label }) => {
   const colorClass = percentage > 80 
@@ -42,10 +43,13 @@ const StatCircle = ({ percentage, label }) => {
   );
 };
 
-const SystemUsageWidget = () => {
+const SystemUsageWidget = ({ isInteracting }) => {
   const [stats, setStats] = useState({ cpu_usage: 0, memory_usage_percent: 0, disk_usage_percent: 0 });
 
   useEffect(() => {
+    // Only fetch stats if not interacting
+    if (isInteracting) return; 
+
     const fetchStats = async () => {
       try {
         const res = await getSystemStats();
@@ -58,7 +62,15 @@ const SystemUsageWidget = () => {
     fetchStats();
     const interval = setInterval(fetchStats, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isInteracting]);
+
+  if (isInteracting) {
+    return (
+      <div className="flex-grow flex items-center justify-center h-full">
+        <LoadingSpinner size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex justify-around items-center h-full pt-2 pb-4">

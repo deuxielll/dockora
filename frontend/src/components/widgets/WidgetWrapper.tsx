@@ -1,8 +1,16 @@
 import React from 'react';
 import { GripVertical } from 'lucide-react';
 
-const WidgetWrapper = ({ widgetId, title, onHide, children, isLocked }) => {
+const WidgetWrapper = ({ widgetId, title, onHide, children, isLocked, isInteracting }) => {
   const panelClasses = "bg-dark-bg shadow-neo";
+
+  // Clone children to inject isInteracting prop
+  const childrenWithProps = React.Children.map(children, child => {
+    if (React.isValidElement(child)) {
+      return React.cloneElement(child, { isInteracting });
+    }
+    return child;
+  });
 
   return (
     <div className={`${panelClasses} rounded-2xl flex flex-col overflow-hidden h-full`}>
@@ -18,7 +26,7 @@ const WidgetWrapper = ({ widgetId, title, onHide, children, isLocked }) => {
         {/* The hide widget button has been removed */}
       </header>
       <div className="p-4 pt-2 flex-grow min-h-0">
-        {children}
+        {childrenWithProps}
       </div>
     </div>
   );

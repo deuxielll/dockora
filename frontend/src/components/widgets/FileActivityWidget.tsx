@@ -3,18 +3,21 @@ import { FileText, Folder, Share2, Clock, CheckCircle, Loader } from 'lucide-rea
 import { getRecentFileActivity, getNewSharedFilesCount } from '../../services/api';
 import { useInterval } from '../../hooks/useInterval';
 import LoadingSpinner from '../LoadingSpinner';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
-import FileViewerModal from '../modals/FileViewerModal'; // Import FileViewerModal
+import { useNavigate } from 'react-router-dom';
+import FileViewerModal from '../modals/FileViewerModal';
 
-const FileActivityWidget = () => {
+const FileActivityWidget = ({ isInteracting }) => {
   const [recentFiles, setRecentFiles] = useState([]);
   const [newSharedCount, setNewSharedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [viewingFile, setViewingFile] = useState(null); // State for file viewer modal
-  const navigate = useNavigate(); // Initialize useNavigate
+  const [viewingFile, setViewingFile] = useState(null);
+  const navigate = useNavigate();
 
   const fetchData = useCallback(async () => {
+    // Only fetch data if not interacting
+    if (isInteracting) return;
+
     setIsLoading(true);
     setError(null);
     try {
@@ -30,13 +33,13 @@ const FileActivityWidget = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isInteracting]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  useInterval(fetchData, 15000); // Refresh every 15 seconds
+  useInterval(fetchData, 15000);
 
   const formatTimeAgo = (isoString) => {
     const date = new Date(isoString);
@@ -117,6 +120,14 @@ const FileActivityWidget = () => {
       </div>
     );
   };
+
+  if (isInteracting) {
+    return (
+      <div className="flex-grow flex items-center justify-center h-full">
+        <LoadingSpinner size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col">

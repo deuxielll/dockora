@@ -5,6 +5,7 @@ import { getDownloadClientStats, getTorrents, torrentAction } from '../../servic
 import TorrentItem from './download-client/TorrentItem';
 import TorrentContextMenu from './download-client/TorrentContextMenu';
 import toast from 'react-hot-toast';
+import LoadingSpinner from '../LoadingSpinner';
 
 const formatSpeed = (bytes) => {
   if (bytes < 1024) return `${bytes} B/s`;
@@ -12,7 +13,7 @@ const formatSpeed = (bytes) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB/s`;
 };
 
-const DownloadClientWidget = () => {
+const DownloadClientWidget = ({ isInteracting }) => {
   const [stats, setStats] = useState(null);
   const [torrents, setTorrents] = useState([]);
   const [error, setError] = useState(null);
@@ -30,6 +31,9 @@ const DownloadClientWidget = () => {
       setError(null); // Clear any previous errors
       return;
     }
+    // Only fetch data if not interacting
+    if (isInteracting) return;
+
     try {
       const [statsRes, torrentsRes] = await Promise.all([
         getDownloadClientStats(),
@@ -45,7 +49,7 @@ const DownloadClientWidget = () => {
     } finally {
       if (isLoading) setIsLoading(false);
     }
-  }, [config.type, isLoading, settings.downloadClientConfig]);
+  }, [config.type, isLoading, settings.downloadClientConfig, isInteracting]);
 
   useEffect(() => {
     fetchData();

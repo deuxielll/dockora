@@ -10,7 +10,7 @@ import AppContextMenu from './AppContextMenu';
 import EditAppModal from '../modals/EditAppModal';
 import toast from 'react-hot-toast';
 
-const AppLauncherWidget = () => {
+const AppLauncherWidget = ({ isInteracting }) => {
   const { settings, setSetting } = useSettings();
   const { currentUser } = useAuth();
   const [apps, setApps] = useState([]);
@@ -31,6 +31,9 @@ const AppLauncherWidget = () => {
   }, [settings.appLauncherConfig]);
 
   const fetchApps = useCallback(async () => {
+    // Only fetch apps if not interacting
+    if (isInteracting) return;
+
     try {
       const res = await getApps();
       const installedApps = res.data
@@ -54,7 +57,7 @@ const AppLauncherWidget = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isInteracting]);
 
   useEffect(() => {
     fetchApps();
@@ -235,7 +238,7 @@ const AppLauncherWidget = () => {
     return launcherItems.filter(item => item.app.name.toLowerCase().includes(lowerSearch));
   }, [launcherItems, searchTerm]);
 
-  if (isLoading) {
+  if (isLoading || isInteracting) {
     return <div className="flex-grow flex items-center justify-center"><LoadingSpinner /></div>;
   }
 

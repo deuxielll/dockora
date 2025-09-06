@@ -11,6 +11,7 @@ import {
   Tooltip,
   Filler,
 } from 'chart.js';
+import LoadingSpinner from '../LoadingSpinner';
 
 ChartJS.register(
   CategoryScale,
@@ -36,7 +37,7 @@ const formatSpeed = (bytes) => {
 
 const MAX_DATA_POINTS = 20;
 
-const NetworkingWidget = () => {
+const NetworkingWidget = ({ isInteracting }) => {
   const [stats, setStats] = useState(null);
   const [history, setHistory] = useState({
     labels: Array(MAX_DATA_POINTS).fill(''),
@@ -46,6 +47,9 @@ const NetworkingWidget = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Only fetch data if not interacting
+    if (isInteracting) return;
+
     const fetchData = async () => {
       try {
         const res = await getNetworkStats();
@@ -67,7 +71,7 @@ const NetworkingWidget = () => {
     fetchData();
     const interval = setInterval(fetchData, 2000);
     return () => clearInterval(interval);
-  }, [isLoading]);
+  }, [isLoading, isInteracting]);
 
   const chartData = {
     labels: history.labels,
@@ -225,7 +229,7 @@ const NetworkingWidget = () => {
               <span className="capitalize">{stats.connection_type}</span>
             </div>
             <div className="flex items-center gap-2">
-              {stats.online_status ? <Signal size={16} className="text-green-500" /> : <WifiOff size={16} className="text-red-500" />}
+              {stats.online_status ? <Signal size={16} className="text-green-500" /> : <WifiOff size={16} className="text-red-400" />}
               <span className={stats.online_status ? "text-green-400" : "text-red-400"}>{stats.online_status ? "Online" : "Offline"}</span>
             </div>
           </div>

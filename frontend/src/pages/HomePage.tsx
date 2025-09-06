@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useCallback } from 'react';
+import React, { useMemo, useEffect, useCallback, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useSettings } from '../hooks/useSettings';
 import TimeWidget from '../components/widgets/TimeWidget';
@@ -32,6 +32,7 @@ const WIDGETS_CONFIG = {
 const HomePage = () => {
   const { currentUser } = useAuth();
   const { settings, setSetting, isLoading: isSettingsLoading } = useSettings();
+  const [isInteracting, setIsInteracting] = useState(false); // New state for drag/resize interaction
 
   const isLayoutLocked = useMemo(() => {
     return settings.lockWidgetLayout === 'true';
@@ -117,6 +118,20 @@ const HomePage = () => {
     setSetting('widgetLayouts', JSON.stringify(allLayouts));
   };
 
+  const handleDragResizeStart = () => {
+    if (!isLayoutLocked) {
+      setIsInteracting(true);
+      document.body.classList.add('grabbing'); // Add grabbing cursor globally
+    }
+  };
+
+  const handleDragResizeStop = () => {
+    if (!isLayoutLocked) {
+      setIsInteracting(false);
+      document.body.classList.remove('grabbing'); // Remove grabbing cursor globally
+    }
+  };
+
   const handleHideWidget = (widgetKey) => {
     const newVisibility = { ...widgetVisibility, [widgetKey]: false };
     setSetting('widgetVisibility', JSON.stringify(newVisibility));
@@ -158,6 +173,10 @@ const HomePage = () => {
           margin={[24, 24]}
           containerPadding={[0, 0]}
           onLayoutChange={handleLayoutChange}
+          onDragStart={handleDragResizeStart}
+          onDragStop={handleDragResizeStop}
+          onResizeStart={handleDragResizeStart}
+          onResizeStop={handleDragResizeStop}
           draggableHandle=".drag-handle"
           isDraggable={!isLayoutLocked}
           isResizable={!isLayoutLocked}
@@ -171,6 +190,7 @@ const HomePage = () => {
                   title={WIDGETS_CONFIG[key].title}
                   onHide={handleHideWidget}
                   isLocked={isLayoutLocked}
+                  isInteracting={isInteracting}
                 >
                   <WidgetComponent />
                 </WidgetWrapper>

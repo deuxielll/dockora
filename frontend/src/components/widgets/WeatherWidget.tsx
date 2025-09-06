@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Settings, Sun, Cloud, CloudRain, CloudSnow, Wind, Loader, Zap, CloudFog, Droplets, Umbrella, CloudSun, WifiOff, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 import { useSettings } from '../../hooks/useSettings';
-import { useLocalStorage } from '../../hooks/useLocalStorage'; // Import useLocalStorage
+import { useLocalStorage } from '../../hooks/useLocalStorage';
+import LoadingSpinner from '../LoadingSpinner';
 
 const OwmWeatherIcon = ({ code, ...props }) => {
   if (!code) return <CloudSun {...props} />;
@@ -38,11 +39,11 @@ const getWeatherDescription = (code) => {
   return codes[code] || 'Unknown';
 };
 
-const WeatherWidget = () => {
-  const [weatherData, setWeatherData] = useLocalStorage('dockora-weather-data', null); // Use localStorage
+const WeatherWidget = ({ isInteracting }) => {
+  const [weatherData, setWeatherData] = useLocalStorage('dockora-weather-data', null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFetchingNew, setIsFetchingNew] = useState(false); // New state for active fetching
+  const [isFetchingNew, setIsFetchingNew] = useState(false);
   const { settings } = useSettings();
   const apiKey = settings.weatherApiKey;
   const provider = settings.weatherProvider || 'openmeteo';
@@ -77,9 +78,11 @@ const WeatherWidget = () => {
   useEffect(() => {
     if (!coords) return;
     if (provider === 'openweathermap' && !apiKey) return;
+    // Only fetch weather if not interacting
+    if (isInteracting) return;
 
     const fetchWeather = async () => {
-      setIsFetchingNew(true); // Start fetching
+      setIsFetchingNew(true);
       try {
         let newWeatherData;
         if (provider === 'openweathermap') {
@@ -98,8 +101,8 @@ const WeatherWidget = () => {
               timestamp: Date.now(),
           };
         }
-        setWeatherData(newWeatherData); // Update localStorage and state
-        setError(null); // Clear any previous errors
+        setWeatherData(newWeatherData);
+        setError(null);
       } catch (err) {
         if (axios.isAxiosError(err) && err.code === 'ERR_NETWORK') {
           setError("No internet connection. Displaying cached data.");
@@ -110,16 +113,15 @@ const WeatherWidget = () => {
         }
         console.error("Weather fetch error:", err);
       } finally {
-        setIsLoading(false); // Initial load is complete
-        setIsFetchingNew(false); // Fetching finished
+        setIsLoading(false);
+        setIsFetchingNew(false);
       }
     };
 
-    // Fetch immediately, then set up interval
     fetchWeather();
-    const interval = setInterval(fetchWeather, 5 * 60 * 1000); // Refresh every 5 minutes
+    const interval = setInterval(fetchWeather, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [apiKey, coords, provider, setWeatherData]);
+  }, [apiKey, coords, provider, setWeatherData, isInteracting]);
 
   const renderContent = () => {
     if (isLoading && !weatherData) { // Only show full loading spinner if no cached data
