@@ -2,53 +2,118 @@
 
 import React, { useMemo } from 'react';
 import { useSettings } from '../hooks/useSettings';
-import { AppWindow } from 'lucide-react';
-import * as simpleIcons from 'simple-icons'; // Import all icons from simple-icons
+import {
+  AppWindow,
+  Server,
+  Database,
+  Cloud,
+  Globe,
+  Code,
+  FileText,
+  Image,
+  Music,
+  Video,
+  Download,
+  Book,
+  Shield,
+  Gauge,
+  GitBranch,
+  Container,
+  HardDrive,
+  Cpu,
+  MemoryStick,
+  Network,
+  Bell,
+  Mail,
+  Key,
+  Users,
+  Calendar,
+  Clock,
+  Timer,
+  Stopwatch,
+  CloudRain,
+  Sun,
+  Moon,
+  Zap,
+  Droplets,
+  Wind,
+  Umbrella,
+  CloudSnow,
+  CloudFog,
+  AlertTriangle,
+  Info,
+  X,
+  Trash2,
+  RotateCcw,
+  Folder,
+  Plus,
+  Edit,
+  Pencil,
+  Play,
+  Pause,
+  Square,
+  RefreshCw,
+  MoreVertical,
+  ChevronRight,
+  ChevronLeft,
+  Layers,
+  Search,
+  Terminal,
+  CheckCircle,
+  XCircle,
+  Loader,
+  WifiOff,
+  MapPin,
+  Signal,
+  ListTree,
+  Share2,
+  Copy
+} from 'lucide-react';
 
-// Map common app names to Simple Icons slugs
-const iconSlugMap: { [key: string]: string } = {
-  nginx: 'nginx',
-  apache: 'apache',
-  wordpress: 'wordpress',
-  mysql: 'mysql',
-  postgres: 'postgresql', // Correct slug for PostgreSQL
-  mongo: 'mongodb',
-  redis: 'redis',
-  grafana: 'grafana',
-  prometheus: 'prometheus',
-  portainer: 'portainer',
-  jenkins: 'jenkins',
-  gitlab: 'gitlab',
-  gitea: 'gitea',
-  vscode: 'visualstudiocode',
-  jupyter: 'jupyter',
-  nextcloud: 'nextcloud',
-  plex: 'plex',
-  emby: 'emby',
-  jellyfin: 'jellyfin',
-  sonarr: 'sonarr',
-  radarr: 'radarr',
-  lidarr: 'lidarr',
-  prowlarr: 'prowlarr',
-  qbittorrent: 'qbittorrent',
-  transmission: 'transmission',
-  calibre: 'calibre',
-  uptime: 'uptimerobot',
-  adguard: 'adguard',
-  pihole: 'pi-hole', // Correct slug for Pi-hole
-  traefik: 'traefikproxy',
-  caddy: 'caddyserver',
-  vaultwarden: 'vaultwarden',
-  bitwarden: 'bitwarden',
-  homeassistant: 'homeassistant',
-  node: 'nodedotjs',
-  python: 'python',
-  php: 'php',
-  java: 'openjdk',
-  go: 'go',
-  rust: 'rust',
-  docker: 'docker',
-  dockora: 'docker', // Using docker icon for dockora
+// Map common app names to specific Lucide React icons
+const lucideIconMap: { [key: string]: React.ElementType } = {
+  nginx: Server,
+  apache: Server,
+  wordpress: Book,
+  mysql: Database,
+  postgres: Database,
+  mongo: Database,
+  redis: Database,
+  grafana: Gauge,
+  prometheus: Gauge,
+  portainer: Container,
+  jenkins: GitBranch,
+  gitlab: GitBranch,
+  gitea: GitBranch,
+  vscode: Code,
+  jupyter: Code,
+  nextcloud: Cloud,
+  plex: Video,
+  emby: Video,
+  jellyfin: Video,
+  sonarr: Video,
+  radarr: Video,
+  lidarr: Music,
+  prowlarr: Search,
+  qbittorrent: Download,
+  transmission: Download,
+  calibre: Book,
+  uptime: Bell,
+  adguard: Shield,
+  pihole: Shield,
+  traefik: Network,
+  caddy: Server,
+  vaultwarden: Key,
+  bitwarden: Key,
+  homeassistant: Home, // Assuming Home is a Lucide React icon
+  node: Code,
+  python: Code,
+  php: Code,
+  java: Code,
+  go: Code,
+  rust: Code,
+  docker: Container,
+  dockora: Container,
 };
 
 const AppIcon = ({ appId, appName }) => {
@@ -63,20 +128,15 @@ const AppIcon = ({ appId, appName }) => {
 
   const customIconUrl = customAppIcons[appId];
 
-  const autoDetectedIconData = useMemo(() => {
-    if (customIconUrl) return null; // If custom URL exists, don't auto-detect Simple Icon
+  const AutoDetectedLucideIcon = useMemo(() => {
     const lowerCaseAppName = appName.toLowerCase();
-    for (const keyword in iconSlugMap) {
+    for (const keyword in lucideIconMap) {
       if (lowerCaseAppName.includes(keyword)) {
-        const slug = iconSlugMap[keyword];
-        const icon = simpleIcons.get(slug);
-        if (icon) {
-          return { svg: icon.svg, hex: icon.hex };
-        }
+        return lucideIconMap[keyword];
       }
     }
-    return null;
-  }, [appName, customIconUrl]);
+    return AppWindow; // Default fallback Lucide React icon
+  }, [appName]);
 
   // Render logic
   if (customIconUrl) {
@@ -87,19 +147,9 @@ const AppIcon = ({ appId, appName }) => {
         className="w-full h-full object-contain p-1"
       />
     );
-  } else if (autoDetectedIconData) {
-    // Apply the brand color via inline style on the wrapper div.
-    // Simple Icons SVGs typically use 'currentColor' or no explicit fill,
-    // so setting fill on the parent div should correctly color the SVG.
-    return (
-      <div
-        className="w-full h-full object-contain p-1"
-        style={{ fill: `#${autoDetectedIconData.hex}` }}
-        dangerouslySetInnerHTML={{ __html: autoDetectedIconData.svg }}
-      />
-    );
   } else {
-    return <AppWindow size={32} className="text-gray-400" />; // Lucide React fallback
+    // Render Lucide React icon
+    return <AutoDetectedLucideIcon size={32} className="text-gray-400" />;
   }
 };
 
