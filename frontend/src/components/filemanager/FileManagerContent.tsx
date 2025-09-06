@@ -4,7 +4,7 @@ import React, { useRef } from 'react';
 import Breadcrumbs from './Breadcrumbs';
 import FileManagerActions from './FileManagerActions';
 import FileTable from './FileTable';
-// Removed MySharesView import
+import MySharesView from './MySharesView';
 import toast from 'react-hot-toast';
 import { Search } from 'lucide-react'; // Import Search icon
 
@@ -23,8 +23,8 @@ const FileManagerContent = ({
   cutItems,
   fileInputRef,
   isTrashView,
-  isSharedWithMeView, // Still passed, but will be false
-  isMySharesView, // Still passed, but will be false
+  isSharedWithMeView,
+  isMySharesView,
   selectedCount,
   singleSelectedItem,
   onRestore,
@@ -78,30 +78,31 @@ const FileManagerContent = ({
             isSharedWithMeView={isSharedWithMeView}
             isMySharesView={isMySharesView}
           />
-          {selectedCount > 0 && <p className="text-sm text-gray-200 mt-1">{selectedCount} item(s) selected</p>} {/* Removed !isMySharesView condition */}
+          {selectedCount > 0 && !isMySharesView && <p className="text-sm text-gray-200 mt-1">{selectedCount} item(s) selected</p>}
         </div>
-        {/* Removed !isMySharesView condition from FileManagerActions wrapper */}
-        <FileManagerActions
-          isTrashView={isTrashView}
-          isSharedWithMeView={isSharedWithMeView}
-          selectedCount={selectedCount}
-          itemCount={items.length}
-          currentPath={currentPath}
-          onRestore={onRestore}
-          onDeletePermanently={onDeletePermanently}
-          onEmptyTrash={onEmptyTrash}
-          onUploadClick={onUploadClick}
-          onCreateFile={onCreateFile}
-          onCreateFolder={onCreateFolder}
-          onGoUp={onGoUp}
-          onDownloadShared={onDownloadShared}
-          singleSelectedItem={singleSelectedItem}
-        />
+        {!isMySharesView && (
+          <FileManagerActions
+            isTrashView={isTrashView}
+            isSharedWithMeView={isSharedWithMeView}
+            selectedCount={selectedCount}
+            itemCount={items.length}
+            currentPath={currentPath}
+            onRestore={onRestore}
+            onDeletePermanently={onDeletePermanently}
+            onEmptyTrash={onEmptyTrash}
+            onUploadClick={onUploadClick}
+            onCreateFile={onCreateFile}
+            onCreateFolder={onCreateFolder}
+            onGoUp={onGoUp}
+            onDownloadShared={onDownloadShared}
+            singleSelectedItem={singleSelectedItem}
+          />
+        )}
         <input type="file" multiple ref={fileInputRef} onChange={(e) => onUploadClick(e.target.files)} className="hidden" />
       </div>
 
       {/* Search Input */}
-      {!isTrashView && ( // Removed !isSharedWithMeView and !isMySharesView
+      {!isTrashView && !isSharedWithMeView && !isMySharesView && (
         <div className="relative mb-4 flex-shrink-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-200" size={20} />
           <input
@@ -115,27 +116,34 @@ const FileManagerContent = ({
       )}
 
       <div className="overflow-y-auto flex-grow no-scrollbar" onClick={(e) => e.stopPropagation()}>
-        {/* Removed conditional rendering for MySharesView */}
-        <FileTable
-          items={items}
-          isLoading={isLoading}
-          error={error}
-          isTrashView={isTrashView}
-          isSharedWithMeView={isSharedWithMeView}
-          selectedItems={selectedItems}
-          draggedOverItem={draggedOverItem}
-          onItemClick={onItemClick}
-          onItemDoubleClick={onItemDoubleClick}
-          onItemContextMenu={onItemContextMenu}
-          onDragStart={onDragStart}
-          onItemDragEnter={onItemDragEnter}
-          onItemDragLeave={onItemDragLeave}
-          onDropOnItem={onDropOnItem}
-          searchTerm={searchTerm} // Pass search term
-          sortColumn={sortColumn} // Pass sort column
-          sortDirection={sortDirection} // Pass sort direction
-          onSort={onSort} // Pass sort handler
-        />
+        {isMySharesView ? (
+          <MySharesView 
+            onRefreshFileManager={onRefreshMyShares} 
+            selectedItems={selectedItems} // Pass selectedItems
+            setSelectedItems={setSelectedItems} // Pass setSelectedItems
+          />
+        ) : (
+          <FileTable
+            items={items}
+            isLoading={isLoading}
+            error={error}
+            isTrashView={isTrashView}
+            isSharedWithMeView={isSharedWithMeView}
+            selectedItems={selectedItems}
+            draggedOverItem={draggedOverItem}
+            onItemClick={onItemClick}
+            onItemDoubleClick={onItemDoubleClick}
+            onItemContextMenu={onItemContextMenu}
+            onDragStart={onDragStart}
+            onItemDragEnter={onItemDragEnter}
+            onItemDragLeave={onItemDragLeave}
+            onDropOnItem={onDropOnItem}
+            searchTerm={searchTerm} // Pass search term
+            sortColumn={sortColumn} // Pass sort column
+            sortDirection={sortDirection} // Pass sort direction
+            onSort={onSort} // Pass sort handler
+          />
+        )}
       </div>
     </div>
   );

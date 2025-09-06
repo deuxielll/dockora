@@ -1,22 +1,22 @@
 import React from 'react';
-import { Eye, Share2, Copy, Edit, Trash2, RotateCcw, ClipboardPaste, Scissors, FolderInput } from 'lucide-react'; // Removed Users, Download
+import { Eye, Share2, Copy, Edit, Trash2, RotateCcw, Users, Download, ClipboardPaste, Scissors, FolderInput } from 'lucide-react'; // Added FolderInput
 
 const ItemContextMenu = ({
   contextMenu,
   isTrashView,
-  isSharedWithMeView, // Still passed, but will be false
-  isMySharesView, // Still passed, but will be false
+  isSharedWithMeView,
+  isMySharesView, // New prop
   selectedCount,
   singleSelectedItem,
   onView,
   onSharePublic, // For public links
-  // Removed onShareWithUsers
+  onShareWithUsers, // For user-to-user sharing
   onCopyPath,
   onRename,
   onDelete,
   onRestore,
   onClose,
-  // Removed onDownloadShared
+  onDownloadShared,
   onCopy, // New prop
   onCut, // New prop
   onPaste, // New prop
@@ -26,8 +26,8 @@ const ItemContextMenu = ({
 }) => {
   if (!contextMenu || selectedCount === 0) return null;
 
-  const canPaste = (hasCopiedItems || hasCutItems) && !isTrashView; // Adjusted condition
-  const canMove = !isTrashView; // Adjusted condition
+  const canPaste = (hasCopiedItems || hasCutItems) && !isTrashView && !isSharedWithMeView && !isMySharesView;
+  const canMove = !isTrashView && !isSharedWithMeView && !isMySharesView;
 
   return (
     <div
@@ -39,7 +39,23 @@ const ItemContextMenu = ({
           <li><button onClick={() => { onRestore(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><RotateCcw size={16} /><span>Restore ({selectedCount})</span></button></li>
           <li><button onClick={() => { onDelete(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md"><Trash2 size={16} /><span>Delete Permanently ({selectedCount})</span></button></li>
         </ul>
-      ) : ( // Simplified: no isSharedWithMeView or isMySharesView conditions
+      ) : isSharedWithMeView ? (
+        <ul className="space-y-1">
+          {singleSelectedItem && singleSelectedItem.type === 'file' && (
+            <li><button onClick={() => { onView(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Eye size={16} /><span>View</span></button></li>
+          )}
+          {singleSelectedItem && ( // Allow download for both files and folders
+            <li><button onClick={() => { onDownloadShared(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Download size={16} /><span>Download</span></button></li>
+          )}
+          <li><button onClick={() => { onCopyPath(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Copy size={16} /><span>Copy Path(s)</span></button></li>
+          <li><button onClick={() => { onDelete(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md"><Trash2 size={16} /><span>Remove from list ({selectedCount})</span></button></li>
+        </ul>
+      ) : isMySharesView ? ( // New context menu for My Shares
+        <ul className="space-y-1">
+          <li><button onClick={() => { onCopyPath(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Copy size={16} /><span>Copy Path(s)</span></button></li>
+          <li><button onClick={() => { onDelete(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md"><Trash2 size={16} /><span>Unshare ({selectedCount})</span></button></li>
+        </ul>
+      ) : (
         <ul className="space-y-1">
           {singleSelectedItem && singleSelectedItem.type === 'file' && (
             <li><button onClick={() => { onView(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Eye size={16} /><span>View</span></button></li>
@@ -47,7 +63,9 @@ const ItemContextMenu = ({
           {selectedCount > 0 && (
             <li><button onClick={() => { onSharePublic(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Share2 size={16} /><span>Share Public ({selectedCount})</span></button></li>
           )}
-          {/* Removed Share with Users option */}
+          {selectedCount > 0 && (
+            <li><button onClick={() => { onShareWithUsers(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Users size={16} /><span>Share with Users ({selectedCount})</span></button></li>
+          )}
           <li><button onClick={() => { onCopy(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Copy size={16} /><span>Copy ({selectedCount})</span></button></li>
           <li><button onClick={() => { onCut(); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"><Scissors size={16} /><span>Cut ({selectedCount})</span></button></li>
           {canMove && (

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash, unshareFileWithUsers, copyItems, getSharedByMeItems } from '../services/api'; // Removed getSharedWithMeItems, downloadSharedWithMeFile, updateLastViewedSharedFilesTimestamp
+import { browseFiles, createItem, uploadFile, deleteItem, renameItem, moveItems, getTrashItems, restoreTrashItems, deleteTrashItemsPermanently, emptyTrash, getSharedWithMeItems, downloadSharedWithMeFile, unshareFileWithUsers, updateLastViewedSharedFilesTimestamp, copyItems, getSharedByMeItems } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import Sidebar from '../components/Sidebar';
 import FileManagerContent from '../components/filemanager/FileManagerContent';
@@ -21,11 +21,11 @@ const FileManagerPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(null);
   const [itemToRename, setItemToRename] = useState(null);
   const [itemsToSharePublic, setItemsToSharePublic] = useState(null);
-  // Removed itemsToShareWithUsers state
+  const [itemsToShareWithUsers, setItemsToShareWithUsers] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const [emptySpaceContextMenu, setEmptySpaceContextMenu] = useState(null);
-  const [selectedItems, setSelectedItems] = new Set(); // Initialize as empty set, no longer passed to MySharesView
+  const [selectedItems, setSelectedItems] = useState(new Set());
   const [selectionAnchor, setSelectionAnchor] = useState(null);
   const [draggedOverItem, setDraggedOverItem] = useState(null);
   const [copiedItems, setCopiedItems] = useState([]);
@@ -41,10 +41,8 @@ const FileManagerPage = () => {
   const [itemsToMove, setItemsToMove] = useState(null);
 
   const isTrashView = currentPath === 'trash';
-  // Removed isSharedWithMeView and isMySharesView
-  const isMySharesView = false; // Always false now
-  const isSharedWithMeView = false; // Always false now
-
+  const isSharedWithMeView = currentPath === 'shared-with-me';
+  const isMySharesView = currentPath === 'my-shares';
 
   const fetchItems = useCallback(async (path) => {
     setIsLoading(true);
@@ -53,18 +51,22 @@ const FileManagerPage = () => {
       let res;
       if (path === 'trash') {
         res = await getTrashItems();
-        setItems(res.data);
-      } else { // Simplified: no 'shared-with-me' or 'my-shares' paths
+      } else if (path === 'shared-with-me') {
+        res = await getSharedWithMeItems();
+        await updateLastViewedSharedFilesTimestamp();
+      } else if (path === 'my-shares') {
+        res = await getSharedByMeItems(); // MySharesView now fetches its own data, but we need to populate `items` for context menu logic
+      } else {
         res = await browseFiles(path);
-        setItems(res.data);
       }
+      setItems(res.data);
       setSelectedItems(new Set());
       setSearchTerm(''); // Reset search term on path change
       setSortColumn('name'); // Reset sort on path change
       setSortDirection('asc'); // Reset sort on path change
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to load directory.');
-      if (path !== '/' && path !== 'trash') setCurrentPath('/'); // Adjusted path check
+      if (path !== '/' && path !== 'trash' && path !== 'shared-with-me' && path !== 'my-shares') setCurrentPath('/');
     } finally {
       setIsLoading(false);
     }
@@ -104,11 +106,17 @@ const FileManagerPage = () => {
 
   const getItemIdentifier = (item) => {
     if (isTrashView) return item.trashed_name;
+    if (isSharedWithMeView) return item.id;
+    if (isMySharesView) return item.id;
     return item.path;
   };
 
   const handleItemDoubleClick = async (item) => {
     if (item.type === 'dir') {
+      if (isSharedWithMeView || isMySharesView) {
+        toast.error("Cannot browse subfolders directly in this view. Please download or view the item.");
+        return;
+      }
       setCurrentPath(item.path);
     } else {
       setViewingFile(item);
@@ -136,7 +144,8 @@ const FileManagerPage = () => {
     } else {
       setSelectedItems(new Set([itemIdentifier]));
       setSelectionAnchor(item);
-      // Do not clear copied/cut items on single click
+      setCopiedItems([]);
+      setCutItems([]);
     }
   };
 
@@ -177,6 +186,23 @@ const FileManagerPage = () => {
   const handleDeleteMultiple = async () => {
     const itemsToDelete = Array.from(selectedItems);
     if (itemsToDelete.length === 0) return;
+
+    if (isSharedWithMeView || isMySharesView) {
+      const confirmMessage = isSharedWithMeView
+        ? `Are you sure you want to remove ${itemsToDelete.length} item(s) from your 'Shared with me' list? This will not delete the original files.`
+        : `Are you sure you want to unshare ${itemsToDelete.length} item(s)? This will revoke access for the recipients.`;
+
+      if (window.confirm(confirmMessage)) {
+        try {
+          await unshareFileWithUsers(itemsToDelete);
+          toast.success(`${itemsToDelete.length} item(s) removed/unshared successfully.`);
+          fetchItems(currentPath);
+        } catch (err) {
+          toast.error(err.response?.data?.error || 'Failed to remove/unshare item(s).');
+        }
+      }
+      return;
+    }
 
     const confirmMessage = isTrashView
       ? `Are you sure you want to permanently delete ${itemsToDelete.length} item(s)? This action cannot be undone.`
@@ -232,6 +258,12 @@ const FileManagerPage = () => {
   const handleCopyMultiplePaths = () => {
     const pathsToCopy = Array.from(selectedItems).map(id => {
       const item = items.find(i => getItemIdentifier(i) === id);
+      if (isSharedWithMeView) return `${item.sharer_name}:${item.path}`;
+      if (isMySharesView) {
+        // For MySharesView, the 'path' is relative to the sharer, so we show sharer:path
+        const sharedItem = items.find(i => i.id === id);
+        return sharedItem ? `${sharedItem.sharer_name}:${sharedItem.path}` : '';
+      }
       return item.path;
     }).filter(Boolean); // Filter out any empty strings from items not found
     navigator.clipboard.writeText(pathsToCopy.join('\n'))
@@ -255,7 +287,7 @@ const FileManagerPage = () => {
 
   const handlePaste = async () => {
     if (copiedItems.length === 0 && cutItems.length === 0) return;
-    if (isTrashView) { // Adjusted condition
+    if (isTrashView || isSharedWithMeView || isMySharesView) {
       toast.error("Cannot paste into this view.");
       return;
     }
@@ -304,12 +336,12 @@ const FileManagerPage = () => {
     event.preventDefault();
     closeAllContextMenus();
     setSelectedItems(new Set());
-    if (!isTrashView) setEmptySpaceContextMenu({ x: event.pageX, y: event.pageY }); // Adjusted condition
+    if (!isTrashView && !isSharedWithMeView && !isMySharesView) setEmptySpaceContextMenu({ x: event.pageX, y: event.pageY });
   };
 
   const handleDragStart = (e, item) => {
     e.stopPropagation();
-    if (isTrashView) { // Adjusted condition
+    if (isTrashView || isSharedWithMeView || isMySharesView) {
       e.preventDefault();
       return;
     }
@@ -349,7 +381,7 @@ const FileManagerPage = () => {
     e.preventDefault();
     e.stopPropagation();
     setDraggedOverItem(null);
-    if (dropTargetItem.type !== 'dir' || isTrashView) return; // Adjusted condition
+    if (dropTargetItem.type !== 'dir' || isTrashView || isSharedWithMeView || isMySharesView) return;
     const draggedItemsJSON = e.dataTransfer.getData('application/json');
     if (!draggedItemsJSON) return;
     try {
@@ -365,14 +397,14 @@ const FileManagerPage = () => {
 
   const handleDragOver = (e) => {
     e.preventDefault();
-    if (!isTrashView && Array.from(e.dataTransfer.types).includes('Files')) setIsDragging(true); // Adjusted condition
+    if (!isTrashView && !isSharedWithMeView && !isMySharesView && Array.from(e.dataTransfer.types).includes('Files')) setIsDragging(true);
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
     setDraggedOverItem(null);
-    if (!isTrashView && e.dataTransfer.files.length > 0) handleUpload(e.dataTransfer.files); // Adjusted condition
+    if (!isTrashView && !isSharedWithMeView && !isMySharesView && e.dataTransfer.files.length > 0) handleUpload(e.dataTransfer.files);
   };
 
   const handleDragEnd = () => {
@@ -393,13 +425,43 @@ const FileManagerPage = () => {
   const selectedCount = selectedItems.size;
   const singleSelectedItem = selectedCount === 1 ? items.find(i => getItemIdentifier(i) === Array.from(selectedItems)[0]) : null;
 
-  // Removed handleViewSharedFile and handleDownloadSharedFile
+  const handleViewSharedFile = async (item) => {
+    if (item.type === 'dir') {
+      toast.error("Cannot view directories directly. Please download.");
+      return;
+    }
+    setViewingFile({
+      name: item.name,
+      path: item.id,
+      type: item.type,
+      isShared: true,
+      sharer_name: item.sharer_name
+    });
+  };
+
+  const handleDownloadSharedFile = async (item) => {
+    try {
+      const response = await downloadSharedWithMeFile(item.id);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', item.name);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success(`Downloading ${item.name}...`);
+    } catch (err) {
+      toast.error(err.response?.data?.error || `Failed to download ${item.name}.`);
+    }
+  };
 
   return (
     <>
       <div className="flex h-full p-4 sm:p-6 pb-28">
         <Sidebar onNavigate={setCurrentPath} currentUser={currentUser} />
         <div className="flex-1 flex flex-col overflow-hidden ml-6">
+          {/* Removed: <h2 className="text-2xl font-bold text-gray-200 mb-6">File Manager</h2> */}
           <FileManagerContent
             currentUser={currentUser}
             currentPath={currentPath}
@@ -415,8 +477,8 @@ const FileManagerPage = () => {
             cutItems={cutItems}
             fileInputRef={fileInputRef}
             isTrashView={isTrashView}
-            isSharedWithMeView={isSharedWithMeView} // Still pass, but will be false
-            isMySharesView={isMySharesView} // Still pass, but will be false
+            isSharedWithMeView={isSharedWithMeView}
+            isMySharesView={isMySharesView}
             selectedCount={selectedCount}
             singleSelectedItem={singleSelectedItem}
             onRestore={handleRestoreMultiple}
@@ -426,12 +488,12 @@ const FileManagerPage = () => {
             onCreateFile={() => setShowCreateModal({ type: 'file' })}
             onCreateFolder={() => setShowCreateModal({ type: 'dir' })}
             onGoUp={goUp}
-            onDownloadShared={() => toast.error("Shared download is not available.")} // Placeholder for removed feature
+            onDownloadShared={handleDownloadSharedFile}
             onItemClick={handleItemClick}
             onItemDoubleClick={handleItemDoubleClick}
             onItemContextMenu={handleContextMenu}
             onDragStart={handleDragStart}
-            onItemDragEnter={(e, item) => { e.preventDefault(); e.stopPropagation(); if (item.type === 'dir' && !isTrashView) setDraggedOverItem(getItemIdentifier(item)); }} // Adjusted condition
+            onItemDragEnter={(e, item) => { e.preventDefault(); e.stopPropagation(); if (item.type === 'dir' && !isTrashView && !isSharedWithMeView && !isMySharesView) setDraggedOverItem(getItemIdentifier(item)); }}
             onItemDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); if (e.currentTarget.contains(e.relatedTarget)) return; setDraggedOverItem(null); }}
             onDropOnItem={handleDropOnItem}
             onDragOver={handleDragOver}
@@ -458,9 +520,10 @@ const FileManagerPage = () => {
         onRename={handleRename}
         itemsToSharePublic={itemsToSharePublic}
         setItemsToSharePublic={setItemsToSharePublic}
-        // Removed itemsToShareWithUsers and setItemsToShareWithUsers
+        itemsToShareWithUsers={itemsToShareWithUsers}
+        setItemsToShareWithUsers={setItemsToShareWithUsers}
         onShareWithUsersSuccess={() => {
-          // Removed itemsToShareWithUsers(null);
+          setItemsToShareWithUsers(null);
           setSelectedItems(new Set());
         }}
         itemsToMove={itemsToMove}
@@ -472,18 +535,18 @@ const FileManagerPage = () => {
         emptySpaceContextMenu={emptySpaceContextMenu}
         closeAllContextMenus={closeAllContextMenus}
         isTrashView={isTrashView}
-        isSharedWithMeView={isSharedWithMeView} // Still pass, but will be false
-        isMySharesView={isMySharesView} // Still pass, but will be false
+        isSharedWithMeView={isSharedWithMeView}
+        isMySharesView={isMySharesView}
         selectedCount={selectedCount}
         singleSelectedItem={singleSelectedItem}
         onView={() => handleItemDoubleClick(singleSelectedItem)}
         onSharePublic={() => setItemsToSharePublic(Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id).path))}
-        // Removed onShareWithUsers
+        onShareWithUsers={() => setItemsToShareWithUsers(Array.from(selectedItems).map(id => items.find(i => getItemIdentifier(i) === id).path))}
         onCopyPath={handleCopyMultiplePaths}
         onRename={() => setItemToRename(singleSelectedItem)}
         onDelete={handleDeleteMultiple}
         onRestore={handleRestoreMultiple}
-        onDownloadShared={() => toast.error("Shared download is not available.")} // Placeholder for removed feature
+        onDownloadShared={() => handleDownloadSharedFile(singleSelectedItem)}
         onCopy={handleCopy}
         onCut={handleCut}
         onPaste={handlePaste}
