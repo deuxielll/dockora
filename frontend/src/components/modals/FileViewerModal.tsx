@@ -48,8 +48,10 @@ const FileViewerModal = ({ item, onClose }) => {
     // Determine which API calls to use based on whether it's a shared item
     const fetchContentApi = item.isShared ? getSharedWithMeFileContent : getFileContent;
     const viewFileApi = item.isShared ? viewSharedWithMeFile : viewFile;
+    
+    // Construct download URL based on whether it's a shared item and its virtual path
     const downloadUrl = item.isShared 
-        ? `${API_BASE_URL}/files/shared-with-me/download?share_id=${item.path}`
+        ? `${API_BASE_URL}/files/shared-with-me/download?share_id=${item.path}&virtual_sub_path=${encodeURIComponent(item.virtual_path)}`
         : `${API_BASE_URL}/files/view?path=${encodeURIComponent(item.path)}`;
 
     useEffect(() => {
@@ -59,7 +61,9 @@ const FileViewerModal = ({ item, onClose }) => {
             setError('');
             try {
                 if (fileType === 'code' || fileType === 'zip') { // Handle ZIP files here
-                    const res = await fetchContentApi(item.path);
+                    const res = item.isShared 
+                        ? await fetchContentApi(item.path, item.virtual_path)
+                        : await fetchContentApi(item.path);
                     if (res.data.type === 'zip_contents') {
                         setZipContents(res.data.contents);
                         setTextContent(''); // Clear text content if it's a zip
@@ -68,7 +72,9 @@ const FileViewerModal = ({ item, onClose }) => {
                         setZipContents([]); // Clear zip contents if it's a text file
                     }
                 } else if (fileType === 'video' || fileType === 'audio' || fileType === 'image' || fileType === 'pdf') {
-                    const res = await viewFileApi(item.path);
+                    const res = item.isShared 
+                        ? await viewFileApi(item.path, item.virtual_path)
+                        : await viewFileApi(item.path);
                     objectUrl = URL.createObjectURL(res.data);
                     setMediaUrl(objectUrl);
                 }
@@ -87,7 +93,7 @@ const FileViewerModal = ({ item, onClose }) => {
                 URL.revokeObjectURL(objectUrl);
             }
         };
-    }, [item.path, fileType, fetchContentApi, viewFileApi]);
+    }, [item.path, item.virtual_path, fileType, fetchContentApi, viewFileApi, item.isShared]);
 
     const renderContent = () => {
         if (isLoading) return <div className="flex-grow flex items-center justify-center"><LoadingSpinner /></div>;

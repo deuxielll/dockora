@@ -14,7 +14,7 @@ const FileTable = ({
   onItemClick,
   onItemDoubleClick,
   onItemContextMenu,
-  onDragStart, // This prop is now correctly named and passed
+  onDragStart,
   onItemDragEnter,
   onItemDragLeave,
   onDropOnItem,
@@ -35,7 +35,10 @@ const FileTable = ({
   
   const getItemIdentifier = (item) => {
     if (isTrashView) return item.trashed_name;
-    if (isSharedWithMeView) return item.id;
+    if (isSharedWithMeView) {
+      // For shared-with-me, combine share_id and virtual_path for unique identifier
+      return `${item.id}-${item.virtual_path}`;
+    }
     return item.path;
   };
 
