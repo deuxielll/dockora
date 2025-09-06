@@ -18,7 +18,7 @@ import NotificationBell from '../components/NotificationBell';
 import WidgetGrid from '../components/home/WidgetGrid'; // New import
 
 // Define WIDGETS_CONFIG here, consistent with WidgetSettings.tsx
-export const WIDGETS_CONFIG = { // Exported for use in WidgetGrid
+export const WIDGETS_CONFIG = { // Exported for use in WidgetGrid and PopoutWidgetPage
   deploymentStatus: { component: DeploymentStatusWidget, title: 'Deployment Status', defaultVisible: true, defaultLayout: { h: 2, minH: 2, minW: 1 } },
   systemUsage: { component: SystemUsageWidget, title: 'System Usage', defaultVisible: true, defaultLayout: { h: 1.5, minH: 1.5, minW: 1 } },
   weather: { component: WeatherWidget, title: 'Weather', defaultVisible: true, defaultLayout: { h: 1.5, minH: 1.5, minW: 1 } },

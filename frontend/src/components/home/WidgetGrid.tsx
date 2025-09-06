@@ -39,7 +39,7 @@ const WidgetGrid = ({
         return (
           <div key={key}>
             <WidgetWrapper
-              widgetId={key}
+              widgetId={key} // Pass widgetId here
               title={WIDGETS_CONFIG[key].title}
               onHide={handleHideWidget}
               isLocked={isLayoutLocked}

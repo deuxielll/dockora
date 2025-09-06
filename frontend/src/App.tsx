@@ -8,6 +8,7 @@ import SetupPage from "./pages/SetupPage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import BottomNavBar from "./components/BottomNavBar.tsx";
 import BackgroundManager from "./components/BackgroundManager.tsx";
+import PopoutWidgetPage from "./pages/PopoutWidgetPage.tsx"; // Import the new page
 
 const HomePage = lazy(() => import("./pages/HomePage.tsx"));
 const ManagementPage = lazy(() => import("./pages/ManagementPage.tsx"));
@@ -33,7 +34,6 @@ const DashboardLayout = () => {
   const { currentUser } = useAuth();
   const activeTab = location.pathname === '/' ? 'home' : location.pathname.split('/')[1];
   const isFileManager = activeTab === 'files';
-  // Removed isSettingsPage check from here, as SettingsPage will manage its own scrolling.
 
   return (
     <div className="flex h-screen text-black dark:text-gray-200 font-sans">
@@ -70,6 +70,9 @@ function App() {
         <Route path="/forgot-password" element={!isLoggedIn ? <ForgotPasswordPage /> : <Navigate to="/" />} />
         <Route path="/reset-password/:token" element={!isLoggedIn ? <ResetPasswordPage /> : <Navigate to="/" />} />
         
+        {/* New route for pop-out widgets */}
+        <Route path="/widget/:widgetId" element={<ProtectedRoute><PopoutWidgetPage /></ProtectedRoute>} />
+
         <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
           <Route path="/" element={<HomePage />} />
           <Route path="/containers" element={<ManagementPage />} />
