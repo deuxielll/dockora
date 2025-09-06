@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useFileManager } from './useFileManager'; // Import useFileManager to get item data
 
-export const useFileManagerModals = () => { // Added 'export' here
+const useFileManagerModals = () => {
   const { items, getItemIdentifier, handleCreate, handleRename, handleMove } = useFileManager();
 
   const [viewingFile, setViewingFile] = useState(null);
