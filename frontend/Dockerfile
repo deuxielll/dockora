@@ -1,13 +1,10 @@
-# Stage 1: Builder
 FROM node:18-alpine AS builder
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-# Use --mount=type=cache for pnpm install for more reliable caching
-RUN --mount=type=cache,target=/root/.pnpm-store pnpm install --frozen-lockfile
+COPY package.json package-lock.json ./
+RUN npm install --frozen-lockfile
 COPY . .
-RUN pnpm run build
+RUN npm run build
 
-# Stage 2: Production
 FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf

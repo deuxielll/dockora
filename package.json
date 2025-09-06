@@ -2,7 +2,7 @@
   "name": "dockora-root",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter dockora dev"
+    "dev": "npm --prefix frontend run dev"
   },
   "dependencies": {
     "postcss-import": "^16.1.1",
