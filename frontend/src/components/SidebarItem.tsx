@@ -1,14 +1,14 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { ChevronRight, Folder, Loader } from 'lucide-react';
-import { browseFiles, uploadFile } from '../services/api';
-import toast from 'react-hot-toast'; // Import toast for notifications
+import { browseFiles, uploadFile, moveItems } from '../services/api'; // Import moveItems
+import toast from 'react-hot-toast';
 
-const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate, depth = 0 }) => {
+const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate, depth = 0, onRefreshFileManager }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [subItems, setSubItems] = useState([]); // Renamed from subfolders to subItems
+    const [subItems, setSubItems] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [isDragging, setIsDragging] = useState(false);
-    const [hasChildren, setHasChildren] = useState(false); // Renamed from hasSubfolders to hasChildren
+    const [isDraggingOver, setIsDraggingOver] = useState(false); // Renamed from isDragging to isDraggingOver
+    const [hasChildren, setHasChildren] = useState(false);
 
     const isSpecialSection = path === 'trash' || path === 'shared-with-me' || path === 'my-shares';
 
@@ -34,8 +34,6 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate, depth = 
     }, [path, isSpecialSection]);
 
     useEffect(() => {
-        // Only fetch contents for regular folders on initial render if not collapsed and not a special section
-        // And only if it's a top-level item or already expanded
         if (!isCollapsed && !isSpecialSection && (depth === 0 || isExpanded)) {
             fetchContents();
         }
@@ -45,7 +43,7 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate, depth = 
         e.stopPropagation();
         if (isCollapsed || isSpecialSection) return;
         setIsExpanded(!isExpanded);
-        if (!isExpanded && subItems.length === 0) { // Fetch subfolders only when expanding for the first time
+        if (!isExpanded && subItems.length === 0) {
             fetchContents();
         }
     };
@@ -57,40 +55,79 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate, depth = 
     const handleDrop = async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        setIsDragging(false);
-        if (isSpecialSection || !isExpanded) { // Only allow drop if it's an expanded folder
-            toast.error("Cannot upload files to this section or unexpanded folder.");
+        setIsDraggingOver(false);
+
+        if (isSpecialSection) {
+            toast.error("Cannot drop items into this section.");
             return;
         }
-        const files = Array.from(e.dataTransfer.files);
-        if (files.length > 0) {
-            const uploadPromises = files.map(file => {
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('path', path);
-                return uploadFile(formData);
-            });
+        if (!isExpanded && e.dataTransfer.types.includes('Files')) {
+            toast.error("Please expand the folder to upload files into it.");
+            return;
+        }
+        if (!isExpanded && e.dataTransfer.types.includes('application/json')) {
+            toast.error("Please expand the folder to move items into it.");
+            return;
+        }
+
+        // Handle file uploads
+        if (e.dataTransfer.types.includes('Files')) {
+            const files = Array.from(e.dataTransfer.files);
+            if (files.length > 0) {
+                const uploadPromises = files.map(file => {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('path', path);
+                    return uploadFile(formData);
+                });
+                try {
+                    await Promise.all(uploadPromises);
+                    fetchContents(); // Refresh sub-items in sidebar
+                    onRefreshFileManager(); // Refresh main file manager content
+                    toast.success(`${files.length} file(s) uploaded to ${name}.`);
+                } catch (err) {
+                    toast.error(err.response?.data?.error || 'An error occurred during upload.');
+                }
+            }
+        } 
+        // Handle moving existing items
+        else if (e.dataTransfer.types.includes('application/json')) {
             try {
-                await Promise.all(uploadPromises);
-                fetchContents(); // Refresh contents after upload
-                toast.success(`${files.length} file(s) uploaded to ${name}.`);
+                const sourcePaths = JSON.parse(e.dataTransfer.getData('application/json'));
+                if (sourcePaths.includes(path) || sourcePaths.some(p => p.startsWith(path + '/'))) {
+                    toast.error("Cannot move a folder into itself or its subfolder.");
+                    return;
+                }
+                await moveItems(sourcePaths, path);
+                onRefreshFileManager(); // Refresh main file manager content
+                toast.success(`${sourcePaths.length} item(s) moved to ${name}.`);
             } catch (err) {
-                toast.error(err.response?.data?.error || 'An error occurred during upload.');
+                toast.error(err.response?.data?.error || 'Failed to move item(s).');
             }
         }
     };
 
-    const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
-    const handleDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isSpecialSection) {
+            setIsDraggingOver(true);
+        }
+    };
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDraggingOver(false);
+    };
 
-    const itemPadding = `pl-${4 + depth * 4}`; // Increase padding for nested items
+    const itemPadding = `pl-${4 + depth * 4}`;
 
     return (
         <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            className={`rounded-lg transition-colors ${isDragging ? 'bg-blue-500/20' : ''}`}
+            className={`rounded-lg transition-colors ${isDraggingOver ? 'bg-blue-500/20' : ''}`}
         >
             <div
                 onClick={handleNavigate}
@@ -119,11 +156,12 @@ const SidebarItem = ({ name, icon: Icon, path, isCollapsed, onNavigate, depth = 
                         <SidebarItem
                             key={item.path}
                             name={item.name}
-                            icon={Folder} // All sub-items here are folders
+                            icon={Folder}
                             path={item.path}
                             isCollapsed={isCollapsed}
                             onNavigate={onNavigate}
                             depth={depth + 1}
+                            onRefreshFileManager={onRefreshFileManager} // Pass refresh prop
                         />
                     )) : (
                         <p className={`${itemPadding} py-2 text-xs text-gray-400`}>No subfolders</p>

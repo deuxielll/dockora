@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChevronLeft, Video, Music, FileText, Download, Image as GalleryIcon, Trash2, Users, Share2 } from 'lucide-react';
 import SidebarItem from './SidebarItem';
 
-const Sidebar = ({ onNavigate, currentUser }) => {
+const Sidebar = ({ onNavigate, currentUser, onRefreshFileManager }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     // Paths are now relative to the user's home directory, which the backend resolves.
@@ -40,7 +40,8 @@ const Sidebar = ({ onNavigate, currentUser }) => {
                         path={section.path}
                         isCollapsed={isCollapsed}
                         onNavigate={onNavigate}
-                        depth={0} // Pass initial depth
+                        depth={0}
+                        onRefreshFileManager={onRefreshFileManager} // Pass refresh prop
                     />
                 ))}
             </nav>
