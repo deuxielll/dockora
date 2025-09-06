@@ -6,7 +6,7 @@ import { useAuth } from '../../hooks/useAuth';
 
 const SettingsSidebar = ({ activeSection, onNavigate }) => {
   const { currentUser } = useAuth();
-  const [expandedSections, setExpandedSections] = useState(new Set());
+  const [expandedSections, setExpandedSections] = useState(new Set(['widgets', 'system'])); // Expand widgets and system by default
 
   const toggleSection = (sectionId) => {
     setExpandedSections(prev => {
@@ -20,7 +20,7 @@ const SettingsSidebar = ({ activeSection, onNavigate }) => {
     });
   };
 
-  const NavItem = ({ id, label, Icon, path, isSubItem = false, hasSubItems = false }) => {
+  const NavItem = ({ id, label, Icon, isSubItem = false, hasSubItems = false }) => {
     const isActive = activeSection === id;
     const isExpanded = expandedSections.has(id);
 
@@ -54,26 +54,26 @@ const SettingsSidebar = ({ activeSection, onNavigate }) => {
   };
 
   const sections = [
-    { id: 'profile', label: 'Profile', icon: User, component: 'ProfileSettings' },
-    { id: 'appearance', label: 'Appearance', icon: Palette, component: 'AppearanceSettings' },
+    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'appearance', label: 'Appearance', icon: Palette },
     {
       id: 'widgets', label: 'Widgets', icon: LayoutGrid,
       subItems: [
-        { id: 'widgets-general', label: 'General', component: 'WidgetSettings' },
-        { id: 'widgets-weather', label: 'Weather', component: 'WidgetSettings' },
-        { id: 'widgets-download-client', label: 'Download Client', component: 'WidgetSettings' },
-        { id: 'widgets-system-logs', label: 'System Logs', component: 'WidgetSettings' },
+        { id: 'widgets-general', label: 'General' },
+        { id: 'widgets-weather', label: 'Weather' },
+        { id: 'widgets-download-client', label: 'Download Client' },
+        { id: 'widgets-system-logs', label: 'System Logs' },
       ]
     },
     {
       id: 'system', label: 'System', icon: Terminal,
       subItems: [
-        { id: 'system-trash', label: 'Trash', component: 'TrashSettings' },
-        { id: 'system-smtp', label: 'SMTP', component: 'SmtpSettings' },
-        { id: 'system-ssh-terminal', label: 'SSH Terminal', component: 'SshTerminalSettings' },
+        { id: 'system-trash', label: 'Trash' },
+        { id: 'system-smtp', label: 'SMTP' },
+        { id: 'system-ssh-terminal', label: 'SSH Terminal' },
       ]
     },
-    { id: 'user-management', label: 'User Management', icon: Users, component: 'UserManagement' },
+    { id: 'user-management', label: 'User Management', icon: Users },
   ];
 
   const panelClasses = "bg-dark-bg shadow-neo";
@@ -102,7 +102,6 @@ const SettingsSidebar = ({ activeSection, onNavigate }) => {
                 Icon={section.icon}
                 hasSubItems={!!section.subItems}
                 onNavigate={onNavigate}
-                activeSection={activeSection}
               />
               {section.subItems && expandedSections.has(section.id) && (
                 <div className="space-y-1 mt-1">
@@ -122,7 +121,6 @@ const SettingsSidebar = ({ activeSection, onNavigate }) => {
                       }
                       isSubItem
                       onNavigate={onNavigate}
-                      activeSection={activeSection}
                     />
                   ))}
                 </div>
