@@ -11,7 +11,6 @@ import DeploymentStatusWidget from '../components/widgets/DeploymentStatusWidget
 import NetworkingWidget from '../components/widgets/NetworkingWidget';
 import FileActivityWidget from '../components/widgets/FileActivityWidget';
 import SystemLogsWidget from '../components/widgets/SystemLogsWidget';
-import DownloadClientWidget from '../components/widgets/DownloadClientWidget'; // New import
 import { Sun, Moon } from 'lucide-react';
 import LogoutButton from '../components/LogoutButton';
 import NotificationBell from '../components/NotificationBell';
@@ -27,7 +26,6 @@ export const WIDGETS_CONFIG = { // Exported for use in WidgetGrid and PopoutWidg
   appLauncher: { component: AppLauncherWidget, title: 'App Launcher', defaultVisible: true, defaultLayout: { h: 4, minH: 4, minW: 1 } },
   fileActivity: { component: FileActivityWidget, title: 'File Activity', defaultVisible: true, defaultLayout: { h: 3, minH: 3, minW: 1 } },
   systemLogs: { component: SystemLogsWidget, title: 'System Logs', defaultVisible: true, defaultLayout: { h: 4, minH: 3, minW: 1 } },
-  downloadClient: { component: DownloadClientWidget, title: 'Download Client', defaultVisible: true, defaultLayout: { h: 4, minH: 3, minW: 1 } }, // New: Download Client Widget
 };
 
 const HomePage = () => {

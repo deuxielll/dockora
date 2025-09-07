@@ -37,31 +37,6 @@ services:
     depends_on:
       - backend
 
-  transmission:
-    image: linuxserver/transmission:latest
-    container_name: dockora-transmission
-    environment:
-      - PUID=1000 # You might want to change this to your user's PUID
-      - PGID=1000 # You might want to change this to your user's PGID
-      - TZ=Etc/UTC # Set your desired timezone, e.g., America/New_York
-      - TRANSMISSION_WEB_HOME=/h5/ # For the modern web UI
-      - USER=transmission # Web UI username
-      - PASS=password # Web UI password (CHANGE THIS!)
-    volumes:
-      - transmission_config:/config
-      - transmission_downloads:/downloads
-      - transmission_watch:/watch
-    ports:
-      - "9091:9091" # Web UI
-      - "51413:51413" # Torrent port (TCP)
-      - "51413:51413/udp" # Torrent port (UDP)
-    restart: unless-stopped
-    depends_on:
-      - backend # Depends on backend to ensure Dockora is up, though not strictly necessary for Transmission itself.
-
 volumes:
   postgres_data_v2:
   dockora_data:
-  transmission_config: # New named volume for Transmission config
-  transmission_downloads: # New named volume for Transmission downloads
-  transmission_watch: # New named volume for Transmission watch folder

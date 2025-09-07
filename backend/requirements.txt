@@ -9,5 +9,4 @@ SQLAlchemy
 Flask-Cors
 paramiko
 jsonschema
-transmission-rpc
 psycopg2-binary

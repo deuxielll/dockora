@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronRight, User, Palette, LayoutGrid, CloudSun, Terminal, Trash2, Mail, Key, Users, Volume2, Download } from 'lucide-react'; // New: Import Download icon
+import { ChevronRight, User, Palette, LayoutGrid, CloudSun, Terminal, Trash2, Mail, Key, Users, Volume2 } from 'lucide-react'; 
 import { useAuth } from '../../hooks/useAuth';
 
 const SettingsSidebar = ({ activeSection, onNavigate }) => {
@@ -71,7 +71,6 @@ const SettingsSidebar = ({ activeSection, onNavigate }) => {
         { id: 'system-trash', label: 'Trash' },
         { id: 'system-smtp', label: 'SMTP' },
         { id: 'system-ssh-terminal', label: 'SSH Terminal' },
-        { id: 'system-download-client', label: 'Download Client' }, // New: Download Client
       ]
     },
     { id: 'user-management', label: 'User Management', icon: Users },
@@ -118,7 +117,6 @@ const SettingsSidebar = ({ activeSection, onNavigate }) => {
                         subItem.id === 'system-trash' ? Trash2 :
                         subItem.id === 'system-smtp' ? Mail :
                         subItem.id === 'system-ssh-terminal' ? Key :
-                        subItem.id === 'system-download-client' ? Download : // New: Download icon for Download Client
                         null
                       }
                       isSubItem
