@@ -90,13 +90,15 @@ def get_download_client_stats():
     if not config_setting or not config_setting.value:
         return jsonify({"error": "Not configured."}), 404
     
+    current_app.logger.debug(f"Raw downloadClientConfig from DB (stats): {config_setting.value}") # Debug log
+    
     try:
         config = json.loads(config_setting.value)
         if not isinstance(config, dict):
             raise ValueError("Download client configuration must be a JSON object.")
     except (json.JSONDecodeError, ValueError) as e:
         current_app.logger.error(f"Invalid download client configuration for user {session['user_id']}: {config_setting.value} - {e}")
-        return jsonify({"error": "Invalid download client configuration format. Please reconfigure in settings."}), 400 # Changed status to 400
+        return jsonify({"error": "Invalid download client configuration format. Please reconfigure in settings."}), 400
 
     client_type = config.get('type')
     if not client_type or client_type == 'none':
@@ -147,13 +149,15 @@ def get_torrents():
     if not config_setting or not config_setting.value:
         return jsonify({"error": "Not configured."}), 404
     
+    current_app.logger.debug(f"Raw downloadClientConfig from DB (torrents): {config_setting.value}") # Debug log
+    
     try:
         config = json.loads(config_setting.value)
         if not isinstance(config, dict):
             raise ValueError("Download client configuration must be a JSON object.")
     except (json.JSONDecodeError, ValueError) as e:
         current_app.logger.error(f"Invalid download client configuration for user {session['user_id']}: {config_setting.value} - {e}")
-        return jsonify({"error": "Invalid download client configuration format. Please reconfigure in settings."}), 400 # Changed status to 400
+        return jsonify({"error": "Invalid download client configuration format. Please reconfigure in settings."}), 400
 
     client_type = config.get('type')
     try:
@@ -206,13 +210,15 @@ def torrent_action():
     if not config_setting or not config_setting.value:
         return jsonify({"error": "Not configured."}), 404
     
+    current_app.logger.debug(f"Raw downloadClientConfig from DB (action): {config_setting.value}") # Debug log
+    
     try:
         config = json.loads(config_setting.value)
         if not isinstance(config, dict):
             raise ValueError("Download client configuration must be a JSON object.")
     except (json.JSONDecodeError, ValueError) as e:
         current_app.logger.error(f"Invalid download client configuration for user {session['user_id']}: {config_setting.value} - {e}")
-        return jsonify({"error": "Invalid download client configuration format. Please reconfigure in settings."}), 400 # Changed status to 400
+        return jsonify({"error": "Invalid download client configuration format."}), 400
     
     data = request.get_json()
     hashes = data.get('hash')
