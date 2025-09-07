@@ -24,7 +24,13 @@ const DownloadClientSettings = () => {
         const parsedConfig = JSON.parse(settings.downloadClientConfig);
         setClientConfig(prev => ({ ...prev, ...parsedConfig }));
       } catch (e) {
-        console.error("Failed to parse download client config", e);
+        // Handle cases where the stored value might be a double-stringified string
+        try {
+          const reparsedConfig = JSON.parse(JSON.parse(settings.downloadClientConfig));
+          setClientConfig(prev => ({ ...prev, ...reparsedConfig }));
+        } catch (e2) {
+          console.error("Failed to parse download client config", e2);
+        }
       }
     }
   }, [settings]);
@@ -42,7 +48,7 @@ const DownloadClientSettings = () => {
     setIsSaving(true);
     setTestStatus(null); // Clear test status on save attempt
     try {
-      await setSetting('downloadClientConfig', JSON.stringify(clientConfig));
+      await setSetting('downloadClientConfig', clientConfig);
       toast.success('Download client settings saved!');
     } catch (err) {
       console.error("Failed to save download client settings", err);
@@ -56,7 +62,7 @@ const DownloadClientSettings = () => {
     setTestStatus('loading');
     try {
       // Temporarily save settings to ensure backend uses the latest config for the test
-      await setSetting('downloadClientConfig', JSON.stringify(clientConfig));
+      await setSetting('downloadClientConfig', clientConfig);
       await getQbittorrentDownloads(); // Attempt to fetch downloads
       setTestStatus('success');
       toast.success('Connection successful!');
