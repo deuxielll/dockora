@@ -3,11 +3,10 @@ Flask-SQLAlchemy
 Flask-Bcrypt
 psutil
 requests
-docker
 python-dotenv
-gunicorn
-gevent
-PyYAML
-paramiko
+docker
+SQLAlchemy
 Flask-Cors
-psycopg2-binary
+paramiko
+jsonschema
+transmission-rpc
