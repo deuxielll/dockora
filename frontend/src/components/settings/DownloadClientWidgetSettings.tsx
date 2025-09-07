@@ -66,9 +66,8 @@ const DownloadClientWidgetSettings = () => {
     setSuccessMessage('');
     setErrorMessage('');
     try {
-      const configToSend = JSON.stringify(localDownloadClientConfig);
-      console.log("Sending downloadClientConfig to backend:", configToSend); // Debug log
-      await setSetting('downloadClientConfig', configToSend);
+      // Pass the object directly; useSettings will handle the JSON.stringify
+      await setSetting('downloadClientConfig', localDownloadClientConfig);
       setSuccessMessage('Download client settings saved!');
       setHasChanges(false);
       setTimeout(() => setSuccessMessage(''), 3000);
