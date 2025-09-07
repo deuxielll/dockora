@@ -4,14 +4,13 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
-    include: ['xterm', 'xterm-addon-fit'], // Removed 'simple-icons'
+    include: ['xterm', 'xterm-addon-fit'],
   },
   build: {
     rollupOptions: {
-      // Removed 'xterm' and 'xterm-addon-fit' from external to ensure they are bundled.
       // external: ['xterm', 'xterm-addon-fit'], 
     },
-    commonjsOptions: { // Removed 'simple-icons' from include
+    commonjsOptions: {
       // include: [/node_modules\/simple-icons/],
     },
   },
