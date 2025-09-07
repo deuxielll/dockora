@@ -19,19 +19,9 @@ const DownloadClientSettings = () => {
   const [testStatus, setTestStatus] = useState(null); // null, 'loading', 'success', 'error'
 
   useEffect(() => {
+    // The useSettings hook already provides the config as an object, so no parsing is needed.
     if (settings && settings.downloadClientConfig) {
-      try {
-        const parsedConfig = JSON.parse(settings.downloadClientConfig);
-        setClientConfig(prev => ({ ...prev, ...parsedConfig }));
-      } catch (e) {
-        // Handle cases where the stored value might be a double-stringified string
-        try {
-          const reparsedConfig = JSON.parse(JSON.parse(settings.downloadClientConfig));
-          setClientConfig(prev => ({ ...prev, ...reparsedConfig }));
-        } catch (e2) {
-          console.error("Failed to parse download client config", e2);
-        }
-      }
+      setClientConfig(prev => ({ ...prev, ...settings.downloadClientConfig }));
     }
   }, [settings]);
 

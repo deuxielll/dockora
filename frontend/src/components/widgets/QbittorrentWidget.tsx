@@ -26,9 +26,8 @@ const QbittorrentWidget = ({ isInteracting }) => {
   const [error, setError] = useState(null);
 
   const clientConfig = useMemo(() => {
-    try {
-      return settings.downloadClientConfig ? JSON.parse(settings.downloadClientConfig) : null;
-    } catch { return null; }
+    // The useSettings hook already parses the JSON string, so we can use it directly.
+    return settings.downloadClientConfig || null;
   }, [settings.downloadClientConfig]);
 
   const fetchDownloads = useCallback(async () => {
