@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, lazy, Suspense } from 'react';
 import { useDeployment } from '../hooks/useDeployment';
 import { createStack } from '../services/api';
@@ -9,7 +11,8 @@ import StackNameCard from '../components/stackcreator/StackNameCard';
 import StackControlsCard from '../components/stackcreator/StackControlsCard';
 import ServicesEditorCard from '../components/stackcreator/ServicesEditorCard';
 import EnvEditorCard from '../components/stackcreator/EnvEditorCard';
-import useStackForm from '../hooks/useStackForm'; // New import
+import useStackForm from '../hooks/useStackForm';
+import * as yaml from 'js-yaml'; // Added this import
 
 // Lazy load widgets
 const SystemUsageWidget = lazy(() => import('../components/widgets/SystemUsageWidget'));
@@ -31,7 +34,7 @@ const StackCreatorPage = ({ onCancel, onSuccess }) => {
     removeService,
     generateYaml,
     parseYamlToForm,
-  } = useStackForm(); // Use the new hook
+  } = useStackForm();
 
   const [error, setError] = useState('');
   const [isDeploying, setIsDeploying] = useState(false);
