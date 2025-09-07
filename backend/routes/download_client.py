@@ -93,11 +93,10 @@ def get_download_client_stats():
     try:
         config = json.loads(config_setting.value)
         if not isinstance(config, dict):
-            # If it's not a dictionary, it's an invalid format for the client config
             raise ValueError("Download client configuration must be a JSON object.")
     except (json.JSONDecodeError, ValueError) as e:
         current_app.logger.error(f"Invalid download client configuration for user {session['user_id']}: {config_setting.value} - {e}")
-        return jsonify({"error": "Invalid download client configuration format. Please reconfigure in settings."}), 500
+        return jsonify({"error": "Invalid download client configuration format. Please reconfigure in settings."}), 400 # Changed status to 400
 
     client_type = config.get('type')
     if not client_type or client_type == 'none':
@@ -151,11 +150,10 @@ def get_torrents():
     try:
         config = json.loads(config_setting.value)
         if not isinstance(config, dict):
-            # If it's not a dictionary, it's an invalid format for the client config
             raise ValueError("Download client configuration must be a JSON object.")
     except (json.JSONDecodeError, ValueError) as e:
         current_app.logger.error(f"Invalid download client configuration for user {session['user_id']}: {config_setting.value} - {e}")
-        return jsonify({"error": "Invalid download client configuration format. Please reconfigure in settings."}), 500
+        return jsonify({"error": "Invalid download client configuration format. Please reconfigure in settings."}), 400 # Changed status to 400
 
     client_type = config.get('type')
     try:
@@ -214,7 +212,7 @@ def torrent_action():
             raise ValueError("Download client configuration must be a JSON object.")
     except (json.JSONDecodeError, ValueError) as e:
         current_app.logger.error(f"Invalid download client configuration for user {session['user_id']}: {config_setting.value} - {e}")
-        return jsonify({"error": "Invalid download client configuration format."}), 500
+        return jsonify({"error": "Invalid download client configuration format. Please reconfigure in settings."}), 400 # Changed status to 400
     
     data = request.get_json()
     hashes = data.get('hash')
