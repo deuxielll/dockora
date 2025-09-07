@@ -4,7 +4,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useSettings } from '../hooks/useSettings';
 import { AppWindow } from 'lucide-react';
 
-const CDN_BASE_URL = 'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg';
+const CDN_BASE_URL = 'https://raw.githubusercontent.com/deuxielll/dashboard-icons/main/svg';
 
 const toKebabCase = (str) => {
   return str
