@@ -14,7 +14,7 @@ import AddBookmarkModal from '../modals/AddBookmarkModal';
 import toast from 'react-hot-toast';
 import AppLauncherSkeleton from '../skeletons/AppLauncherSkeleton';
 
-const AppLauncherWidget = ({ isInteracting }) => {
+const AppLauncherWidget = ({ isInteracting, isLocked = false }) => {
   const { settings, setSetting } = useSettings();
   const { currentUser } = useAuth();
   const [apps, setApps] = useState([]);
@@ -265,11 +265,11 @@ const AppLauncherWidget = ({ isInteracting }) => {
         href={item.app.url}
         target="_blank"
         rel="noopener noreferrer"
-        draggable
-        onDragStart={(e) => handleDragStart(e, item)}
-        onDrop={(e) => handleDropOnItem(e, item)}
+        draggable={!isLocked}
+        onDragStart={(e) => !isLocked && handleDragStart(e, item)}
+        onDrop={(e) => !isLocked && handleDropOnItem(e, item)}
         onDragOver={handleDragOver}
-        onDragEnter={(e) => handleDragEnter(e, item)}
+        onDragEnter={(e) => !isLocked && handleDragEnter(e, item)}
         onDragLeave={handleDragLeave}
         onDragEnd={handleDragEnd}
         onContextMenu={(e) => handleContextMenu(e, item)}
@@ -319,7 +319,7 @@ const AppLauncherWidget = ({ isInteracting }) => {
         <div className="flex-grow overflow-y-auto no-scrollbar pr-2">
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
             {filteredItems.map(item => <AppItem key={item.id} item={item} />)}
-            <AddBookmarkTile />
+            {!isLocked && <AddBookmarkTile />}
           </div>
         </div>
       </div>

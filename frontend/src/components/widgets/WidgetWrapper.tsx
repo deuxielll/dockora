@@ -9,7 +9,7 @@ const WidgetWrapper = ({ widgetId, title, onHide, children, isLocked, isInteract
   // Clone children to inject isInteracting prop
   const childrenWithProps = React.Children.map(children, child => {
     if (React.isValidElement(child)) {
-      return React.cloneElement(child, { isInteracting });
+      return React.cloneElement(child, { isInteracting, isLocked });
     }
     return child;
   });
