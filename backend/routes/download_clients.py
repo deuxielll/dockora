@@ -2,8 +2,9 @@ from flask import Blueprint, jsonify, request, session, current_app
 from decorators import login_required
 from models import UserSetting
 from extensions import db
-from qbittorrent import Client
+from qbittorrentapi import Client
 import json
+from urllib.parse import urlparse
 
 download_clients_bp = Blueprint('download_clients', __name__)
 
@@ -25,9 +26,9 @@ def get_qbittorrent_client(user_id):
         if not qb_url:
             return None, "qBittorrent URL is missing."
 
-        qb = Client(qb_url)
-        if qb_username and qb_password:
-            qb.login(qb_username, qb_password)
+        parsed_url = urlparse(qb_url)
+        qb = Client(host=parsed_url.hostname, port=parsed_url.port, username=qb_username, password=qb_password)
+        qb.auth_log_in()
         return qb, None
     except json.JSONDecodeError:
         return None, "Invalid qBittorrent configuration format."
@@ -81,24 +82,24 @@ def get_qbittorrent_downloads():
         return jsonify({"error": error}), 500
 
     try:
-        torrents = qb.torrents(filter='downloading') # Only get active downloads
+        torrents = qb.torrents_info(status_filter='downloading') # Only get active downloads
         
         # Sort by progress (descending) and limit to 7
-        torrents.sort(key=lambda t: t['progress'], reverse=True)
+        torrents.sort(key=lambda t: t.progress, reverse=True)
         active_downloads = torrents[:7]
 
         result = []
         for t in active_downloads:
             result.append({
-                "hash": t['hash'],
-                "name": t['name'],
-                "progress": round(t['progress'] * 100, 1), # Convert to percentage
-                "download_speed": t['dlspeed'],
-                "upload_speed": t['upspeed'],
-                "state": t['state'],
-                "size": t['size'],
-                "downloaded": t['downloaded'],
-                "uploaded": t['uploaded'],
+                "hash": t.hash,
+                "name": t.name,
+                "progress": round(t.progress * 100, 1), # Convert to percentage
+                "download_speed": t.dlspeed,
+                "upload_speed": t.upspeed,
+                "state": t.state,
+                "size": t.size,
+                "downloaded": t.downloaded,
+                "uploaded": t.uploaded,
             })
         return jsonify(result)
     except Exception as e:
