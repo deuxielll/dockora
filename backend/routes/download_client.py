@@ -14,37 +14,46 @@ transmission_session_id = None
 
 def qbittorrent_login(config):
     global qbit_auth_cookie, qbit_session
-    if qbit_auth_cookie: return True
-    try:
-        url = config.get('url')
-        username = config.get('username', '')
-        password = config.get('password', '')
-        if not url: return False
+    url = config.get('url')
+    username = config.get('username', '')
+    password = config.get('password', '')
 
-        parsed_url = urlparse(url)
-        origin_and_referer = f"{parsed_url.scheme}://{parsed_url.netloc}"
-        
-        login_headers = {
-            'Referer': origin_and_referer,
-            'Origin': origin_and_referer
-        }
+    if not url:
+        raise ValueError("qBittorrent URL is not configured.")
+
+    parsed_url = urlparse(url)
+    origin_and_referer = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    
+    login_headers = {
+        'Referer': origin_and_referer,
+        'Origin': origin_and_referer
+    }
+
+    try:
         res = qbit_session.post(
             f"{url.rstrip('/')}/api/v2/auth/login", 
             data={'username': username, 'password': password},
             headers=login_headers,
             timeout=5
         )
-        if res.ok and res.text == "Ok.":
+        res.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+
+        if res.text == "Ok.":
             qbit_auth_cookie = res.cookies.get('SID')
             qbit_session.headers.update({'Referer': origin_and_referer})
             return True
-    except requests.RequestException:
-        current_app.logger.error("qBittorrent login failed due to network error.")
-        return False
+        else:
+            raise requests.exceptions.RequestException(f"qBittorrent login failed: {res.text}")
+
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 403: # Forbidden, often means bad credentials
+            raise ConnectionError("qBittorrent login failed: Invalid username or password.") from e
+        else:
+            raise ConnectionError(f"qBittorrent login failed with HTTP status {e.response.status_code}.") from e
+    except requests.RequestException as e:
+        raise ConnectionError(f"qBittorrent login failed due to network error: {e}") from e
     except KeyError:
-        current_app.logger.error("qBittorrent login failed due to unexpected response format.")
-        return False
-    return False
+        raise ConnectionError("qBittorrent login failed due to unexpected response format.")
 
 def transmission_request(config, method, args=None):
     global transmission_session_id
@@ -55,8 +64,8 @@ def transmission_request(config, method, args=None):
     url = f"{base_url.rstrip('/')}/transmission/rpc"
     headers = {'Content-Type': 'application/json'}
     if transmission_session_id: headers['X-Transmission-Session-Id'] = transmission_session_id
-    payload = {"method": method, "arguments": args or {}}
     auth = (config.get('username'), config.get('password')) if config.get('username') else None
+    payload = {"method": method, "arguments": args or {}}
     
     try:
         res = requests.post(url, json=payload, headers=headers, auth=auth, timeout=5)
@@ -87,10 +96,12 @@ def get_download_client_stats():
 
     try:
         if client_type == 'qbittorrent':
-            if not qbittorrent_login(config): 
-                qbit_auth_cookie = None
-                qbit_session = requests.Session()
-                return jsonify({"error": "qBittorrent login failed. Check URL, username, and password."}), 500
+            try:
+                qbittorrent_login(config)
+            except ConnectionError as e:
+                qbit_auth_cookie = None # Clear cookie on login failure
+                qbit_session = requests.Session() # Reset session
+                return jsonify({"error": str(e)}), 500
             
             res = qbit_session.get(f"{config.get('url', '').rstrip('/')}/api/v2/transfer/info", timeout=5)
             res.raise_for_status()
@@ -132,10 +143,13 @@ def get_torrents():
     client_type = config.get('type')
     try:
         if client_type == 'qbittorrent':
-            if not qbittorrent_login(config):
+            try:
+                qbittorrent_login(config)
+            except ConnectionError as e:
                 qbit_auth_cookie = None
                 qbit_session = requests.Session()
-                return jsonify({"error": "qBittorrent login failed. Check URL, username, and password."}), 500
+                return jsonify({"error": str(e)}), 500
+            
             params = {'filter': 'active', 'sort': 'added_on', 'reverse': 'true', 'limit': 5}
             res = qbit_session.get(f"{config.get('url', '').rstrip('/')}/api/v2/torrents/info", params=params, timeout=5)
             res.raise_for_status()
@@ -187,10 +201,13 @@ def torrent_action():
     client_type = config.get('type')
     try:
         if client_type == 'qbittorrent':
-            if not qbittorrent_login(config):
+            try:
+                qbittorrent_login(config)
+            except ConnectionError as e:
                 qbit_auth_cookie = None
                 qbit_session = requests.Session()
-                return jsonify({"error": "qBittorrent login failed. Check URL, username, and password."}), 500
+                return jsonify({"error": str(e)}), 500
+            
             action_map = {'pause': 'pause', 'resume': 'resume', 'remove': 'delete'}
             if action not in action_map: return jsonify({"error": "Invalid action."}), 400
             url = f"{config.get('url', '').rstrip('/')}/api/v2/torrents/{action_map[action]}"
