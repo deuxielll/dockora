@@ -182,10 +182,4 @@ export const executeSshCommand = async (data, onChunk) => {
   }
 };
 
-// Download Client (qBittorrent)
-export const getQbittorrentDownloads = () => api.get("/downloads/qbittorrent/list");
-export const addQbittorrentDownload = (data) => api.post("/downloads/qbittorrent/add", data);
-export const togglePauseResumeQbittorrentDownload = (hashes, action) => api.post("/downloads/qbittorrent/toggle_pause_resume", { hashes, action });
-export const deleteQbittorrentDownload = (hashes, delete_files) => api.post("/downloads/qbittorrent/delete", { hashes, delete_files });
-
 export default api;

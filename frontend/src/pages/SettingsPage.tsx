@@ -13,7 +13,6 @@ import SmtpSettings from '../components/settings/SmtpSettings';
 import SshTerminalSettings from '../components/settings/SshTerminalSettings';
 import SshTerminalOutputCard from '../components/settings/SshTerminalOutputCard';
 import AlarmSettings from '../components/settings/AlarmSettings'; // New import
-import DownloadClientWidgetSettings from '../components/settings/DownloadClientWidgetSettings'; // New: Import DownloadClientWidgetSettings
 import SettingsSidebar from '../components/settings/SettingsSidebar';
 
 const SettingsPage = () => {
@@ -34,8 +33,6 @@ const SettingsPage = () => {
         return <SystemLogsWidgetSettings />;
       case 'widgets-alarm': // New case for Alarm Settings
         return <AlarmSettings />;
-      case 'widgets-download-client': // New: Case for Download Client Settings
-        return <DownloadClientWidgetSettings />;
       case 'system-trash':
         return <TrashSettings />;
       case 'system-smtp':
