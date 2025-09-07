@@ -1,6 +1,7 @@
 Flask==2.2.2
 Werkzeug==2.2.3
 Flask-SQLAlchemy==2.5.1
+SQLAlchemy==1.4.46
 Flask-Bcrypt==1.0.1
 psycopg2-binary==2.9.5
 docker==6.0.1
