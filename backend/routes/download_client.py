@@ -4,19 +4,28 @@ from extensions import db
 import requests
 import os
 import base64
+import json # Import json module
 
 download_client_bp = Blueprint('download_client', __name__)
 
 def _get_qbittorrent_settings_for_user(user_id):
     """Retrieves qBittorrent connection settings for a given user."""
-    settings_list = UserSetting.query.filter_by(user_id=user_id).filter(
-        UserSetting.key.in_(['qbittorrentUrl', 'qbittorrentUsername', 'qbittorrentPassword'])
-    ).all()
-    settings = {s.key: s.value for s in settings_list}
+    # Fetch the single 'downloadClientConfig' setting which stores all qBittorrent details as JSON
+    download_client_config_setting = UserSetting.query.filter_by(user_id=user_id, key='downloadClientConfig').first()
+    
+    config = {}
+    if download_client_config_setting and download_client_config_setting.value:
+        try:
+            # Parse the JSON string value into a Python dictionary
+            config = json.loads(download_client_config_setting.value)
+        except json.JSONDecodeError:
+            current_app.logger.error(f"Failed to parse downloadClientConfig for user {user_id}: {download_client_config_setting.value}")
+            config = {} # Fallback to empty config on parse error
+
     return {
-        'url': settings.get('qbittorrentUrl'),
-        'username': settings.get('qbittorrentUsername'),
-        'password': settings.get('qbittorrentPassword')
+        'url': config.get('qbittorrentUrl'),
+        'username': config.get('qbittorrentUsername'),
+        'password': config.get('qbittorrentPassword')
     }
 
 def _make_qbittorrent_request(user_id, endpoint, method='GET', data=None, files=None):
