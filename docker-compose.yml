@@ -48,9 +48,9 @@ services:
       - USER=transmission # Web UI username
       - PASS=password # Web UI password (CHANGE THIS!)
     volumes:
-      - dockora_data/transmission/config:/config
-      - dockora_data/transmission/downloads:/downloads
-      - dockora_data/transmission/watch:/watch
+      - transmission_config:/config
+      - transmission_downloads:/downloads
+      - transmission_watch:/watch
     ports:
       - "9091:9091" # Web UI
       - "51413:51413" # Torrent port (TCP)
@@ -62,3 +62,6 @@ services:
 volumes:
   postgres_data_v2:
   dockora_data:
+  transmission_config: # New named volume for Transmission config
+  transmission_downloads: # New named volume for Transmission downloads
+  transmission_watch: # New named volume for Transmission watch folder
