@@ -249,10 +249,12 @@ const AppLauncherWidget = ({ isInteracting, isLocked = false }) => {
 
   const AppItem = ({ item }) => {
     const isBookmark = item.type === 'bookmark';
+    const status = !isBookmark ? item.app.status.toLowerCase() : '';
+    const isRunning = status.includes('running') || status.includes('up');
+
     let statusColor = 'bg-gray-500';
     if (!isBookmark) {
-      const status = item.app.status.toLowerCase();
-      if (status.includes('running') || status.includes('up')) statusColor = 'bg-green-500';
+      if (isRunning) statusColor = 'bg-green-500';
       else if (status.includes('paused')) statusColor = 'bg-yellow-500';
       else if (status.includes('exited') || status.includes('stopped')) statusColor = 'bg-red-500';
     }
@@ -275,7 +277,7 @@ const AppLauncherWidget = ({ isInteracting, isLocked = false }) => {
         onContextMenu={(e) => handleContextMenu(e, item)}
         className={`flex flex-col items-center text-center p-2 rounded-lg transition-all duration-200 group ${isBeingDragged ? 'opacity-30' : ''} ${isDropTarget ? 'scale-110 bg-accent/20' : 'hover:bg-dark-bg/50'}`}
       >
-        <div className="relative w-16 h-16 mb-2 bg-dark-bg shadow-neo-inset rounded-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
+        <div className={`relative w-16 h-16 mb-2 bg-dark-bg shadow-neo-inset rounded-lg flex items-center justify-center transition-all duration-200 group-hover:scale-105 ${!isBookmark && !isRunning ? 'grayscale' : ''}`}>
           <AppIcon appId={item.app.id} appName={item.app.name} customIconUrl={item.app.iconUrl} />
           {!isBookmark && <span className={`absolute top-1 right-1 block h-3 w-3 rounded-full ${statusColor} border-2 border-dark-bg shadow-md`}></span>}
         </div>
