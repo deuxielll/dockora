@@ -190,6 +190,7 @@ export const getNetworkStats = () => api.get("/system/network-stats");
 export const getSmtpSettings = () => api.get("/system/smtp-settings");
 export const setSmtpSettings = (data) => api.post("/system/smtp-settings", data);
 export const getSmtpStatus = () => api.get("/system/smtp-status");
+export const getUrlMetadata = (url) => api.get(`/system/url-metadata?url=${encodeURIComponent(url)}`);
 
 // SSH Terminal
 export const getSshSettings = () => api.get("/system/ssh-settings");

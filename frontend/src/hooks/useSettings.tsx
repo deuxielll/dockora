@@ -25,7 +25,7 @@ export const SettingsProvider = ({ children }) => {
       for (const key in fetchedSettings) {
         try {
           // Attempt to parse values that are expected to be JSON strings
-          if (['widgetVisibility', 'widgetLayouts', 'customAppIcons', 'downloadClientConfig'].includes(key)) {
+          if (['widgetVisibility', 'widgetLayouts', 'customAppIcons', 'downloadClientConfig', 'customBookmarks'].includes(key)) {
             parsedSettings[key] = JSON.parse(fetchedSettings[key]);
           } else {
             parsedSettings[key] = fetchedSettings[key];
@@ -57,7 +57,7 @@ export const SettingsProvider = ({ children }) => {
     setIsLoading(true); // Indicate saving is in progress
     try {
       // Stringify values that are objects/arrays before sending to backend
-      const valueToSend = ['widgetVisibility', 'widgetLayouts', 'customAppIcons', 'downloadClientConfig'].includes(key)
+      const valueToSend = ['widgetVisibility', 'widgetLayouts', 'customAppIcons', 'downloadClientConfig', 'customBookmarks'].includes(key)
         ? JSON.stringify(value)
         : value;
         

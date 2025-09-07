@@ -13,7 +13,7 @@ const toKebabCase = (str) => {
     .replace(/\s+/g, '-'); // Replace spaces with hyphens
 };
 
-const AppIcon = ({ appId, appName }) => {
+const AppIcon = ({ appId, appName, customIconUrl: bookmarkIconUrl }) => {
   const { settings } = useSettings();
   const [imageError, setImageError] = useState(false); // State to track image loading errors
 
@@ -25,7 +25,7 @@ const AppIcon = ({ appId, appName }) => {
     }
   }, [settings.customAppIcons]);
 
-  const customIconUrl = customAppIcons[appId];
+  const customIconUrl = customAppIcons[appId] || bookmarkIconUrl;
 
   const dashboardIconUrl = useMemo(() => {
     if (customIconUrl) return null; // If custom URL is present, don't try dashboard icon
@@ -38,7 +38,7 @@ const AppIcon = ({ appId, appName }) => {
     setImageError(false);
   }, [appName, customIconUrl]);
 
-  if (customIconUrl) {
+  if (customIconUrl && !imageError) {
     return (
       <img
         src={customIconUrl}

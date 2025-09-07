@@ -1,8 +1,8 @@
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import { Share2, Play, Pause, Square, Edit, Trash2 } from 'lucide-react';
+import { Share2, Play, Pause, Square, Edit, Trash2, Link as LinkIcon } from 'lucide-react';
 
-const AppContextMenu = ({ x, y, app, onShare, onAction, onRename, onDelete }) => {
+const AppContextMenu = ({ x, y, item, onShare, onAction, onEdit, onDelete }) => {
   const menuRef = useRef(null);
   const [position, setPosition] = useState({ top: y, left: x });
 
@@ -28,9 +28,12 @@ const AppContextMenu = ({ x, y, app, onShare, onAction, onRename, onDelete }) =>
     }
   }, [x, y]);
 
-  if (!app) return null;
+  if (!item) return null;
 
-  const status = app.status.toLowerCase();
+  const isBookmark = item.type === 'bookmark';
+  const app = item.app;
+
+  const status = !isBookmark ? app.status.toLowerCase() : '';
   const isRunning = status.includes('running') || status.includes('up');
   const isPaused = status.includes('paused');
   const isStopped = !isRunning && !isPaused;
@@ -40,27 +43,29 @@ const AppContextMenu = ({ x, y, app, onShare, onAction, onRename, onDelete }) =>
   };
 
   let primaryAction = null;
-  if (isRunning) {
-    primaryAction = (
-      <button onClick={() => handleAction('pause')} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md">
-        <Pause size={16} />
-        <span>Pause</span>
-      </button>
-    );
-  } else if (isPaused) {
-    primaryAction = (
-      <button onClick={() => handleAction('unpause')} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md">
-        <Play size={16} />
-        <span>Resume</span>
-      </button>
-    );
-  } else if (isStopped) {
-    primaryAction = (
-      <button onClick={() => handleAction('start')} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-500 hover:bg-green-500/10 rounded-md">
-        <Play size={16} />
-        <span>Start</span>
-      </button>
-    );
+  if (!isBookmark) {
+    if (isRunning) {
+      primaryAction = (
+        <button onClick={() => handleAction('pause')} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md">
+          <Pause size={16} />
+          <span>Pause</span>
+        </button>
+      );
+    } else if (isPaused) {
+      primaryAction = (
+        <button onClick={() => handleAction('unpause')} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md">
+          <Play size={16} />
+          <span>Resume</span>
+        </button>
+      );
+    } else if (isStopped) {
+      primaryAction = (
+        <button onClick={() => handleAction('start')} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-500 hover:bg-green-500/10 rounded-md">
+          <Play size={16} />
+          <span>Start</span>
+        </button>
+      );
+    }
   }
 
   const menuContent = (
@@ -71,39 +76,40 @@ const AppContextMenu = ({ x, y, app, onShare, onAction, onRename, onDelete }) =>
       onClick={(e) => e.stopPropagation()}
     >
       <ul className="space-y-1">
-        {primaryAction && <li>{primaryAction}</li>}
-        
-        {(isRunning || isPaused) && (
+        {isBookmark ? (
+          <li>
+            <a href={app.url} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md">
+              <LinkIcon size={16} />
+              <span>Open in new tab</span>
+            </a>
+          </li>
+        ) : (
+          <>
+            {primaryAction && <li>{primaryAction}</li>}
+            {(isRunning || isPaused) && (
+              <li>
+                <button onClick={() => handleAction('stop')} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md">
+                  <Square size={16} />
+                  <span>Stop</span>
+                </button>
+              </li>
+            )}
             <li>
-              <button onClick={() => handleAction('stop')} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md">
-                <Square size={16} />
-                <span>Stop</span>
+              <button onClick={onShare} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md">
+                <Share2 size={16} />
+                <span>Share...</span>
               </button>
             </li>
+          </>
         )}
         <li>
-          <button
-            onClick={onRename}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"
-          >
+          <button onClick={onEdit} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md">
             <Edit size={16} />
-            <span>Rename</span>
+            <span>Edit</span>
           </button>
         </li>
         <li>
-          <button
-            onClick={onShare}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-blue-500/10 rounded-md"
-          >
-            <Share2 size={16} />
-            <span>Share...</span>
-          </button>
-        </li>
-        <li>
-          <button
-            onClick={onDelete}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md"
-          >
+          <button onClick={onDelete} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-md">
             <Trash2 size={16} />
             <span>Delete</span>
           </button>

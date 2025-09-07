@@ -4,7 +4,8 @@ import requests
 import json
 import time
 import socket
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
+from bs4 import BeautifulSoup
 from models import UserSetting, SystemSetting, NetworkUsage
 from decorators import login_required, admin_required
 from extensions import db
@@ -20,6 +21,50 @@ last_net_io = psutil.net_io_counters()
 last_time = time.time()
 session_upload_total = 0
 session_download_total = 0
+
+@system_bp.route("/system/url-metadata", methods=["GET"])
+@login_required
+def get_url_metadata():
+    url = request.args.get('url')
+    if not url:
+        return jsonify({"error": "URL parameter is required"}), 400
+
+    try:
+        # Add http scheme if missing
+        if not url.startswith(('http://', 'https://')):
+            url = 'https://' + url
+            
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers, timeout=5, allow_redirects=True)
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        title = soup.title.string if soup.title else ''
+
+        favicon_url = None
+        # Look for favicon in link tags
+        icon_link = soup.find('link', rel=lambda r: r and 'icon' in r.lower())
+        if icon_link and icon_link.get('href'):
+            favicon_url = urljoin(response.url, icon_link['href'])
+        else:
+            # Fallback to checking for /favicon.ico
+            try:
+                favicon_check_url = urljoin(response.url, '/favicon.ico')
+                fav_res = requests.head(favicon_check_url, timeout=2)
+                if fav_res.status_code == 200:
+                    favicon_url = favicon_check_url
+            except requests.RequestException:
+                pass # Ignore if favicon.ico doesn't exist
+
+        return jsonify({"title": title.strip(), "favicon_url": favicon_url})
+
+    except requests.RequestException as e:
+        return jsonify({"error": f"Failed to fetch URL: {e}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {e}"}), 500
 
 @system_bp.route("/system/smtp-status", methods=["GET"])
 def get_smtp_status():

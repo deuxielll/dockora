@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Search, RefreshCw } from 'lucide-react';
+import { Search, RefreshCw, Plus } from 'lucide-react';
 import { getApps, refreshApps, manageContainer } from '../../services/api';
 import LoadingSpinner from '../LoadingSpinner';
 import AppIcon from '../AppIcon';
@@ -9,9 +9,10 @@ import { useSettings } from '../../hooks/useSettings';
 import { useAuth } from '../../hooks/useAuth';
 import ShareAppModal from '../modals/ShareAppModal';
 import AppContextMenu from './AppContextMenu';
-import EditAppModal from '../modals/EditAppModal';
+import EditLauncherItemModal from '../modals/EditLauncherItemModal';
+import AddBookmarkModal from '../modals/AddBookmarkModal';
 import toast from 'react-hot-toast';
-import AppLauncherSkeleton from '../skeletons/AppLauncherSkeleton'; // Import skeleton
+import AppLauncherSkeleton from '../skeletons/AppLauncherSkeleton';
 
 const AppLauncherWidget = ({ isInteracting }) => {
   const { settings, setSetting } = useSettings();
@@ -25,18 +26,23 @@ const AppLauncherWidget = ({ isInteracting }) => {
   const [dropTargetId, setDropTargetId] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
   const [appToShare, setAppToShare] = useState(null);
-  const [appToEdit, setAppToEdit] = useState(null);
+  const [itemToEdit, setItemToEdit] = useState(null);
+  const [showAddBookmarkModal, setShowAddBookmarkModal] = useState(false);
 
   const appLauncherConfig = useMemo(() => {
     try {
-      return settings.appLauncherConfig ? JSON.parse(settings.appLauncherConfig) : null;
-    } catch { return null; }
+      return settings.appLauncherConfig ? JSON.parse(settings.appLauncherConfig) : [];
+    } catch { return []; }
   }, [settings.appLauncherConfig]);
 
-  const fetchApps = useCallback(async () => {
-    // Only fetch apps if not interacting
-    if (isInteracting) return;
+  const customBookmarks = useMemo(() => {
+    try {
+      return settings.customBookmarks ? JSON.parse(settings.customBookmarks) : [];
+    } catch { return []; }
+  }, [settings.customBookmarks]);
 
+  const fetchApps = useCallback(async () => {
+    if (isInteracting) return;
     try {
       const res = await getApps();
       const installedApps = res.data
@@ -66,39 +72,42 @@ const AppLauncherWidget = ({ isInteracting }) => {
     fetchApps();
   }, [fetchApps]);
 
-  const saveConfig = useCallback((orderedAppIds) => {
-    setSetting('appLauncherConfig', JSON.stringify(orderedAppIds));
+  const saveConfig = useCallback((orderedItemIds) => {
+    setSetting('appLauncherConfig', JSON.stringify(orderedItemIds));
+  }, [setSetting]);
+
+  const saveBookmarks = useCallback((bookmarks) => {
+    setSetting('customBookmarks', JSON.stringify(bookmarks));
   }, [setSetting]);
 
   useEffect(() => {
-    const appMap = new Map(apps.map(app => [app.id, app]));
-    let orderedAppIds = [];
+    const appMap = new Map(apps.map(app => [app.id, { ...app, type: 'app' }]));
+    const bookmarkMap = new Map(customBookmarks.map(bm => [bm.id, { ...bm, type: 'bookmark' }]));
+    const allItemsMap = new Map([...appMap, ...bookmarkMap]);
 
-    if (appLauncherConfig && Array.isArray(appLauncherConfig)) {
-      if (appLauncherConfig.length > 0 && typeof appLauncherConfig[0] === 'object') {
-        orderedAppIds = appLauncherConfig.flatMap(item => {
-          if (item.type === 'app') return [item.id];
-          if (item.type === 'group') return item.appIds || [];
-          return [];
-        });
-      } else {
-        orderedAppIds = appLauncherConfig;
-      }
-    }
-
-    const configuredApps = orderedAppIds.map(id => appMap.get(id)).filter(Boolean);
-    const configuredAppIds = new Set(configuredApps.map(app => app.id));
-    const newApps = apps.filter(app => !configuredAppIds.has(app.id));
+    const configuredItems = appLauncherConfig.map(id => allItemsMap.get(id)).filter(Boolean);
+    const configuredItemIds = new Set(configuredItems.map(item => item.id));
+    const newItems = [...apps, ...customBookmarks].filter(item => !configuredItemIds.has(item.id));
     
-    const finalApps = [...configuredApps, ...newApps];
+    const finalItems = [...configuredItems, ...newItems];
     
-    setLauncherItems(finalApps.map(app => ({ type: 'app', id: app.id, app })));
+    setLauncherItems(finalItems.map(item => ({
+        id: item.id,
+        type: item.type || (item.url.startsWith('http') ? 'bookmark' : 'app'),
+        app: {
+            id: item.id,
+            name: item.name,
+            url: item.url,
+            status: item.status,
+            iconUrl: item.iconUrl,
+        }
+    })));
 
-    const finalAppIds = finalApps.map(app => app.id);
-    if (JSON.stringify(finalAppIds) !== JSON.stringify(appLauncherConfig)) {
-      saveConfig(finalAppIds);
+    const finalItemIds = finalItems.map(item => item.id);
+    if (JSON.stringify(finalItemIds) !== JSON.stringify(appLauncherConfig)) {
+      saveConfig(finalItemIds);
     }
-  }, [apps, appLauncherConfig, saveConfig]);
+  }, [apps, customBookmarks, appLauncherConfig, saveConfig]);
 
   useEffect(() => {
     const handleClick = () => setContextMenu(null);
@@ -120,12 +129,10 @@ const AppLauncherWidget = ({ isInteracting }) => {
 
   const handleAppAction = async (appId, action) => {
     const toastId = toast.loading(`Sending '${action}' command...`);
-
     const originalApp = apps.find(a => a.id === appId);
     if (!originalApp) return;
     const originalStatus = originalApp.status;
 
-    // Optimistic update
     const getOptimisticStatus = (act) => {
       if (act === 'start' || act === 'unpause' || act === 'restart') return 'running (optimistic)';
       if (act === 'stop') return 'exited (optimistic)';
@@ -133,63 +140,51 @@ const AppLauncherWidget = ({ isInteracting }) => {
       return 'updating...';
     };
 
-    setLauncherItems(prevItems => prevItems.map(item => {
-      if (item.app.id === appId) {
-        return { ...item, app: { ...item.app, status: getOptimisticStatus(action) } };
-      }
-      return item;
-    }));
+    setLauncherItems(prevItems => prevItems.map(item => 
+      item.app.id === appId ? { ...item, app: { ...item.app, status: getOptimisticStatus(action) } } : item
+    ));
 
     try {
         await manageContainer(appId, action);
         toast.success(`'${action}' command sent. Verifying status...`, { id: toastId });
-
-        // Poll for status change
-        let attempts = 0;
-        const maxAttempts = 10; // 10 attempts over 5 seconds
-        const pollInterval = 500; // 0.5 seconds
-
-        const poll = setInterval(async () => {
-            attempts++;
-            try {
-                const res = await getApps();
-                const updatedApps = res.data;
-                const updatedApp = updatedApps.find(a => a.id === appId);
-                
-                if (updatedApp && updatedApp.status !== originalStatus) {
-                    clearInterval(poll);
-                    toast.success(`Status for ${updatedApp.name} updated.`, { id: toastId });
-                    fetchApps(); // This will trigger the useEffect to rebuild launcherItems
-                } else if (attempts >= maxAttempts) {
-                    clearInterval(poll);
-                    toast.warn(`Could not verify status change for ${originalApp.name}. Refreshing list.`, { id: toastId });
-                    fetchApps(); // Fallback to a final fetch
-                }
-            } catch (pollErr) {
-                // Ignore poll errors
-            }
-        }, pollInterval);
-
+        setTimeout(() => fetchApps(), 2000); // Refresh after a delay
     } catch (err) {
         toast.error(err.response?.data?.error || `Failed to send '${action}' command.`, { id: toastId });
-        // Revert optimistic update on failure by fetching the real state
         fetchApps();
     }
   };
 
   const handleDeleteApp = async (appId, appName) => {
-    if (!window.confirm(`Are you sure you want to delete the application "${appName}"? This will remove all associated containers and data (if not using external volumes). This action cannot be undone.`)) {
-      return;
-    }
-
+    if (!window.confirm(`Are you sure you want to delete the application "${appName}"? This will remove all associated containers and data (if not using external volumes). This action cannot be undone.`)) return;
     const toastId = toast.loading(`Deleting application "${appName}"...`);
     try {
       await manageContainer(appId, 'remove');
       toast.success(`Application "${appName}" deleted successfully.`, { id: toastId });
-      fetchApps(); // Refresh the list after deletion
+      fetchApps();
     } catch (err) {
       toast.error(err.response?.data?.error || `Failed to delete application "${appName}".`, { id: toastId });
     }
+  };
+
+  const handleSaveBookmark = (bookmark) => {
+    const newBookmarks = [...customBookmarks, bookmark];
+    saveBookmarks(newBookmarks);
+    toast.success(`Bookmark "${bookmark.name}" added.`);
+    setShowAddBookmarkModal(false);
+  };
+
+  const handleUpdateBookmark = (updatedBookmark) => {
+    const newBookmarks = customBookmarks.map(bm => bm.id === updatedBookmark.id ? updatedBookmark : bm);
+    saveBookmarks(newBookmarks);
+    toast.success(`Bookmark "${updatedBookmark.name}" updated.`);
+    setItemToEdit(null);
+  };
+
+  const handleDeleteBookmark = (bookmarkId) => {
+    if (!window.confirm(`Are you sure you want to delete this bookmark?`)) return;
+    const newBookmarks = customBookmarks.filter(bm => bm.id !== bookmarkId);
+    saveBookmarks(newBookmarks);
+    toast.success(`Bookmark deleted.`);
   };
 
   const handleDragStart = (e, item) => {
@@ -217,9 +212,7 @@ const AppLauncherWidget = ({ isInteracting }) => {
     setDropTargetId(null);
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
+  const handleDragOver = (e) => e.preventDefault();
 
   const handleDropOnItem = (e, targetItem) => {
     e.preventDefault();
@@ -240,14 +233,10 @@ const AppLauncherWidget = ({ isInteracting }) => {
   };
 
   const handleContextMenu = (e, item) => {
-    if (currentUser?.role !== 'admin') return;
+    if (currentUser?.role !== 'admin' && item.type !== 'bookmark') return;
     e.preventDefault();
     e.stopPropagation();
-    setContextMenu({
-        x: e.clientX,
-        y: e.clientY,
-        app: item.app,
-    });
+    setContextMenu({ x: e.clientX, y: e.clientY, item });
   };
 
   const filteredItems = useMemo(() => {
@@ -256,25 +245,16 @@ const AppLauncherWidget = ({ isInteracting }) => {
     return launcherItems.filter(item => item.app.name.toLowerCase().includes(lowerSearch));
   }, [launcherItems, searchTerm]);
 
-  if (isLoading || isInteracting) {
-    return <AppLauncherSkeleton />; // Render skeleton when loading or interacting
-  }
+  if (isLoading || isInteracting) return <AppLauncherSkeleton />;
 
   const AppItem = ({ item }) => {
-    const status = item.app.status.toLowerCase();
-    const isRunning = status.includes('running') || status.includes('up');
-    const isPaused = status.includes('paused');
-    const isStopped = status.includes('exited') || status.includes('stopped');
-
-    let statusColor = '';
-    if (isRunning) {
-      statusColor = 'bg-green-500';
-    } else if (isPaused) {
-      statusColor = 'bg-yellow-500';
-    } else if (isStopped) {
-      statusColor = 'bg-red-500';
-    } else {
-      statusColor = 'bg-gray-500';
+    const isBookmark = item.type === 'bookmark';
+    let statusColor = 'bg-gray-500';
+    if (!isBookmark) {
+      const status = item.app.status.toLowerCase();
+      if (status.includes('running') || status.includes('up')) statusColor = 'bg-green-500';
+      else if (status.includes('paused')) statusColor = 'bg-yellow-500';
+      else if (status.includes('exited') || status.includes('stopped')) statusColor = 'bg-red-500';
     }
 
     const isBeingDragged = draggedItem?.id === item.id;
@@ -296,14 +276,26 @@ const AppLauncherWidget = ({ isInteracting }) => {
         className={`flex flex-col items-center text-center p-2 rounded-lg transition-all duration-200 group ${isBeingDragged ? 'opacity-30' : ''} ${isDropTarget ? 'scale-110 bg-accent/20' : 'hover:bg-dark-bg/50'}`}
       >
         <div className="relative w-16 h-16 mb-2 bg-dark-bg shadow-neo-inset rounded-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
-          {/* Removed the grayscale filter from here */}
-          <AppIcon appId={item.app.id} appName={item.app.name} />
-          <span className={`absolute top-1 right-1 block h-3 w-3 rounded-full ${statusColor} border-2 border-dark-bg shadow-md`}></span>
+          <AppIcon appId={item.app.id} appName={item.app.name} customIconUrl={item.app.iconUrl} />
+          {!isBookmark && <span className={`absolute top-1 right-1 block h-3 w-3 rounded-full ${statusColor} border-2 border-dark-bg shadow-md`}></span>}
         </div>
-        <p className={`text-xs font-semibold text-gray-200 w-full h-8 flex items-center justify-center text-center break-words ${(isPaused || isStopped) ? 'opacity-60' : ''}`}>{item.app.name}</p>
+        <p className={`text-xs font-semibold text-gray-200 w-full h-8 flex items-center justify-center text-center break-words`}>{item.app.name}</p>
       </a>
     );
   };
+
+  const AddBookmarkTile = () => (
+    <button
+      onClick={() => setShowAddBookmarkModal(true)}
+      className="flex flex-col items-center justify-center text-center p-2 rounded-lg transition-all duration-200 group hover:bg-dark-bg/50 w-full h-full"
+      title="Add bookmark"
+    >
+      <div className="relative w-16 h-16 mb-2 bg-dark-bg shadow-neo-inset rounded-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
+        <Plus size={32} className="text-gray-400" />
+      </div>
+      <p className="text-xs font-semibold text-gray-400 w-full h-8 flex items-center justify-center text-center break-words">Add Bookmark</p>
+    </button>
+  );
 
   return (
     <>
@@ -325,56 +317,38 @@ const AppLauncherWidget = ({ isInteracting }) => {
         </div>
 
         <div className="flex-grow overflow-y-auto no-scrollbar pr-2">
-          {filteredItems.length > 0 ? (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-              {filteredItems.map(item => (
-                <AppItem key={item.id} item={item} />
-              ))}
-            </div>
-          ) : (
-            <div className="flex-grow flex items-center justify-center text-center text-gray-400">
-              <p>No applications found{searchTerm ? ` for "${searchTerm}"` : ''}.</p>
-            </div>
-          )}
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+            {filteredItems.map(item => <AppItem key={item.id} item={item} />)}
+            <AddBookmarkTile />
+          </div>
         </div>
       </div>
       {contextMenu && (
         <AppContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          app={contextMenu.app}
-          onShare={() => {
-            setAppToShare(contextMenu.app);
-            setContextMenu(null);
-          }}
-          onAction={(appId, action) => {
-            handleAppAction(appId, action);
-            setContextMenu(null);
-          }}
-          onRename={() => {
-            setAppToEdit(contextMenu.app);
-            setContextMenu(null);
-          }}
+          item={contextMenu.item}
+          onShare={() => { setAppToShare(contextMenu.item.app); setContextMenu(null); }}
+          onAction={(appId, action) => { handleAppAction(appId, action); setContextMenu(null); }}
+          onEdit={() => { setItemToEdit(contextMenu.item); setContextMenu(null); }}
           onDelete={() => {
-            handleDeleteApp(contextMenu.app.id, contextMenu.app.name);
+            if (contextMenu.item.type === 'app') {
+              handleDeleteApp(contextMenu.item.app.id, contextMenu.item.app.name);
+            } else {
+              handleDeleteBookmark(contextMenu.item.app.id);
+            }
             setContextMenu(null);
           }}
         />
       )}
-      {appToShare && (
-        <ShareAppModal
-          app={appToShare}
-          onClose={() => setAppToShare(null)}
-        />
-      )}
-      {appToEdit && (
-        <EditAppModal
-          app={appToEdit}
-          onClose={() => setAppToEdit(null)}
-          onSuccess={() => {
-            setAppToEdit(null);
-            fetchApps();
-          }}
+      {appToShare && <ShareAppModal app={appToShare} onClose={() => setAppToShare(null)} />}
+      {showAddBookmarkModal && <AddBookmarkModal onClose={() => setShowAddBookmarkModal(false)} onSave={handleSaveBookmark} />}
+      {itemToEdit && (
+        <EditLauncherItemModal
+          item={itemToEdit}
+          onClose={() => setItemToEdit(null)}
+          onSaveApp={() => { setItemToEdit(null); fetchApps(); }}
+          onSaveBookmark={handleUpdateBookmark}
         />
       )}
     </>
