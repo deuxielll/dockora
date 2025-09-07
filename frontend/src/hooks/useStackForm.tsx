@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from 'react';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml'; // Changed to import all as yaml
 
 const useStackForm = () => {
   const [stackName, setStackName] = useState('');
