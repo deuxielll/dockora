@@ -181,3 +181,8 @@ export const executeSshCommand = async (data, onChunk) => {
     throw new Error(`SSH command failed with status: ${response.status}`);
   }
 };
+
+// Download Clients (New)
+export const getDownloadClientSettings = () => api.get("/download-clients/settings");
+export const setDownloadClientSettings = (data) => api.post("/download-clients/settings", data);
+export const getQbittorrentDownloads = () => api.get("/download-clients/qbittorrent/downloads");

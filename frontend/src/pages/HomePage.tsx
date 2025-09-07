@@ -11,6 +11,7 @@ import DeploymentStatusWidget from '../components/widgets/DeploymentStatusWidget
 import NetworkingWidget from '../components/widgets/NetworkingWidget';
 import FileActivityWidget from '../components/widgets/FileActivityWidget';
 import SystemLogsWidget from '../components/widgets/SystemLogsWidget';
+import QbittorrentWidget from '../components/widgets/QbittorrentWidget'; // New import
 import { Sun, Moon } from 'lucide-react';
 import LogoutButton from '../components/LogoutButton';
 import NotificationBell from '../components/NotificationBell';
@@ -26,6 +27,7 @@ export const WIDGETS_CONFIG = { // Exported for use in WidgetGrid and PopoutWidg
   appLauncher: { component: AppLauncherWidget, title: 'App Launcher', defaultVisible: true, defaultLayout: { h: 4, minH: 4, minW: 1 } },
   fileActivity: { component: FileActivityWidget, title: 'File Activity', defaultVisible: true, defaultLayout: { h: 3, minH: 3, minW: 1 } },
   systemLogs: { component: SystemLogsWidget, title: 'System Logs', defaultVisible: true, defaultLayout: { h: 4, minH: 3, minW: 1 } },
+  qbittorrent: { component: QbittorrentWidget, title: 'qBittorrent Downloads', defaultVisible: true, defaultLayout: { h: 2.5, minH: 2.5, minW: 1 } }, // New widget
 };
 
 const HomePage = () => {
@@ -54,7 +56,7 @@ const HomePage = () => {
   }), [widgetVisibility]);
 
   const generateDefaultLayouts = useCallback(() => {
-    const breakpoints = { lg: 3, md: 2, sm: 1, xs: 1, xxs: 0 };
+    const breakpoints = { lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 }; // Changed xxs to 1
     const newLayouts = {};
     for (const [breakpoint, cols] of Object.entries(breakpoints)) {
       newLayouts[breakpoint] = [];
