@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronRight, User, Palette, LayoutGrid, CloudSun, Download, Terminal, Trash2, Mail, Key, Users, Volume2 } from 'lucide-react';
+import { ChevronRight, User, Palette, LayoutGrid, CloudSun, Terminal, Trash2, Mail, Key, Users, Volume2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 const SettingsSidebar = ({ activeSection, onNavigate }) => {
@@ -61,7 +61,6 @@ const SettingsSidebar = ({ activeSection, onNavigate }) => {
       subItems: [
         { id: 'widgets-general', label: 'General' },
         { id: 'widgets-weather', label: 'Weather' },
-        { id: 'widgets-download-client', label: 'Download Client' },
         { id: 'widgets-system-logs', label: 'System Logs' },
         { id: 'widgets-alarm', label: 'Alarm' }, // New Alarm Settings sub-item
       ]
@@ -113,7 +112,6 @@ const SettingsSidebar = ({ activeSection, onNavigate }) => {
                       label={subItem.label}
                       Icon={
                         subItem.id === 'widgets-weather' ? CloudSun :
-                        subItem.id === 'widgets-download-client' ? Download :
                         subItem.id === 'widgets-system-logs' ? Terminal :
                         subItem.id === 'widgets-alarm' ? Volume2 : // Icon for Alarm Settings
                         subItem.id === 'system-trash' ? Trash2 :

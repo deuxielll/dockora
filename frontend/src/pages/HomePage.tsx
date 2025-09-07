@@ -8,7 +8,6 @@ import SystemUsageWidget from '../components/widgets/SystemUsageWidget';
 import WeatherWidget from '../components/widgets/WeatherWidget';
 import AppLauncherWidget from '../components/widgets/AppLauncherWidget';
 import DeploymentStatusWidget from '../components/widgets/DeploymentStatusWidget';
-import DownloadClientWidget from '../components/widgets/DownloadClientWidget';
 import NetworkingWidget from '../components/widgets/NetworkingWidget';
 import FileActivityWidget from '../components/widgets/FileActivityWidget';
 import SystemLogsWidget from '../components/widgets/SystemLogsWidget';
@@ -24,7 +23,6 @@ export const WIDGETS_CONFIG = { // Exported for use in WidgetGrid and PopoutWidg
   weather: { component: WeatherWidget, title: 'Weather', defaultVisible: true, defaultLayout: { h: 1.5, minH: 1.5, minW: 1 } },
   time: { component: TimeWidget, title: 'Time & Date', defaultVisible: true, defaultLayout: { h: 2, minH: 2, minW: 1 } },
   networking: { component: NetworkingWidget, title: 'Network Status', defaultVisible: true, defaultLayout: { h: 3, minH: 3, minW: 1 } },
-  downloadClient: { component: DownloadClientWidget, title: 'Download Client', defaultVisible: true, defaultLayout: { h: 3.5, minH: 3, minW: 1 } },
   appLauncher: { component: AppLauncherWidget, title: 'App Launcher', defaultVisible: true, defaultLayout: { h: 4, minH: 4, minW: 1 } },
   fileActivity: { component: FileActivityWidget, title: 'File Activity', defaultVisible: true, defaultLayout: { h: 3, minH: 3, minW: 1 } },
   systemLogs: { component: SystemLogsWidget, title: 'System Logs', defaultVisible: true, defaultLayout: { h: 4, minH: 3, minW: 1 } },
@@ -51,18 +49,9 @@ const HomePage = () => {
     } catch { return null; }
   }, [settings.widgetLayouts]);
 
-  const isDownloadClientConfigured = useMemo(() => {
-    if (!settings.downloadClientConfig) return false;
-    try {
-      const config = JSON.parse(settings.downloadClientConfig);
-      return config.type && config.type !== 'none';
-    } catch (e) { return false; }
-  }, [settings.downloadClientConfig]);
-
   const visibleWidgets = useMemo(() => Object.keys(WIDGETS_CONFIG).filter(key => {
-    if (key === 'downloadClient' && !isDownloadClientConfigured) return false;
     return widgetVisibility[key] !== false;
-  }), [widgetVisibility, isDownloadClientConfigured]);
+  }), [widgetVisibility]);
 
   const generateDefaultLayouts = useCallback(() => {
     const breakpoints = { lg: 3, md: 2, sm: 1, xs: 1, xxs: 0 };

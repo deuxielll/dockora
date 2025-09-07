@@ -6,7 +6,6 @@ import UserManagement from './UserManagementPage';
 import ProfileSettings from '../components/settings/ProfileSettings';
 import GeneralWidgetSettings from '../components/settings/GeneralWidgetSettings';
 import WeatherWidgetSettings from '../components/settings/WeatherWidgetSettings';
-import DownloadClientWidgetSettings from '../components/settings/DownloadClientWidgetSettings';
 import SystemLogsWidgetSettings from '../components/settings/SystemLogsWidgetSettings';
 import AppearanceSettings from '../components/settings/AppearanceSettings';
 import TrashSettings from '../components/settings/TrashSettings';
@@ -30,8 +29,6 @@ const SettingsPage = () => {
         return <GeneralWidgetSettings />;
       case 'widgets-weather':
         return <WeatherWidgetSettings />;
-      case 'widgets-download-client':
-        return <DownloadClientWidgetSettings />;
       case 'widgets-system-logs':
         return <SystemLogsWidgetSettings />;
       case 'widgets-alarm': // New case for Alarm Settings
