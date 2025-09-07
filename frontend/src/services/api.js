@@ -182,4 +182,10 @@ export const executeSshCommand = async (data, onChunk) => {
   }
 };
 
+// Download Client
+export const testDownloadClientConnection = (config) => api.post('/download-client/test-connection', config);
+export const getTorrents = () => api.get('/download-client/torrents');
+export const addTorrent = (data) => api.post('/download-client/add-torrent', data);
+export const manageTorrent = (id, action) => api.post(`/download-client/torrents/${id}/${action}`);
+
 export default api;

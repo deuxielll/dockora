@@ -12,7 +12,8 @@ import TrashSettings from '../components/settings/TrashSettings';
 import SmtpSettings from '../components/settings/SmtpSettings';
 import SshTerminalSettings from '../components/settings/SshTerminalSettings';
 import SshTerminalOutputCard from '../components/settings/SshTerminalOutputCard';
-import AlarmSettings from '../components/settings/AlarmSettings'; // New import
+import AlarmSettings from '../components/settings/AlarmSettings';
+import DownloadClientSettings from '../components/settings/DownloadClientSettings'; // New import
 import SettingsSidebar from '../components/settings/SettingsSidebar';
 
 const SettingsPage = () => {
@@ -31,7 +32,7 @@ const SettingsPage = () => {
         return <WeatherWidgetSettings />;
       case 'widgets-system-logs':
         return <SystemLogsWidgetSettings />;
-      case 'widgets-alarm': // New case for Alarm Settings
+      case 'widgets-alarm':
         return <AlarmSettings />;
       case 'system-trash':
         return <TrashSettings />;
@@ -44,6 +45,8 @@ const SettingsPage = () => {
             <SshTerminalOutputCard />
           </>
         );
+      case 'system-download-client': // New case
+        return <DownloadClientSettings />;
       case 'user-management':
         return <UserManagement />;
       default:

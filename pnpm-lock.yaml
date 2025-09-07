@@ -20,6 +20,9 @@ importers:
       requests:
         specifier: ^0.3.0
         version: 0.3.0
+      transmission-rpc:
+        specifier: ^0.1.0
+        version: 0.1.0
 
   frontend:
     dependencies:
@@ -1064,6 +1067,9 @@ packages:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
     engines: {node: '>=8.0'}
 
+  transmission-rpc@0.1.0:
+    resolution: {integrity: sha512-ROcSFneAwG59QRKOsgLM9B4DpZFb5zd5WstumxWvjwX8QsQ95dtUN0L2aswVbwkSXxs6/DtxaNkBDjJ9tCQbOw==}
+
   ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
 
@@ -2102,6 +2108,8 @@ snapshots:
   to-regex-range@5.0.1:
     dependencies:
       is-number: 7.0.0
+
+  transmission-rpc@0.1.0: {}
 
   ts-interface-checker@0.1.13: {}
 
