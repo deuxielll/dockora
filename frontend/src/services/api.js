@@ -1,4 +1,5 @@
 import axios from "axios";
+import toast from 'react-hot-toast';
 
 const API_URL = `http://${window.location.hostname}:5000/api`;
 
@@ -6,6 +7,44 @@ const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
 });
+
+// Add a response interceptor to handle errors globally
+api.interceptors.response.use(
+  (response) => response, // Pass through successful responses
+  (error) => {
+    let message = 'An unexpected error occurred.';
+    
+    // Check if the error has a response from the server
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      message = error.response.data?.error || error.response.data?.message || message;
+      const status = error.response.status;
+      const path = error.config.url;
+
+      // Paths where errors are handled inline and we don't want a global toast
+      const noToastPaths = ['/login', '/setup', '/user/password', '/forgot-password', '/reset-password'];
+
+      // Don't show a toast for 401 (handled by auth context) or for paths with inline error handling
+      if (status !== 401 && !noToastPaths.includes(path)) {
+        toast.error(message);
+      }
+    } else if (error.request) {
+      // The request was made but no response was received
+      message = 'Network error: Could not connect to the server.';
+      toast.error(message);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      message = `An error occurred: ${error.message}`;
+      toast.error(message);
+    }
+
+    // IMPORTANT: Re-throw the error so that it can be caught by the calling function
+    // This allows components to still have their own error handling logic (e.g., setting loading states)
+    return Promise.reject(error);
+  }
+);
+
 
 // Auth
 export const checkSetup = () => api.get("/setup");
