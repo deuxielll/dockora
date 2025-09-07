@@ -2,10 +2,14 @@ import { useState, useEffect } from 'react';
 
 function getStorageValue(key, defaultValue) {
   const saved = localStorage.getItem(key);
+  if (saved === null) { // Handle null case explicitly
+    return defaultValue;
+  }
   try {
-    return saved ? JSON.parse(saved) : defaultValue;
+    return JSON.parse(saved);
   } catch (error) {
     console.error(`Error parsing localStorage key "${key}":`, error);
+    // If parsing fails, return the default value
     return defaultValue;
   }
 }
