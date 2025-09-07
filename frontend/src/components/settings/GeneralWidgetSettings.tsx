@@ -6,9 +6,11 @@ import SettingsCard from './SettingsCard';
 import { Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { WIDGETS_CONFIG } from '../../pages/HomePage'; // Import WIDGETS_CONFIG from HomePage
+import { useAuth } from '../../hooks/useAuth';
 
 const GeneralWidgetSettings = () => {
   const { settings, setSetting, isLoading: isSettingsLoading } = useSettings();
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [localWidgetVisibility, setLocalWidgetVisibility] = useState({});
   const [lockLayout, setLockLayout] = useState(false);
@@ -73,14 +75,21 @@ const GeneralWidgetSettings = () => {
   };
 
   const filteredWidgets = useMemo(() => {
+    const allWidgets = Object.entries(WIDGETS_CONFIG).filter(([key, config]) => {
+      if (config.adminOnly && currentUser?.role !== 'admin') {
+        return false;
+      }
+      return true;
+    });
+
     if (!searchTerm) {
-      return Object.entries(WIDGETS_CONFIG);
+      return allWidgets;
     }
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    return Object.entries(WIDGETS_CONFIG).filter(([key, config]) =>
+    return allWidgets.filter(([key, config]) =>
       config.title.toLowerCase().includes(lowerCaseSearchTerm)
     );
-  }, [searchTerm]);
+  }, [searchTerm, currentUser]);
 
   const showSearchBar = Object.keys(WIDGETS_CONFIG).length > 5;
   const inputStyles = "w-full p-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition placeholder:text-gray-500";
