@@ -49,7 +49,9 @@ const DownloadClientWidget = ({ isInteracting }) => {
   const [isAddingDownload, setIsAddingDownload] = useState(false);
   const fileInputRef = useRef(null);
 
-  const qbittorrentUrl = settings.qbittorrentUrl;
+  // Access qBittorrent settings from the downloadClientConfig object
+  const qbittorrentConfig = settings.downloadClientConfig || {};
+  const qbittorrentUrl = qbittorrentConfig.qbittorrentUrl;
 
   const fetchDownloads = useCallback(async () => {
     if (isInteracting) return; // Don't fetch if widget is being dragged/resized

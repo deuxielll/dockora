@@ -8,28 +8,44 @@ import { Save, AlertTriangle } from 'lucide-react';
 
 const DownloadClientWidgetSettings = () => {
   const { settings, setSetting, isLoading: isSettingsLoading } = useSettings();
-  const [qbittorrentUrl, setQbittorrentUrl] = useState('');
-  const [qbittorrentUsername, setQbittorrentUsername] = useState('');
-  const [qbittorrentPassword, setQbittorrentPassword] = useState('');
+  const [localConfig, setLocalConfig] = useState({
+    qbittorrentUrl: '',
+    qbittorrentUsername: '',
+    qbittorrentPassword: '',
+  });
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (settings) {
-      setQbittorrentUrl(settings.qbittorrentUrl || '');
-      setQbittorrentUsername(settings.qbittorrentUsername || '');
-      setQbittorrentPassword(settings.qbittorrentPassword || '');
+      try {
+        // Parse the downloadClientConfig from settings, default to empty object if not set
+        const parsedConfig = settings.downloadClientConfig ? settings.downloadClientConfig : {};
+        setLocalConfig(prev => ({
+          ...prev,
+          ...parsedConfig,
+        }));
+      } catch (e) {
+        console.error("Failed to parse downloadClientConfig from settings", e);
+        // Fallback to default empty config on parse error
+        setLocalConfig({ qbittorrentUrl: '', qbittorrentUsername: '', qbittorrentPassword: '' });
+      }
     }
   }, [settings]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setLocalConfig(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   const handleSave = useCallback(async (e) => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      await Promise.all([
-        setSetting('qbittorrentUrl', qbittorrentUrl),
-        setSetting('qbittorrentUsername', qbittorrentUsername),
-        setSetting('qbittorrentPassword', qbittorrentPassword),
-      ]);
+      // The useSettings hook will automatically stringify this object because 'downloadClientConfig' is in its list
+      await setSetting('downloadClientConfig', localConfig);
       toast.success('qBittorrent settings saved!');
     } catch (err) {
       console.error("Failed to save qBittorrent settings", err);
@@ -37,7 +53,7 @@ const DownloadClientWidgetSettings = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [qbittorrentUrl, qbittorrentUsername, qbittorrentPassword, setSetting]);
+  }, [localConfig, setSetting]);
 
   const inputStyles = "w-full p-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition placeholder:text-gray-500";
   const buttonStyles = "px-6 py-3 bg-dark-bg text-accent rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
@@ -54,15 +70,15 @@ const DownloadClientWidgetSettings = () => {
       <form onSubmit={handleSave} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-2 text-gray-400">WebUI URL</label>
-          <input type="url" name="qbittorrentUrl" value={qbittorrentUrl} onChange={(e) => setQbittorrentUrl(e.target.value)} className={inputStyles} placeholder="http://localhost:8080" required disabled={isSettingsLoading} />
+          <input type="url" name="qbittorrentUrl" value={localConfig.qbittorrentUrl} onChange={handleChange} className={inputStyles} placeholder="http://localhost:8080" required disabled={isSettingsLoading} />
         </div>
         <div>
           <label className="block text-sm font-medium mb-2 text-gray-400">Username (Optional)</label>
-          <input type="text" name="qbittorrentUsername" value={qbittorrentUsername} onChange={(e) => setQbittorrentUsername(e.target.value)} className={inputStyles} disabled={isSettingsLoading} />
+          <input type="text" name="qbittorrentUsername" value={localConfig.qbittorrentUsername} onChange={handleChange} className={inputStyles} disabled={isSettingsLoading} />
         </div>
         <div>
           <label className="block text-sm font-medium mb-2 text-gray-400">Password (Optional)</label>
-          <input type="password" name="qbittorrentPassword" value={qbittorrentPassword} onChange={(e) => setQbittorrentPassword(e.target.value)} className={inputStyles} disabled={isSettingsLoading} />
+          <input type="password" name="qbittorrentPassword" value={localConfig.qbittorrentPassword} onChange={handleChange} className={inputStyles} disabled={isSettingsLoading} />
         </div>
         <div className="flex justify-end pt-2">
           <button type="submit" className={buttonStyles} disabled={isSaving || isSettingsLoading}>
