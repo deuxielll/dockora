@@ -1,11 +1,14 @@
+"use client";
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowDown, ArrowUp, Settings, Loader, WifiOff } from 'lucide-react';
+import { ArrowDown, ArrowUp, Settings, Loader, WifiOff, AlertTriangle } from 'lucide-react';
 import { useSettings } from '../../hooks/useSettings';
 import { getDownloadClientStats, getTorrents, torrentAction } from '../../services/api';
 import TorrentItem from './download-client/TorrentItem';
 import TorrentContextMenu from './download-client/TorrentContextMenu';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../LoadingSpinner';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const formatSpeed = (bytes) => {
   if (bytes < 1024) return `${bytes} B/s`;
@@ -20,6 +23,7 @@ const DownloadClientWidget = ({ isInteracting }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [contextMenu, setContextMenu] = useState(null);
   const { settings } = useSettings();
+  const navigate = useNavigate(); // Initialize useNavigate
   
   const config = settings.downloadClientConfig ? JSON.parse(settings.downloadClientConfig) : { type: 'none' };
 
@@ -92,6 +96,24 @@ const DownloadClientWidget = ({ isInteracting }) => {
         </div>
       );
     }
+    
+    // Specific error handling for invalid configuration format
+    if (error && error.includes("Invalid download client configuration format")) {
+      return (
+        <div className="flex-grow flex flex-col items-center justify-center text-center text-red-500 p-4">
+          <AlertTriangle size={48} className="mb-4" />
+          <p className="font-bold text-lg">Configuration Error</p>
+          <p className="text-sm text-gray-400 mt-2">{error}</p>
+          <button 
+            onClick={() => navigate('/settings', { state: { activeSection: 'widgets-download-client' } })}
+            className="mt-4 px-4 py-2 bg-accent text-white rounded-lg shadow-neo hover:bg-accent-hover transition-all"
+          >
+            Go to Settings
+          </button>
+        </div>
+      );
+    }
+
     if (error && error.includes("network error")) {
       return (
         <div className="flex-grow flex flex-col items-center justify-center text-center text-red-500 p-4">
