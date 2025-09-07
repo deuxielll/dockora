@@ -87,12 +87,21 @@ def transmission_request(config, method, args=None):
 def get_download_client_stats():
     global qbit_auth_cookie, qbit_session
     config_setting = UserSetting.query.filter_by(user_id=session['user_id'], key='downloadClientConfig').first()
-    if not config_setting or not config_setting.value: return jsonify({"error": "Not configured."}), 404
-    try: config = json.loads(config_setting.value)
-    except json.JSONDecodeError: return jsonify({"error": "Invalid configuration."}), 500
+    if not config_setting or not config_setting.value:
+        return jsonify({"error": "Not configured."}), 404
+    
+    try:
+        config = json.loads(config_setting.value)
+        if not isinstance(config, dict):
+            # If it's not a dictionary, it's an invalid format for the client config
+            raise ValueError("Download client configuration must be a JSON object.")
+    except (json.JSONDecodeError, ValueError) as e:
+        current_app.logger.error(f"Invalid download client configuration for user {session['user_id']}: {config_setting.value} - {e}")
+        return jsonify({"error": "Invalid download client configuration format. Please reconfigure in settings."}), 500
 
     client_type = config.get('type')
-    if not client_type or client_type == 'none': return jsonify({"error": "Not configured."}), 404
+    if not client_type or client_type == 'none':
+        return jsonify({"error": "Not configured."}), 404
 
     try:
         if client_type == 'qbittorrent':
@@ -136,9 +145,17 @@ def map_transmission_status(status):
 def get_torrents():
     global qbit_auth_cookie, qbit_session
     config_setting = UserSetting.query.filter_by(user_id=session['user_id'], key='downloadClientConfig').first()
-    if not config_setting or not config_setting.value: return jsonify({"error": "Not configured."}), 404
-    try: config = json.loads(config_setting.value)
-    except json.JSONDecodeError: return jsonify({"error": "Invalid configuration."}), 500
+    if not config_setting or not config_setting.value:
+        return jsonify({"error": "Not configured."}), 404
+    
+    try:
+        config = json.loads(config_setting.value)
+        if not isinstance(config, dict):
+            # If it's not a dictionary, it's an invalid format for the client config
+            raise ValueError("Download client configuration must be a JSON object.")
+    except (json.JSONDecodeError, ValueError) as e:
+        current_app.logger.error(f"Invalid download client configuration for user {session['user_id']}: {config_setting.value} - {e}")
+        return jsonify({"error": "Invalid download client configuration format. Please reconfigure in settings."}), 500
 
     client_type = config.get('type')
     try:
@@ -188,9 +205,16 @@ def get_torrents():
 @login_required
 def torrent_action():
     config_setting = UserSetting.query.filter_by(user_id=session['user_id'], key='downloadClientConfig').first()
-    if not config_setting or not config_setting.value: return jsonify({"error": "Not configured."}), 404
-    try: config = json.loads(config_setting.value)
-    except json.JSONDecodeError: return jsonify({"error": "Invalid configuration."}), 500
+    if not config_setting or not config_setting.value:
+        return jsonify({"error": "Not configured."}), 404
+    
+    try:
+        config = json.loads(config_setting.value)
+        if not isinstance(config, dict):
+            raise ValueError("Download client configuration must be a JSON object.")
+    except (json.JSONDecodeError, ValueError) as e:
+        current_app.logger.error(f"Invalid download client configuration for user {session['user_id']}: {config_setting.value} - {e}")
+        return jsonify({"error": "Invalid download client configuration format."}), 500
     
     data = request.get_json()
     hashes = data.get('hash')
