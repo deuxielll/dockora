@@ -56,8 +56,14 @@ const HomePage = () => {
     if (config.adminOnly && currentUser?.role !== 'admin') {
       return false;
     }
+    if (key === 'qbittorrent') {
+      const downloadClientConfig = settings.downloadClientConfig;
+      if (!downloadClientConfig || downloadClientConfig.type === 'none') {
+        return false;
+      }
+    }
     return widgetVisibility[key] !== false;
-  }), [widgetVisibility, currentUser]);
+  }), [widgetVisibility, currentUser, settings.downloadClientConfig]);
 
   const generateDefaultLayouts = useCallback(() => {
     const breakpoints = { lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 }; // Changed xxs to 1
