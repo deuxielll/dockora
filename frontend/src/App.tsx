@@ -8,7 +8,8 @@ import SetupPage from "./pages/SetupPage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import BottomNavBar from "./components/BottomNavBar.tsx";
 import BackgroundManager from "./components/BackgroundManager.tsx";
-import PopoutWidgetPage from "./pages/PopoutWidgetPage.tsx"; // Import the new page
+import PopoutWidgetPage from "./pages/PopoutWidgetPage.tsx";
+import ErrorBoundary from "./components/ErrorBoundary.tsx";
 
 const HomePage = lazy(() => import("./pages/HomePage.tsx"));
 const ManagementPage = lazy(() => import("./pages/ManagementPage.tsx"));
@@ -64,24 +65,26 @@ function App() {
   return (
     <>
       <BackgroundManager />
-      <Routes>
-        <Route path="/login" element={!isLoggedIn ? <LoginPage /> : <Navigate to="/" />} />
-        <Route path="/setup" element={needsSetup ? <SetupPage /> : <Navigate to="/login" />} />
-        <Route path="/forgot-password" element={!isLoggedIn ? <ForgotPasswordPage /> : <Navigate to="/" />} />
-        <Route path="/reset-password/:token" element={!isLoggedIn ? <ResetPasswordPage /> : <Navigate to="/" />} />
-        
-        {/* New route for pop-out widgets */}
-        <Route path="/widget/:widgetId" element={<ProtectedRoute><PopoutWidgetPage /></ProtectedRoute>} />
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/login" element={!isLoggedIn ? <LoginPage /> : <Navigate to="/" />} />
+          <Route path="/setup" element={needsSetup ? <SetupPage /> : <Navigate to="/login" />} />
+          <Route path="/forgot-password" element={!isLoggedIn ? <ForgotPasswordPage /> : <Navigate to="/" />} />
+          <Route path="/reset-password/:token" element={!isLoggedIn ? <ResetPasswordPage /> : <Navigate to="/" />} />
+          
+          {/* New route for pop-out widgets */}
+          <Route path="/widget/:widgetId" element={<ProtectedRoute><PopoutWidgetPage /></ProtectedRoute>} />
 
-        <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/containers" element={<ManagementPage />} />
-          <Route path="/files" element={<FileManagerPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-        </Route>
+          <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/containers" element={<ManagementPage />} />
+            <Route path="/files" element={<FileManagerPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Route>
 
-        <Route path="*" element={<Navigate to={isLoggedIn ? "/" : "/login"} />} />
-      </Routes>
+          <Route path="*" element={<Navigate to={isLoggedIn ? "/" : "/login"} />} />
+        </Routes>
+      </ErrorBoundary>
     </>
   );
 }
