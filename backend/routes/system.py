@@ -6,7 +6,7 @@ import time
 import socket
 from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
-from models import UserSetting, SystemSetting, NetworkUsage
+from models import User, UserSetting, SystemSetting, NetworkUsage
 from decorators import login_required, admin_required
 from extensions import db
 import subprocess
@@ -14,6 +14,8 @@ import re
 from datetime import datetime, date, timedelta
 from sqlalchemy import func
 import os
+import smtplib
+from email.mime.text import MIMEText
 
 system_bp = Blueprint('system', __name__)
 
@@ -320,3 +322,44 @@ def set_smtp_settings():
     
     db.session.commit()
     return jsonify({"message": "SMTP settings saved successfully."})
+
+@system_bp.route("/system/smtp-test", methods=["POST"])
+def test_smtp_connection():
+    # This endpoint is for testing during setup.
+    # It is only available if no users have been created yet.
+    if User.query.first():
+        return jsonify({"error": "This test endpoint is only available during initial setup."}), 403
+
+    data = request.get_json()
+    smtp_server = data.get('smtp_server')
+    smtp_port = data.get('smtp_port')
+    smtp_user = data.get('smtp_user')
+    smtp_password = data.get('smtp_password')
+    smtp_sender = data.get('smtp_sender_email')
+    smtp_use_tls = data.get('smtp_use_tls', True)
+
+    if not all([smtp_server, smtp_port, smtp_sender]):
+        return jsonify({"error": "Server, Port, and Sender Email are required."}), 400
+
+    msg = MIMEText("This is a test email from Dockora to verify your SMTP settings.")
+    msg['Subject'] = 'Dockora SMTP Test'
+    msg['From'] = smtp_sender
+    msg['To'] = smtp_sender # Send to self
+
+    try:
+        with smtplib.SMTP(smtp_server, int(smtp_port), timeout=10) as server:
+            if smtp_use_tls:
+                server.starttls()
+            if smtp_user and smtp_password:
+                server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+        return jsonify({"message": "SMTP connection successful! Test email sent."})
+    except smtplib.SMTPAuthenticationError:
+        return jsonify({"error": "SMTP Authentication Error. Check username/password."}), 500
+    except (socket.gaierror, ConnectionRefusedError, smtplib.SMTPConnectError):
+        return jsonify({"error": "Connection Error. Check server address and port."}), 500
+    except socket.timeout:
+        return jsonify({"error": "Connection timed out."}), 500
+    except Exception as e:
+        current_app.logger.error(f"Failed to send test email: {e}")
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500

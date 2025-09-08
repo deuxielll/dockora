@@ -143,8 +143,6 @@ export const createStack = async (data, onChunk) => {
 export const getStack = (name) => api.get(`/stacks/${name}`);
 export const updateStack = (name, data) => api.put(`/stacks/${name}`, data);
 
-// File Manager APIs are removed
-
 // Images
 export const getImages = () => api.get("/images");
 export const removeImage = (id) => api.delete(`/images/${id}`);
@@ -156,6 +154,7 @@ export const getSmtpSettings = () => api.get("/system/smtp-settings");
 export const setSmtpSettings = (data) => api.post("/system/smtp-settings", data);
 export const getSmtpStatus = () => api.get("/system/smtp-status");
 export const getUrlMetadata = (url) => api.get(`/system/url-metadata?url=${encodeURIComponent(url)}`);
+export const testSmtpSettings = (data) => api.post("/system/smtp-test", data);
 
 // SSH Terminal
 export const getSshSettings = () => api.get("/system/ssh-settings");

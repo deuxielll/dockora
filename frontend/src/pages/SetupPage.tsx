@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { testSmtpSettings } from '../services/api';
 
 const SetupPage = () => {
   const [step, setStep] = useState(1);
@@ -19,6 +20,8 @@ const SetupPage = () => {
   const [error, setError] = useState('');
   const { setup } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isTestingSmtp, setIsTestingSmtp] = useState(false);
+  const [smtpTestResult, setSmtpTestResult] = useState(null);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -40,6 +43,27 @@ const SetupPage = () => {
   };
 
   const prevStep = () => setStep(step - 1);
+
+  const handleTestSmtp = async () => {
+    setIsTestingSmtp(true);
+    setSmtpTestResult(null);
+    try {
+        const settingsToTest = {
+            smtp_server: formData.smtp_server,
+            smtp_port: formData.smtp_port,
+            smtp_user: formData.smtp_user,
+            smtp_password: formData.smtp_password,
+            smtp_sender_email: formData.smtp_sender_email,
+            smtp_use_tls: formData.smtp_use_tls,
+        };
+        const res = await testSmtpSettings(settingsToTest);
+        setSmtpTestResult({ type: 'success', message: res.data.message });
+    } catch (err) {
+        setSmtpTestResult({ type: 'error', message: err.response?.data?.error || 'Failed to connect.' });
+    } finally {
+        setIsTestingSmtp(false);
+    }
+  };
 
   const handleSubmit = async (skipSmtp = false) => {
     setError('');
@@ -138,7 +162,17 @@ const SetupPage = () => {
             <label htmlFor="smtp_use_tls" className="text-sm text-gray-400">Use TLS</label>
         </div>
       </div>
-      <div className="flex justify-between items-center mt-8">
+      {smtpTestResult && (
+        <p className={`text-sm text-center my-4 ${smtpTestResult.type === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+            {smtpTestResult.message}
+        </p>
+      )}
+      <div className="flex justify-end mt-4">
+        <button type="button" onClick={handleTestSmtp} disabled={isTestingSmtp || isLoading} className={secondaryButtonStyles}>
+            {isTestingSmtp ? 'Testing...' : 'Test Connection'}
+        </button>
+      </div>
+      <div className="flex justify-between items-center mt-4">
         <button type="button" onClick={prevStep} className={`${secondaryButtonStyles} !px-4 !py-2 flex items-center gap-2`}>
             <ChevronLeft size={18} /> Back
         </button>
