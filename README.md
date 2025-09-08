@@ -7,7 +7,7 @@ Dockora is a modern, self-hosted dashboard designed to simplify the management o
 This dashboard was powered by state-of-the-art Google Gemini
 with huge thanks to [**Dyad**](https://www.dyad.sh/) for enabling its creation.
 
-![Dockora Screenshot](https://user-images.githubusercontent.com/12345/placeholder.png) <!-- TODO: Replace with an actual screenshot -->
+![Dockora](https://fsgezdakoianpjhingyz.supabase.co/storage/v1/object/public/images/3d2f1b02-aff2-49ef-a113-b05b26c3348a.png)
 
 ## ✨ Key Features
 
