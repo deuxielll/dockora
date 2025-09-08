@@ -324,13 +324,18 @@ def set_smtp_settings():
     return jsonify({"message": "SMTP settings saved successfully."})
 
 @system_bp.route("/system/smtp-test", methods=["POST"])
-@admin_required
 def test_smtp_connection():
+    # If the app is already set up (a user exists), we must ensure an admin is making the request.
+    if User.query.first():
+        if 'user_id' not in session:
+            return jsonify({"error": "Authentication required"}), 401
+        user = User.query.get(session['user_id'])
+        if not user or user.role != 'admin':
+            return jsonify({"error": "Admin privileges required"}), 403
+
     data = request.get_json()
-    # If called from settings, it will use saved settings. If from setup, it uses form data.
     if not data:
-        settings_list = SystemSetting.query.filter(SystemSetting.key.like('smtp_%')).all()
-        data = {s.key: s.value for s in settings_list}
+        return jsonify({"error": "SMTP settings are required in the request body."}), 400
 
     smtp_server = data.get('smtp_server')
     smtp_port = data.get('smtp_port')
@@ -338,7 +343,7 @@ def test_smtp_connection():
     smtp_password = data.get('smtp_password')
     smtp_sender = data.get('smtp_sender_email')
     smtp_use_tls = data.get('smtp_use_tls', True)
-    # Handle boolean from DB (string) or setup (boolean)
+    
     if isinstance(smtp_use_tls, str):
         smtp_use_tls = smtp_use_tls.lower() == 'true'
 
