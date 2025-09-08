@@ -12,6 +12,7 @@ import NetworkingWidget from '../components/widgets/NetworkingWidget';
 // FileActivityWidget is removed
 import SystemLogsWidget from '../components/widgets/SystemLogsWidget';
 import QbittorrentWidget from '../components/widgets/QbittorrentWidget'; // New import
+import TaskWidget from '../components/widgets/TaskWidget'; // New import
 import { Sun, Moon } from 'lucide-react';
 import LogoutButton from '../components/LogoutButton';
 import NotificationBell from '../components/NotificationBell';
@@ -28,6 +29,7 @@ export const WIDGETS_CONFIG = { // Exported for use in WidgetGrid and PopoutWidg
   // FileActivityWidget is removed
   systemLogs: { component: SystemLogsWidget, title: 'System Logs', defaultVisible: true, defaultLayout: { h: 4, minH: 3, minW: 1 }, adminOnly: true },
   qbittorrent: { component: QbittorrentWidget, title: 'qBittorrent Downloads', defaultVisible: true, defaultLayout: { h: 2.5, minH: 2.5, minW: 1 } }, // New widget
+  tasks: { component: TaskWidget, title: 'Tasks', defaultVisible: true, defaultLayout: { h: 3, minH: 2.5, minW: 1 } },
 };
 
 const HomePage = () => {
@@ -37,7 +39,7 @@ const HomePage = () => {
 
   const isLayoutLocked = useMemo(() => {
     return settings.lockWidgetLayout === 'true';
-  }, [settings.lockLayout]);
+  }, [settings.lockWidgetLayout]);
 
   const widgetVisibility = useMemo(() => {
     try {
