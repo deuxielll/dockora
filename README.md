@@ -4,10 +4,15 @@ Dockora is a modern, self-hosted dashboard designed to simplify the management o
 
 ## 🤖 Built with [AI](https://example-ai-link.com)
 
-
-
 This dashboard was powered by state-of-the-art Google Gemini
 with huge thanks to [**Dyad**](https://www.dyad.sh/) for enabling its creation.
+
+---
+
+💻 **Developer:** Rainiel Montañez  
+🔗 **Website:** [rainielmontanez.netlify.app](https://rainielmontanez.netlify.app)
+
+---
 
 ![Dockora](https://fsgezdakoianpjhingyz.supabase.co/storage/v1/object/public/images/3d2f1b02-aff2-49ef-a113-b05b26c3348a.png)
 
