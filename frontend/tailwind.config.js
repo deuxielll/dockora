@@ -32,6 +32,7 @@ module.exports = {
     },
   },
   plugins: [
+    require('@tailwindcss/typography'),
     plugin(function({ theme, addUtilities }) {
       const newUtilities = {}
       Object.entries(theme('textShadow')).forEach(([key, value]) => {

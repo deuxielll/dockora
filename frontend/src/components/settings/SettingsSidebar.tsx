@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronRight, User, Palette, LayoutGrid, CloudSun, Terminal, Trash2, Mail, Key, Users, Volume2, Download } from 'lucide-react'; // New: Download icon
+import { ChevronRight, User, Palette, LayoutGrid, CloudSun, Terminal, Trash2, Mail, Key, Users, Volume2, Download, Info } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 const SettingsSidebar = ({ activeSection, onNavigate }) => {
@@ -63,18 +63,18 @@ const SettingsSidebar = ({ activeSection, onNavigate }) => {
         { id: 'widgets-weather', label: 'Weather' },
         { id: 'widgets-system-logs', label: 'System Logs' },
         { id: 'widgets-alarm', label: 'Alarm' },
-        { id: 'widgets-download-client', label: 'Download Client' }, // New sub-item
+        { id: 'widgets-download-client', label: 'Download Client' },
       ]
     },
     {
       id: 'system', label: 'System', icon: Terminal,
       subItems: [
-        // Removed system-trash
         { id: 'system-smtp', label: 'SMTP' },
         { id: 'system-ssh-terminal', label: 'SSH Terminal' },
       ]
     },
     { id: 'user-management', label: 'User Management', icon: Users },
+    { id: 'about', label: 'About', icon: Info },
   ];
 
   const panelClasses = "bg-dark-bg shadow-neo";
@@ -115,8 +115,7 @@ const SettingsSidebar = ({ activeSection, onNavigate }) => {
                         subItem.id === 'widgets-weather' ? CloudSun :
                         subItem.id === 'widgets-system-logs' ? Terminal :
                         subItem.id === 'widgets-alarm' ? Volume2 :
-                        subItem.id === 'widgets-download-client' ? Download : // New icon for download client
-                        // Removed system-trash icon
+                        subItem.id === 'widgets-download-client' ? Download :
                         subItem.id === 'system-smtp' ? Mail :
                         subItem.id === 'system-ssh-terminal' ? Key :
                         null

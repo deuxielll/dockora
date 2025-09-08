@@ -13,8 +13,9 @@ import SmtpSettings from '../components/settings/SmtpSettings';
 import SshTerminalSettings from '../components/settings/SshTerminalSettings';
 import SshTerminalOutputCard from '../components/settings/SshTerminalOutputCard';
 import AlarmSettings from '../components/settings/AlarmSettings';
-import DownloadClientSettings from '../components/settings/DownloadClientSettings'; // New import
+import DownloadClientSettings from '../components/settings/DownloadClientSettings';
 import SettingsSidebar from '../components/settings/SettingsSidebar';
+import AboutSettings from '../components/settings/AboutSettings';
 
 const SettingsPage = () => {
   const { currentUser } = useAuth();
@@ -48,6 +49,8 @@ const SettingsPage = () => {
         );
       case 'user-management':
         return <UserManagement />;
+      case 'about':
+        return <AboutSettings />;
       default:
         return <ProfileSettings />; // Fallback
     }

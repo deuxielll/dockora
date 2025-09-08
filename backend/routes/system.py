@@ -68,6 +68,19 @@ def get_url_metadata():
     except Exception as e:
         return jsonify({"error": f"An error occurred: {e}"}), 500
 
+@system_bp.route("/system/about", methods=["GET"])
+@login_required
+def get_about_content():
+    readme_url = "https://raw.githubusercontent.com/deuxielll/dockora/main/README.md"
+    try:
+        response = requests.get(readme_url, timeout=10)
+        response.raise_for_status()
+        # Use response.text which correctly handles encoding based on headers
+        return Response(response.text, mimetype='text/markdown; charset=utf-8')
+    except requests.RequestException as e:
+        current_app.logger.error(f"Failed to fetch README from GitHub: {e}")
+        return jsonify({"error": "Could not fetch content from GitHub."}), 502
+
 @system_bp.route("/system/smtp-status", methods=["GET"])
 def get_smtp_status():
     required_keys = ['smtp_server', 'smtp_port', 'smtp_sender_email']
