@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: dockora
     volumes:
-      - postgres_data_v2:/var/lib/postgresql/data
+      - dockora_data:/var/lib/postgresql/data
     restart: always
 
   backend:
@@ -38,5 +38,4 @@ services:
       - backend
 
 volumes:
-  postgres_data_v2:
   dockora_data:
