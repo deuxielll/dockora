@@ -20,6 +20,15 @@ const TaskWidget = () => {
     setNewTask('');
   };
 
+  const handleClearCompleted = () => {
+    const completedTasks = tasks.filter(t => t.completed);
+    if (completedTasks.length === 0) {
+      toast.error("No completed tasks to clear.");
+      return;
+    }
+    clearCompleted();
+  };
+
   if (isLoading) {
     return <TaskWidgetSkeleton />;
   }
@@ -72,7 +81,7 @@ const TaskWidget = () => {
       
       {tasks.some(t => t.completed) && (
         <div className="flex-shrink-0 pt-2 mt-2 border-t border-gray-700/50">
-            <button onClick={clearCompleted} className="w-full text-center text-sm font-semibold text-red-500 p-2 rounded-lg hover:bg-red-900/30 transition-colors">
+            <button onClick={handleClearCompleted} className="w-full text-center text-sm font-semibold text-red-500 p-2 rounded-lg hover:bg-red-900/30 transition-colors">
                 Clear Completed
             </button>
         </div>

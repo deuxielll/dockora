@@ -52,25 +52,23 @@ const GeneralWidgetSettings = () => {
   }, [lockLayout, setSetting, settings.lockLayout]);
 
   const handleReset = async () => {
-    if (window.confirm('Are you sure you want to reset all widget settings to default?')) {
-      try {
-        const defaultVisibility = Object.fromEntries(
-          Object.entries(WIDGETS_CONFIG).map(([key, config]) => [key, config.defaultVisible])
-        );
-        await Promise.all([
-          setSetting('widgetVisibility', JSON.stringify(defaultVisibility)),
-          setSetting('weatherProvider', 'openmeteo'),
-          setSetting('weatherApiKey', ''),
-          setSetting('downloadClientConfig', JSON.stringify({ type: 'none', url: '', username: '', password: '' })),
-          setSetting('systemLogsWidgetConfig', JSON.stringify({ defaultContainerId: '' })),
-          setSetting('lockWidgetLayout', 'false'),
-          setSetting('widgetLayouts', null)
-        ]);
-        toast.success('Widget settings reset to default!');
-      } catch (err) {
-        console.error("Failed to reset widget settings", err);
-        toast.error('Failed to reset widget settings.');
-      }
+    try {
+      const defaultVisibility = Object.fromEntries(
+        Object.entries(WIDGETS_CONFIG).map(([key, config]) => [key, config.defaultVisible])
+      );
+      await Promise.all([
+        setSetting('widgetVisibility', JSON.stringify(defaultVisibility)),
+        setSetting('weatherProvider', 'openmeteo'),
+        setSetting('weatherApiKey', ''),
+        setSetting('downloadClientConfig', JSON.stringify({ type: 'none', url: '', username: '', password: '' })),
+        setSetting('systemLogsWidgetConfig', JSON.stringify({ defaultContainerId: '' })),
+        setSetting('lockWidgetLayout', 'false'),
+        setSetting('widgetLayouts', null)
+      ]);
+      toast.success('Widget settings reset to default!');
+    } catch (err) {
+      console.error("Failed to reset widget settings", err);
+      toast.error('Failed to reset widget settings.');
     }
   };
 

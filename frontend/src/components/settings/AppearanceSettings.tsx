@@ -30,17 +30,15 @@ const AppearanceSettings = () => {
   };
 
   const handleReset = async () => {
-    if (window.confirm('Are you sure you want to reset appearance settings to default?')) {
-      setIsSaving(true);
-      try {
-        await setSetting('backgroundUrl', '');
-        toast.success('Appearance settings reset to default!');
-      } catch (err) {
-        console.error("Failed to reset appearance settings", err);
-        toast.error('Failed to reset appearance settings.');
-      } finally {
-        setIsSaving(false);
-      }
+    setIsSaving(true);
+    try {
+      await setSetting('backgroundUrl', '');
+      toast.success('Appearance settings reset to default!');
+    } catch (err) {
+      console.error("Failed to reset appearance settings", err);
+      toast.error('Failed to reset appearance settings.');
+    } finally {
+      setIsSaving(false);
     }
   };
 

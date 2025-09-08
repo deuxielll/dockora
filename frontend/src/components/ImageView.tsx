@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { getImages, removeImage } from "../services/api";
 import { Trash2, Tag, Hash, HardDrive } from "lucide-react";
+import toast from "react-hot-toast";
 
 const ImageView = () => {
   const [images, setImages] = useState([]);
@@ -16,14 +17,13 @@ const ImageView = () => {
   }, []);
 
   const handleRemove = async (id) => {
-    if (window.confirm("Are you sure you want to remove this image? This action cannot be undone.")) {
-      try {
-        await removeImage(id);
-        fetchImages();
-      } catch (err) {
-        console.error("Error removing image:", err);
-        alert(err.response?.data?.error || "Failed to remove image.");
-      }
+    try {
+      await removeImage(id);
+      fetchImages();
+      toast.success("Image removed.");
+    } catch (err) {
+      console.error("Error removing image:", err);
+      toast.error(err.response?.data?.error || "Failed to remove image.");
     }
   };
 

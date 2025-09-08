@@ -67,20 +67,13 @@ export const useTasks = () => {
 
   const handleClearCompleted = async () => {
     const originalTasks = tasks;
-    const completedTasks = tasks.filter(t => t.completed);
-    if (completedTasks.length === 0) {
-      toast.error("No completed tasks to clear.");
-      return;
-    }
-    if (window.confirm(`Are you sure you want to clear ${completedTasks.length} completed task(s)?`)) {
-      setTasks(prev => prev.filter(t => !t.completed));
-      try {
-        await clearCompletedTasks();
-        toast.success("Cleared completed tasks.");
-      } catch (error) {
-        toast.error("Failed to clear completed tasks.");
-        setTasks(originalTasks);
-      }
+    setTasks(prev => prev.filter(t => !t.completed));
+    try {
+      await clearCompletedTasks();
+      toast.success("Cleared completed tasks.");
+    } catch (error) {
+      toast.error("Failed to clear completed tasks.");
+      setTasks(originalTasks);
     }
   };
 

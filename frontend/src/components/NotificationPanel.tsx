@@ -11,9 +11,7 @@ const NotificationPanel = ({ onClose }) => {
   };
 
   const handleClearAll = () => {
-    if (window.confirm('Are you sure you want to clear all notifications? This action cannot be undone.')) {
-      clearAll();
-    }
+    clearAll();
   };
 
   const getIcon = (type) => {

@@ -155,7 +155,6 @@ const AppLauncherWidget = ({ isInteracting, isLocked = false }) => {
   };
 
   const handleDeleteApp = async (appId, appName) => {
-    if (!window.confirm(`Are you sure you want to delete the application "${appName}"? This will remove all associated containers and data (if not using external volumes). This action cannot be undone.`)) return;
     const toastId = toast.loading(`Deleting application "${appName}"...`);
     try {
       await manageContainer(appId, 'remove');
@@ -181,7 +180,6 @@ const AppLauncherWidget = ({ isInteracting, isLocked = false }) => {
   };
 
   const handleDeleteBookmark = (bookmarkId) => {
-    if (!window.confirm(`Are you sure you want to delete this bookmark?`)) return;
     const newBookmarks = customBookmarks.filter(bm => bm.id !== bookmarkId);
     saveBookmarks(newBookmarks);
     toast.success(`Bookmark deleted.`);

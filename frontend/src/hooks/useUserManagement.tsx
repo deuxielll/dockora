@@ -42,15 +42,13 @@ const useUserManagement = () => {
   }, [fetchUsers]);
 
   const handleDeleteUser = useCallback(async (userId, username) => {
-    if (window.confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
-      try {
-        await deleteUser(userId);
-        toast.success(`User '${username}' deleted successfully.`);
-        fetchUsers(); // Refresh the list
-      } catch (err) {
-        const errorMessage = err.response?.data?.error || "Failed to delete user.";
-        toast.error(errorMessage);
-      }
+    try {
+      await deleteUser(userId);
+      toast.success(`User '${username}' deleted successfully.`);
+      fetchUsers(); // Refresh the list
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || "Failed to delete user.";
+      toast.error(errorMessage);
     }
   }, [fetchUsers]);
 
