@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronRight, User, Palette, LayoutGrid, CloudSun, Terminal, Trash2, Mail, Key, Users, Volume2, Download, Info } from 'lucide-react';
+import { ChevronRight, User, Palette, LayoutGrid, CloudSun, Terminal, Trash2, Mail, Key, Users, Download, Info } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 const SettingsSidebar = ({ activeSection, onNavigate }) => {
@@ -62,7 +62,6 @@ const SettingsSidebar = ({ activeSection, onNavigate }) => {
         { id: 'widgets-general', label: 'General' },
         { id: 'widgets-weather', label: 'Weather' },
         { id: 'widgets-system-logs', label: 'System Logs' },
-        { id: 'widgets-alarm', label: 'Alarm' },
         { id: 'widgets-download-client', label: 'Download Client' },
       ]
     },
@@ -114,7 +113,6 @@ const SettingsSidebar = ({ activeSection, onNavigate }) => {
                       Icon={
                         subItem.id === 'widgets-weather' ? CloudSun :
                         subItem.id === 'widgets-system-logs' ? Terminal :
-                        subItem.id === 'widgets-alarm' ? Volume2 :
                         subItem.id === 'widgets-download-client' ? Download :
                         subItem.id === 'system-smtp' ? Mail :
                         subItem.id === 'system-ssh-terminal' ? Key :

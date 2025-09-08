@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Clock, AlarmClock, Timer, Globe } from 'lucide-react';
+import { Clock, Timer, Globe } from 'lucide-react';
 import ClockDisplay from '../time-widget/ClockDisplay';
-import Alarm from '../time-widget/Alarm';
 import TimerComponent from '../time-widget/Timer';
 import Stopwatch from '../time-widget/Stopwatch';
 import WorldClock from '../time-widget/WorldClock';
@@ -12,7 +11,6 @@ const TimeWidget = ({ isInteracting }) => {
 
   const tabs = [
     { id: 'clock', icon: Clock, label: 'Clock' },
-    { id: 'alarm', icon: AlarmClock, label: 'Alarm' },
     { id: 'timer', icon: Timer, label: 'Timer' },
     { id: 'stopwatch', icon: Timer, label: 'Stopwatch' },
   ];
@@ -22,7 +20,6 @@ const TimeWidget = ({ isInteracting }) => {
       return <div className="flex-grow flex items-center justify-center"><LoadingSpinner size={32} /></div>;
     }
     switch (activeTab) {
-      case 'alarm': return <Alarm />;
       case 'timer': return <TimerComponent />;
       case 'stopwatch': return <Stopwatch />;
       default: return <ClockDisplay />;

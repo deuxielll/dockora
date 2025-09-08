@@ -12,7 +12,6 @@ import AppearanceSettings from '../components/settings/AppearanceSettings';
 import SmtpSettings from '../components/settings/SmtpSettings';
 import SshTerminalSettings from '../components/settings/SshTerminalSettings';
 import SshTerminalOutputCard from '../components/settings/SshTerminalOutputCard';
-import AlarmSettings from '../components/settings/AlarmSettings';
 import DownloadClientSettings from '../components/settings/DownloadClientSettings';
 import SettingsSidebar from '../components/settings/SettingsSidebar';
 import AboutSettings from '../components/settings/AboutSettings';
@@ -33,8 +32,6 @@ const SettingsPage = () => {
         return <WeatherWidgetSettings />;
       case 'widgets-system-logs':
         return <SystemLogsWidgetSettings />;
-      case 'widgets-alarm':
-        return <AlarmSettings />;
       case 'widgets-download-client': // New case
         return <DownloadClientSettings />;
       // Removed system-trash
