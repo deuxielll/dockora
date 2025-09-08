@@ -71,7 +71,8 @@ def get_url_metadata():
 @system_bp.route("/system/about", methods=["GET"])
 @login_required
 def get_about_content():
-    readme_url = "https://raw.githubusercontent.com/deuxielll/dockora/main/README.md"
+    cache_buster = int(time.time())
+    readme_url = f"https://raw.githubusercontent.com/deuxielll/dockora/main/README.md?_={cache_buster}"
     try:
         response = requests.get(readme_url, timeout=10)
         response.raise_for_status()
