@@ -1,60 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { useInterval } from '../../hooks/useInterval';
 import { Plus, Trash2, Bell, BellOff, Timer } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useSettings } from '../../hooks/useSettings'; // New import
-
-let audioContext;
-let oscillator;
-
-const playAlarmSound = (soundType) => {
-  if (oscillator) return; // Already playing
-  try {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime); // Soften the volume
-
-    switch (soundType) {
-      case 'chime':
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(660, audioContext.currentTime);
-        break;
-      case 'ascending':
-        oscillator.type = 'triangle';
-        oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
-        // For ascending, we'll simulate it by starting and then stopping after a short ramp
-        // However, for continuous loop, we just set the initial frequency.
-        // The continuous loop will be a steady tone.
-        break;
-      case 'beep':
-      default:
-        oscillator.type = 'square';
-        oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
-        break;
-    }
-    oscillator.start(); // Start the oscillator, it will play continuously until stopped
-  } catch (e) {
-    console.error("Failed to play alarm sound:", e);
-    toast.error("Failed to play alarm sound. Ensure browser allows audio playback.");
-  }
-};
-
-const stopAlarmSound = () => {
-  if (oscillator) {
-    oscillator.stop(); // Explicitly stop the oscillator
-    oscillator = null;
-  }
-  if (audioContext) {
-    audioContext.close();
-    audioContext = null;
-  }
-};
+import { useSettings } from '../../hooks/useSettings';
 
 const Alarm = () => {
   const [alarms, setAlarms] = useLocalStorage('dockora-alarms', []);
@@ -63,42 +14,83 @@ const Alarm = () => {
   const [showForm, setShowForm] = useState(false);
   const [newAlarmTime, setNewAlarmTime] = useState('07:00');
   const [newAlarmDays, setNewAlarmDays] = useState([]);
-  const { settings } = useSettings(); // Use settings hook
-  const alarmSoundType = settings.alarmSoundType || 'beep'; // Get selected sound type
+  const { settings } = useSettings();
+  const alarmSoundType = settings.alarmSoundType || 'beep';
+  
+  const audioRef = useRef({ context: null, oscillator: null });
+
+  const playAlarmSound = useCallback((soundType) => {
+    if (audioRef.current.oscillator) return; // Already playing
+    try {
+      const context = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = context.createOscillator();
+      const gainNode = context.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(context.destination);
+      gainNode.gain.setValueAtTime(0.1, context.currentTime); // Soften the volume
+
+      switch (soundType) {
+        case 'chime':
+          oscillator.type = 'sine';
+          oscillator.frequency.setValueAtTime(660, context.currentTime);
+          break;
+        case 'ascending':
+          oscillator.type = 'triangle';
+          oscillator.frequency.setValueAtTime(440, context.currentTime);
+          break;
+        case 'beep':
+        default:
+          oscillator.type = 'square';
+          oscillator.frequency.setValueAtTime(880, context.currentTime);
+          break;
+      }
+      oscillator.start();
+      audioRef.current = { context, oscillator };
+    } catch (e) {
+      console.error("Failed to play alarm sound:", e);
+      toast.error("Failed to play alarm sound. Ensure browser allows audio playback.");
+    }
+  }, []);
+
+  const stopAlarmSound = useCallback(() => {
+    if (audioRef.current.oscillator) {
+      audioRef.current.oscillator.stop();
+    }
+    if (audioRef.current.context) {
+      audioRef.current.context.close();
+    }
+    audioRef.current = { context: null, oscillator: null };
+  }, []);
 
   useInterval(() => setTime(new Date()), 1000);
 
   useEffect(() => {
     if (ringingAlarm) {
-      playAlarmSound(alarmSoundType); // Start playing once
-      return () => {
-        stopAlarmSound(); // Stop when ringingAlarm changes or component unmounts
-      };
+      playAlarmSound(alarmSoundType);
     } else {
-      stopAlarmSound(); // Ensure it's stopped if ringingAlarm becomes null
+      stopAlarmSound();
     }
-  }, [ringingAlarm, alarmSoundType]);
+    // Cleanup function to stop sound on unmount or when ringingAlarm changes
+    return () => {
+      stopAlarmSound();
+    };
+  }, [ringingAlarm, alarmSoundType, playAlarmSound, stopAlarmSound]);
 
-  // New: Check for missed alarms when tab becomes visible
+  // Check for missed alarms when tab becomes visible
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && !ringingAlarm) {
         const now = new Date();
-        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        const currentDay = now.getDay();
-
         alarms.forEach(alarm => {
           const isSnoozed = alarm.snoozedUntil && new Date(alarm.snoozedUntil) > now;
           if (alarm.enabled && !isSnoozed) {
+            const currentDay = now.getDay();
             const repeatsToday = alarm.days.length === 0 || alarm.days.includes(currentDay);
             
             const alarmHour = parseInt(alarm.time.split(':')[0]);
             const alarmMinute = parseInt(alarm.time.split(':')[1]);
-
             const alarmDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), alarmHour, alarmMinute, 0);
             
-            // Trigger if alarm time is in the past, but not too far in the past (e.g., last 5 minutes)
-            // And if it hasn't been snoozed past now
             if (repeatsToday && alarmDate <= now && (now.getTime() - alarmDate.getTime() < 5 * 60 * 1000)) {
                 setRingingAlarm(alarm);
             }
@@ -108,19 +100,18 @@ const Alarm = () => {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    // Also run once on mount in case the tab was already visible but missed an alarm
-    handleVisibilityChange();
+    handleVisibilityChange(); // Run on mount
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [alarms, ringingAlarm]); // Depend on alarms and ringingAlarm state
+  }, [alarms, ringingAlarm]);
 
   useInterval(() => {
-    if (ringingAlarm) return; // Don't check for new alarms if one is already ringing
+    if (ringingAlarm) return;
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    const currentDay = now.getDay(); // 0 for Sunday, 1 for Monday, etc.
+    const currentDay = now.getDay();
 
     alarms.forEach(alarm => {
       const isSnoozed = alarm.snoozedUntil && new Date(alarm.snoozedUntil) > now;
@@ -131,7 +122,7 @@ const Alarm = () => {
         }
       }
     });
-  }, 1000); // Check every second
+  }, 1000);
 
   const handleAddAlarm = () => {
     const newAlarm = {
@@ -157,20 +148,17 @@ const Alarm = () => {
   };
 
   const handleSnooze = () => {
-    const snoozedUntil = new Date(new Date().getTime() + 5 * 60 * 1000); // 5 minutes from now
+    const snoozedUntil = new Date(new Date().getTime() + 5 * 60 * 1000);
     setAlarms(alarms.map(a => a.id === ringingAlarm.id ? { ...a, snoozedUntil: snoozedUntil.toISOString() } : a));
     setRingingAlarm(null);
-    stopAlarmSound();
     toast.success("Alarm snoozed for 5 minutes.");
   };
 
   const handleDismiss = () => {
     if (ringingAlarm.days.length === 0) {
-      // If it's a one-time alarm, disable it
       setAlarms(alarms.map(a => a.id === ringingAlarm.id ? { ...a, enabled: false } : a));
     }
     setRingingAlarm(null);
-    stopAlarmSound();
     toast.success("Alarm dismissed.");
   };
 
@@ -178,7 +166,7 @@ const Alarm = () => {
     setNewAlarmDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
   };
 
-  const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']; // 0-indexed for Sunday, Monday, etc.
+  const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
   if (ringingAlarm) {
     return (
