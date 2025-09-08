@@ -18,6 +18,7 @@ from routes.system import system_bp
 from routes.apps import apps_bp, start_app_refresh_scheduler
 from routes.ssh import ssh_bp
 from routes.download_clients import download_clients_bp # New import
+from routes.tasks import tasks_bp
 
 
 def create_app():
@@ -42,6 +43,7 @@ def create_app():
     app.register_blueprint(apps_bp, url_prefix='/api')
     app.register_blueprint(ssh_bp, url_prefix='/api')
     app.register_blueprint(download_clients_bp, url_prefix='/api') # New: Register download_clients_bp
+    app.register_blueprint(tasks_bp, url_prefix='/api')
     
 
     return app

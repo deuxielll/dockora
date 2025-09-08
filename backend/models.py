@@ -27,6 +27,7 @@ class User(db.Model):
     # Removed: received_file_shares = db.relationship('UserFileShare', foreign_keys='UserFileShare.recipient_user_id', backref='recipient', lazy=True, cascade="all, delete-orphan")
     # Removed: sent_file_shares = db.relationship('UserFileShare', foreign_keys='UserFileShare.sharer_user_id', backref='sharer', lazy=True, cascade="all, delete-orphan")
     network_usage = db.relationship('NetworkUsage', backref='user', lazy=True, cascade="all, delete-orphan")
+    tasks = db.relationship('Task', backref='user', lazy=True, cascade="all, delete-orphan")
 
 
     def __init__(self, username, password, role='user'):
@@ -111,3 +112,10 @@ class NetworkUsage(db.Model):
     downloaded_bytes = db.Column(db.BigInteger, default=0, nullable=False)
 
     __table_args__ = (db.UniqueConstraint('user_id', 'date', name='_user_date_uc'),)
+
+class Task(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    text = db.Column(db.Text, nullable=False)
+    completed = db.Column(db.Boolean, default=False, nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())

@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTasks } from '../../hooks/useTasks';
+import TaskWidgetSkeleton from '../skeletons/TaskWidgetSkeleton';
 
 const TaskWidget = () => {
-  const [tasks, setTasks] = useLocalStorage('dockora-tasks', []);
+  const { tasks, isLoading, addTask, toggleTask, deleteTask, clearCompleted } = useTasks();
   const [newTask, setNewTask] = useState('');
 
   const handleAddTask = (e) => {
@@ -15,38 +16,13 @@ const TaskWidget = () => {
       toast.error("Task cannot be empty.");
       return;
     }
-    const task = {
-      id: crypto.randomUUID(),
-      text: newTask.trim(),
-      completed: false,
-    };
-    setTasks([task, ...tasks]);
+    addTask(newTask.trim());
     setNewTask('');
   };
 
-  const toggleTask = (id) => {
-    setTasks(
-      tasks.map(task =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
-
-  const deleteTask = (id) => {
-    setTasks(tasks.filter(task => task.id !== id));
-  };
-
-  const clearCompleted = () => {
-    const completedCount = tasks.filter(t => t.completed).length;
-    if (completedCount === 0) {
-        toast.error("No completed tasks to clear.");
-        return;
-    }
-    if (window.confirm(`Are you sure you want to clear ${completedCount} completed task(s)?`)) {
-        setTasks(tasks.filter(task => !task.completed));
-        toast.success("Cleared completed tasks.");
-    }
-  };
+  if (isLoading) {
+    return <TaskWidgetSkeleton />;
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -70,7 +46,7 @@ const TaskWidget = () => {
               key={task.id}
               className="flex items-center justify-between p-2 rounded-lg bg-dark-bg-secondary shadow-neo-inset group"
             >
-              <div className="flex items-center gap-3 cursor-pointer" onClick={() => toggleTask(task.id)}>
+              <div className="flex items-center gap-3 cursor-pointer" onClick={() => toggleTask(task.id, task.completed)}>
                 <button
                   type="button"
                   className="w-5 h-5 rounded bg-dark-bg shadow-neo-inset flex items-center justify-center flex-shrink-0"

@@ -190,3 +190,10 @@ export const executeSshCommand = async (data, onChunk) => {
 export const getDownloadClientSettings = () => api.get("/download-clients/settings");
 export const setDownloadClientSettings = (data) => api.post("/download-clients/settings", data);
 export const getQbittorrentDownloads = () => api.get("/download-clients/qbittorrent/downloads");
+
+// Tasks (New)
+export const getTasks = () => api.get("/tasks");
+export const createTask = (data) => api.post("/tasks", data);
+export const updateTask = (id, data) => api.put(`/tasks/${id}`, data);
+export const deleteTask = (id) => api.delete(`/tasks/${id}`);
+export const clearCompletedTasks = () => api.post("/tasks/clear-completed");
