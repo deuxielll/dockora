@@ -52,7 +52,7 @@ const AddUserForm = ({ onCreateUser, onCancel, isLoading: parentLoading }) => {
       <h4 className="font-semibold text-gray-200 mb-4 flex items-center gap-2">
         <UserPlus size={18} /> Add New User
       </h4>
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <div>
           <label className="block text-sm font-medium mb-2 text-gray-400">First Name</label>
           <input type="text" value={newFirstName} onChange={(e) => setNewFirstName(e.target.value)} className={inputStyles} required disabled={isDisabled} />

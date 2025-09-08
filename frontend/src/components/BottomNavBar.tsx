@@ -32,10 +32,10 @@ const BottomNavBar = ({ activeTab, currentUser }) => {
   );
 
   return (
-    <div className={`group fixed bottom-0 left-1/2 -translate-x-1/2 z-50 w-full max-w-max transition-transform duration-300 ease-in-out transform translate-y-[calc(100%-2rem)] hover:translate-y-0`}>
+    <div className={`group fixed bottom-0 left-1/2 -translate-x-1/2 z-50 w-full max-w-max transition-transform duration-300 ease-in-out transform md:translate-y-[calc(100%-2rem)] md:hover:translate-y-0`}>
       <div className="p-4 pt-6">
         <nav className={`relative flex justify-center items-center p-2 gap-2 rounded-xl ${panelClasses}`}>
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-gray-600 rounded-full transition-opacity duration-300 group-hover:opacity-0" />
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-gray-600 rounded-full transition-opacity duration-300 hidden md:block md:group-hover:opacity-0" />
           {navItems.map(item => (
             <NavButton
               key={item.name}

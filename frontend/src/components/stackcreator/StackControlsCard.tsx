@@ -34,7 +34,7 @@ const StackControlsCard = ({
 
   return (
     <div className={`p-6 rounded-xl ${panelClasses} flex-shrink-0 ${className}`}>
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-y-4">
         <div className="flex gap-2">
           <TabButton active={editorMode === 'visual'} onClick={() => handleTabSwitch('visual')} disabled={deploymentId !== null}>Visual Editor</TabButton>
           <TabButton active={editorMode === 'yaml'} onClick={() => handleTabSwitch('yaml')} disabled={deploymentId !== null}>Paste YAML</TabButton>

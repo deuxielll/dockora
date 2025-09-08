@@ -54,7 +54,7 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="flex gap-8 h-full">
+    <div className="flex flex-col md:flex-row gap-8 h-full">
       <SettingsSidebar activeSection={activeSection} onNavigate={setActiveSection} />
       <div className="flex-1 overflow-y-auto no-scrollbar p-4 sm:p-6">
         <h2 className="sr-only">Settings Content</h2>

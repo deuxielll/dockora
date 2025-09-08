@@ -155,7 +155,7 @@ const HomePage = () => {
     <div>
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-gray-200 flex items-center gap-3 text-shadow-neo">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-200 flex items-center gap-3 text-shadow-neo">
             <Icon size={36} className={iconColor} />
             <span>{greeting}, {displayName}!</span>
           </h1>

@@ -39,7 +39,7 @@ const DashboardLayout = () => {
   return (
     <div className="flex h-screen text-black dark:text-gray-200 font-sans">
       <div className="flex-1 flex flex-col overflow-hidden">
-        <main className={`flex-1 overflow-x-hidden p-4 sm:p-6 pb-32 overflow-y-auto no-scrollbar`}>
+        <main className={`flex-1 overflow-x-hidden p-4 sm:p-6 pb-28 overflow-y-auto no-scrollbar`}>
           <Suspense fallback={<LoadingSpinner />}>
             <Outlet />
           </Suspense>

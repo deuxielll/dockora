@@ -80,7 +80,7 @@ const SettingsSidebar = ({ activeSection, onNavigate }) => {
   const panelClasses = "bg-dark-bg shadow-neo";
 
   return (
-    <div className={`sticky top-4 h-[calc(100vh-4rem)] overflow-y-auto no-scrollbar p-4 rounded-xl ${panelClasses} w-64 flex-shrink-0`}>
+    <div className={`md:sticky top-4 md:h-[calc(100vh-4rem)] overflow-y-auto no-scrollbar p-4 rounded-xl ${panelClasses} w-full md:w-64 flex-shrink-0`}>
       <h2 className="text-xl font-bold text-gray-200 mb-6 pl-4">Settings</h2>
       <nav className="space-y-1">
         {sections.map(section => {

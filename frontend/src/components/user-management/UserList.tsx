@@ -29,7 +29,7 @@ const UserList = ({ users, currentUser, onDeleteUser, onEditUser, isLoading, err
         const displayName = (user.first_name && user.last_name) ? `${user.first_name} ${user.last_name}` : user.username;
 
         return (
-          <div key={user.id} className={`flex justify-between items-center p-3 rounded-lg ${panelClasses}`}>
+          <div key={user.id} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 p-3 rounded-lg ${panelClasses}`}>
             <div>
               <span className="font-medium text-gray-200">{displayName}</span>
               {user.email && <span className="text-sm text-gray-400 ml-2">({user.email})</span>}
@@ -37,7 +37,7 @@ const UserList = ({ users, currentUser, onDeleteUser, onEditUser, isLoading, err
                 {user.role}
               </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-end sm:self-center">
               <button
                 onClick={() => onEditUser(user)}
                 disabled={!canBeModified}
