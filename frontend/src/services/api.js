@@ -143,42 +143,7 @@ export const createStack = async (data, onChunk) => {
 export const getStack = (name) => api.get(`/stacks/${name}`);
 export const updateStack = (name, data) => api.put(`/stacks/${name}`, data);
 
-// File Manager
-export const browseFiles = (path) => api.get(`/files/browse?path=${encodeURIComponent(path)}`);
-export const getFileContent = (path) => api.get(`/files/content?path=${encodeURIComponent(path)}`);
-export const createItem = (data) => api.post('/files/create', data);
-export const uploadFile = (formData) => api.post('/files/upload', formData, {
-  headers: { 'Content-Type': 'multipart/form-data' }
-});
-export const deleteItem = (paths) => api.post('/files/delete', { paths });
-export const renameItem = (old_path, new_name) => api.post('/files/rename', { old_path, new_name });
-export const moveItems = (source_paths, destination_path) => api.post('/files/move', { source_paths, destination_path });
-export const copyItems = (source_paths, destination_path) => api.post('/files/copy', { source_paths, destination_path });
-export const viewFile = (path) => api.get(`/files/view?path=${encodeURIComponent(path)}`, { responseType: 'blob' });
-
-// Sharing (Public Links)
-export const createShare = (data) => api.post('/files/share', data);
-export const deleteShare = (token) => api.post('/files/unshare', { token });
-
-// Sharing (User-to-User)
-export const shareFileWithUsers = (paths, recipient_user_ids) => api.post('/files/share-with-user', { paths, recipient_user_ids });
-export const unshareFileWithUsers = (share_ids) => api.post('/files/unshare-with-user', { share_ids });
-export const getSharedWithMeItems = () => api.get('/files/shared-with-me');
-export const viewSharedWithMeFile = (share_id) => api.get(`/files/shared-with-me/view?share_id=${share_id}`, { responseType: 'blob' });
-export const downloadSharedWithMeFile = (share_id) => api.get(`/files/shared-with-me/download?share_id=${share_id}`, { responseType: 'blob' });
-export const getSharedWithMeFileContent = (share_id) => api.get(`/files/shared-with-me/content?share_id=${share_id}`);
-export const getSharedByMeItems = () => api.get('/files/shared-by-me');
-
-// New File Manager Activity APIs
-export const getRecentFileActivity = () => api.get('/files/recent-activity');
-export const getNewSharedFilesCount = () => api.get('/files/new-shared-count');
-export const updateLastViewedSharedFilesTimestamp = () => api.post('/files/update-last-viewed-shared');
-
-// Trash
-export const getTrashItems = () => api.get('/files/trash');
-export const restoreTrashItems = (trashed_names) => api.post('/files/trash/restore', { trashed_names });
-export const deleteTrashItemsPermanently = (trashed_names) => api.post('/files/trash/delete_permanently', { trashed_names });
-export const emptyTrash = () => api.post('/files/trash/empty');
+// File Manager APIs are removed
 
 // Images
 export const getImages = () => api.get("/images");

@@ -14,7 +14,7 @@ import ErrorBoundary from "./components/ErrorBoundary.tsx";
 const HomePage = lazy(() => import("./pages/HomePage.tsx"));
 const ManagementPage = lazy(() => import("./pages/ManagementPage.tsx"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage.tsx"));
-const FileManagerPage = lazy(() => import("./pages/FileManagerPage.tsx"));
+// FileManagerPage is removed
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage.tsx"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage.tsx"));
 
@@ -34,12 +34,12 @@ const DashboardLayout = () => {
   const location = useLocation();
   const { currentUser } = useAuth();
   const activeTab = location.pathname === '/' ? 'home' : location.pathname.split('/')[1];
-  const isFileManager = activeTab === 'files';
+  // isFileManager is no longer needed as the page is removed
 
   return (
     <div className="flex h-screen text-black dark:text-gray-200 font-sans">
       <div className="flex-1 flex flex-col overflow-hidden">
-        <main className={`flex-1 overflow-x-hidden ${isFileManager ? '' : 'p-4 sm:p-6 pb-32'} overflow-y-auto no-scrollbar`}>
+        <main className={`flex-1 overflow-x-hidden p-4 sm:p-6 pb-32 overflow-y-auto no-scrollbar`}>
           <Suspense fallback={<LoadingSpinner />}>
             <Outlet />
           </Suspense>
@@ -78,7 +78,7 @@ function App() {
           <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route path="/" element={<HomePage />} />
             <Route path="/containers" element={<ManagementPage />} />
-            <Route path="/files" element={<FileManagerPage />} />
+            {/* FileManagerPage route removed */}
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
 

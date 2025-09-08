@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Container, Settings, Folder } from 'lucide-react';
+import { Home, Container, Settings } from 'lucide-react'; // Removed Folder icon
 import { useNavigate } from 'react-router-dom';
 
 const BottomNavBar = ({ activeTab, currentUser }) => {
@@ -9,7 +9,7 @@ const BottomNavBar = ({ activeTab, currentUser }) => {
   const baseNavItems = [
     { name: 'home', label: 'Home', icon: Home, path: '/' },
     { name: 'containers', label: 'Containers', icon: Container, path: '/containers' },
-    { name: 'files', label: 'File Manager', icon: Folder, path: '/files' },
+    // Removed File Manager item
     { name: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
   ];
 

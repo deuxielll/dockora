@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request, session, current_app, render_template
 from models import User, SystemSetting
 from extensions import db, bcrypt
-from helpers import create_user_home_dirs
+# Removed: from helpers import create_user_home_dirs
 import secrets
 from datetime import datetime, timedelta
 import smtplib
@@ -96,7 +96,7 @@ def initial_setup():
 
     db.session.commit()
     
-    create_user_home_dirs(new_user.username)
+    # Removed: create_user_home_dirs(new_user.username)
     
     # Log the new user in automatically
     session['user_id'] = new_user.id

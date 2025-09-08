@@ -13,7 +13,7 @@ from models import User, SystemSetting
 from routes.auth import auth_bp
 from routes.users import users_bp
 from routes.containers import containers_bp
-from routes.files import files_bp
+# Removed: from routes.files import files_bp
 from routes.system import system_bp
 from routes.apps import apps_bp, start_app_refresh_scheduler
 from routes.ssh import ssh_bp
@@ -37,7 +37,7 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix='/api')
     app.register_blueprint(users_bp, url_prefix='/api')
     app.register_blueprint(containers_bp, url_prefix='/api')
-    app.register_blueprint(files_bp)
+    # Removed: app.register_blueprint(files_bp)
     app.register_blueprint(system_bp, url_prefix='/api')
     app.register_blueprint(apps_bp, url_prefix='/api')
     app.register_blueprint(ssh_bp, url_prefix='/api')
@@ -70,8 +70,8 @@ if __name__ == "__main__":
         exit(1)
 
     with app.app_context():
-        os.makedirs(os.path.realpath('/data/home'), exist_ok=True)
-        os.makedirs('/data/.trash', exist_ok=True)
+        # Removed: os.makedirs(os.path.realpath('/data/home'), exist_ok=True)
+        # Removed: os.makedirs('/data/.trash', exist_ok=True)
         os.makedirs('/data/avatars', exist_ok=True)
         
         scheduler_thread = threading.Thread(target=start_app_refresh_scheduler, args=(app,), daemon=True)

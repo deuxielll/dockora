@@ -49,7 +49,7 @@ const GeneralWidgetSettings = () => {
       toast.error('Failed to update layout lock setting.');
       setLockLayout(settings.lockWidgetLayout === 'true'); // Revert on error
     }
-  }, [lockLayout, setSetting, settings.lockWidgetLayout]);
+  }, [lockLayout, setSetting, settings.lockLayout]);
 
   const handleReset = async () => {
     if (window.confirm('Are you sure you want to reset all widget settings to default?')) {

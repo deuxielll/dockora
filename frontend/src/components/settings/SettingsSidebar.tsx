@@ -69,7 +69,7 @@ const SettingsSidebar = ({ activeSection, onNavigate }) => {
     {
       id: 'system', label: 'System', icon: Terminal,
       subItems: [
-        { id: 'system-trash', label: 'Trash' },
+        // Removed system-trash
         { id: 'system-smtp', label: 'SMTP' },
         { id: 'system-ssh-terminal', label: 'SSH Terminal' },
       ]
@@ -116,7 +116,7 @@ const SettingsSidebar = ({ activeSection, onNavigate }) => {
                         subItem.id === 'widgets-system-logs' ? Terminal :
                         subItem.id === 'widgets-alarm' ? Volume2 :
                         subItem.id === 'widgets-download-client' ? Download : // New icon for download client
-                        subItem.id === 'system-trash' ? Trash2 :
+                        // Removed system-trash icon
                         subItem.id === 'system-smtp' ? Mail :
                         subItem.id === 'system-ssh-terminal' ? Key :
                         null

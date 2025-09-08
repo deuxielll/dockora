@@ -19,15 +19,13 @@ class User(db.Model):
     avatar_url = db.Column(db.String(255), nullable=True)
     settings = db.relationship('UserSetting', backref='user', lazy=True, cascade="all, delete-orphan")
     notifications = db.relationship('Notification', backref='user', lazy=True, cascade="all, delete-orphan")
-    shares = db.relationship('ShareLink', backref='user', lazy=True, cascade="all, delete-orphan")
+    # Removed: shares = db.relationship('ShareLink', backref='user', lazy=True, cascade="all, delete-orphan")
     alarms = db.relationship('Alarm', backref='user', lazy=True, cascade="all, delete-orphan")
     world_clocks = db.relationship('WorldClock', backref='user', lazy=True, cascade="all, delete-orphan")
     reset_token = db.Column(db.String(100), nullable=True, unique=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
-    # New relationship for files shared *with* this user
-    received_file_shares = db.relationship('UserFileShare', foreign_keys='UserFileShare.recipient_user_id', backref='recipient', lazy=True, cascade="all, delete-orphan")
-    # New relationship for files shared *by* this user
-    sent_file_shares = db.relationship('UserFileShare', foreign_keys='UserFileShare.sharer_user_id', backref='sharer', lazy=True, cascade="all, delete-orphan")
+    # Removed: received_file_shares = db.relationship('UserFileShare', foreign_keys='UserFileShare.recipient_user_id', backref='recipient', lazy=True, cascade="all, delete-orphan")
+    # Removed: sent_file_shares = db.relationship('UserFileShare', foreign_keys='UserFileShare.sharer_user_id', backref='sharer', lazy=True, cascade="all, delete-orphan")
     network_usage = db.relationship('NetworkUsage', backref='user', lazy=True, cascade="all, delete-orphan")
 
 
@@ -83,27 +81,7 @@ class Stack(db.Model):
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
-class ShareLink(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    token = db.Column(db.String(32), unique=True, nullable=False, default=lambda: uuid.uuid4().hex)
-    name = db.Column(db.String(255), nullable=False)
-    created_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
-    items = db.relationship('SharedItem', backref='share_link', lazy=True, cascade="all, delete-orphan")
-
-class SharedItem(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    share_link_id = db.Column(db.Integer, db.ForeignKey('share_link.id'), nullable=False)
-    path = db.Column(db.String(1024), nullable=False)
-
-class UserFileShare(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    sharer_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    recipient_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    path = db.Column(db.String(1024), nullable=False) # Path relative to sharer's base path
-    shared_at = db.Column(db.DateTime, default=db.func.current_timestamp())
-
-    __table_args__ = (db.UniqueConstraint('sharer_user_id', 'recipient_user_id', 'path', name='_user_file_share_uc'),)
+# Removed: ShareLink, SharedItem, UserFileShare models
 
 class Application(db.Model):
     id = db.Column(db.Integer, primary_key=True)

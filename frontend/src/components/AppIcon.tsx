@@ -17,15 +17,8 @@ const AppIcon = ({ appId, appName, customIconUrl: bookmarkIconUrl }) => {
   const { settings } = useSettings();
   const [imageError, setImageError] = useState(false); // State to track image loading errors
 
-  const customAppIcons = useMemo(() => {
-    try {
-      return settings.customAppIcons ? JSON.parse(settings.customAppIcons) : {};
-    } catch {
-      return {};
-    }
-  }, [settings.customAppIcons]);
-
-  const customIconUrl = customAppIcons[appId] || bookmarkIconUrl;
+  // customAppIcons is removed, so we only rely on bookmarkIconUrl for custom icons
+  const customIconUrl = bookmarkIconUrl;
 
   const dashboardIconUrl = useMemo(() => {
     if (customIconUrl) return null; // If custom URL is present, don't try dashboard icon

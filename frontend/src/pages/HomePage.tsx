@@ -9,7 +9,7 @@ import WeatherWidget from '../components/widgets/WeatherWidget';
 import AppLauncherWidget from '../components/widgets/AppLauncherWidget';
 import DeploymentStatusWidget from '../components/widgets/DeploymentStatusWidget';
 import NetworkingWidget from '../components/widgets/NetworkingWidget';
-import FileActivityWidget from '../components/widgets/FileActivityWidget';
+// FileActivityWidget is removed
 import SystemLogsWidget from '../components/widgets/SystemLogsWidget';
 import QbittorrentWidget from '../components/widgets/QbittorrentWidget'; // New import
 import { Sun, Moon } from 'lucide-react';
@@ -25,7 +25,7 @@ export const WIDGETS_CONFIG = { // Exported for use in WidgetGrid and PopoutWidg
   time: { component: TimeWidget, title: 'Time & Date', defaultVisible: true, defaultLayout: { h: 2, minH: 2, minW: 1 } },
   networking: { component: NetworkingWidget, title: 'Network Status', defaultVisible: true, defaultLayout: { h: 3, minH: 3, minW: 1 } },
   appLauncher: { component: AppLauncherWidget, title: 'App Launcher', defaultVisible: true, defaultLayout: { h: 4, minH: 4, minW: 1 } },
-  fileActivity: { component: FileActivityWidget, title: 'File Activity', defaultVisible: true, defaultLayout: { h: 3, minH: 3, minW: 1 } },
+  // FileActivityWidget is removed
   systemLogs: { component: SystemLogsWidget, title: 'System Logs', defaultVisible: true, defaultLayout: { h: 4, minH: 3, minW: 1 }, adminOnly: true },
   qbittorrent: { component: QbittorrentWidget, title: 'qBittorrent Downloads', defaultVisible: true, defaultLayout: { h: 2.5, minH: 2.5, minW: 1 } }, // New widget
 };
@@ -37,7 +37,7 @@ const HomePage = () => {
 
   const isLayoutLocked = useMemo(() => {
     return settings.lockWidgetLayout === 'true';
-  }, [settings.lockWidgetLayout]);
+  }, [settings.lockLayout]);
 
   const widgetVisibility = useMemo(() => {
     try {

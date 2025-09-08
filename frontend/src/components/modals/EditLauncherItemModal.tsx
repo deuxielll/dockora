@@ -20,11 +20,11 @@ const EditLauncherItemModal = ({ item, onClose, onSaveApp, onSaveBookmark }) => 
         setUrl(item.app.url);
         setIconUrl(item.app.iconUrl || "");
       } else {
-        const customIcons = JSON.parse(settings.customAppIcons || '{}');
-        setIconUrl(customIcons[item.app.id] || "");
+        // Custom icons for apps are no longer supported, default to empty
+        setIconUrl("");
       }
     }
-  }, [item, settings.customAppIcons, isBookmark]);
+  }, [item, isBookmark]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,14 +39,7 @@ const EditLauncherItemModal = ({ item, onClose, onSaveApp, onSaveBookmark }) => 
         if (name !== item.app.name) {
           await renameContainer(item.app.id, name);
         }
-        // Handle custom icon URL
-        const customIcons = JSON.parse(settings.customAppIcons || '{}');
-        if (iconUrl) {
-          customIcons[item.app.id] = iconUrl;
-        } else {
-          delete customIcons[item.app.id];
-        }
-        await setSetting('customAppIcons', JSON.stringify(customIcons));
+        // Custom icon URL for apps is no longer supported, so no setting update needed here
         onSaveApp();
       }
     } catch (err) {

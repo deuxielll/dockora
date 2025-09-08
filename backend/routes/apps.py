@@ -4,6 +4,7 @@ from models import Application, User
 from decorators import login_required, admin_required
 import time
 import docker
+# Removed: from helpers import cleanup_trash
 
 apps_bp = Blueprint('apps', __name__)
 

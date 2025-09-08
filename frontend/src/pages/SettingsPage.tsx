@@ -8,7 +8,7 @@ import GeneralWidgetSettings from '../components/settings/GeneralWidgetSettings'
 import WeatherWidgetSettings from '../components/settings/WeatherWidgetSettings';
 import SystemLogsWidgetSettings from '../components/settings/SystemLogsWidgetSettings';
 import AppearanceSettings from '../components/settings/AppearanceSettings';
-import TrashSettings from '../components/settings/TrashSettings';
+// TrashSettings is removed
 import SmtpSettings from '../components/settings/SmtpSettings';
 import SshTerminalSettings from '../components/settings/SshTerminalSettings';
 import SshTerminalOutputCard from '../components/settings/SshTerminalOutputCard';
@@ -36,8 +36,7 @@ const SettingsPage = () => {
         return <AlarmSettings />;
       case 'widgets-download-client': // New case
         return <DownloadClientSettings />;
-      case 'system-trash':
-        return <TrashSettings />;
+      // Removed system-trash
       case 'system-smtp':
         return <SmtpSettings />;
       case 'system-ssh-terminal':
