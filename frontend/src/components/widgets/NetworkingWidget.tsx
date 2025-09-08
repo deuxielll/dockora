@@ -22,17 +22,14 @@ ChartJS.register(
   Filler
 );
 
-const formatBytes = (bytes) => {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-};
-
-const formatSpeed = (bytes) => {
-  if (bytes === 0) return '0 B/s';
-  return `${formatBytes(bytes)}/s`;
+const formatSpeedInBits = (bytesPerSecond) => {
+  if (!bytesPerSecond || bytesPerSecond < 0) bytesPerSecond = 0;
+  const bitsPerSecond = bytesPerSecond * 8;
+  const k = 1000;
+  if (bitsPerSecond < k) return `${bitsPerSecond.toFixed(0)} bps`;
+  if (bitsPerSecond < k * k) return `${(bitsPerSecond / k).toFixed(2)} Kbps`;
+  if (bitsPerSecond < k * k * k) return `${(bitsPerSecond / (k * k)).toFixed(2)} Mbps`;
+  return `${(bitsPerSecond / (k * k * k)).toFixed(2)} Gbps`;
 };
 
 const MAX_DATA_POINTS = 20;
@@ -84,8 +81,8 @@ const NetworkingWidget = () => {
         setHistory(prev => {
           const now = new Date();
           const newLabels = [...prev.labels.slice(1), now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })];
-          const newUpload = [...prev.upload.slice(1), res.data.upload_speed / 1024]; // in KB/s
-          const newDownload = [...prev.download.slice(1), res.data.download_speed / 1024]; // in KB/s
+          const newUpload = [...prev.upload.slice(1), (res.data.upload_speed * 8) / 1000000]; // in Mbps
+          const newDownload = [...prev.download.slice(1), (res.data.download_speed * 8) / 1000000]; // in Mbps
           return { labels: newLabels, upload: newUpload, download: newDownload };
         });
       } catch (error) {
@@ -133,7 +130,7 @@ const NetworkingWidget = () => {
         ticks: {
           color: '#9ca3af',
           font: { size: 10 },
-          callback: (value) => `${value} KB/s`,
+          callback: (value) => `${value.toFixed(1)} Mbps`,
         },
         grid: { color: 'rgba(107, 114, 128, 0.2)' },
       },
@@ -149,7 +146,7 @@ const NetworkingWidget = () => {
         mode: 'index',
         intersect: false,
         callbacks: {
-          label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)} KB/s`,
+          label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(2)} Mbps`,
         },
       },
     },
@@ -233,11 +230,11 @@ const NetworkingWidget = () => {
         <div className="flex justify-between items-center text-sm mb-4">
           <div className="flex items-center gap-2 text-blue-400">
             <ArrowDown size={16} />
-            <span>{formatSpeed(stats.download_speed)}</span>
+            <span>{formatSpeedInBits(stats.download_speed)}</span>
           </div>
           <div className="flex items-center gap-2 text-green-400">
             <ArrowUp size={16} />
-            <span>{formatSpeed(stats.upload_speed)}</span>
+            <span>{formatSpeedInBits(stats.upload_speed)}</span>
           </div>
         </div>
         {/* Simplified network details */}
