@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getSmtpSettings, setSmtpSettings } from '../../services/api';
+import { getSmtpSettings, setSmtpSettings, testSmtpSettings } from '../../services/api';
 import SettingsCard from './SettingsCard';
 
 const SmtpSettings = () => {
@@ -14,6 +14,8 @@ const SmtpSettings = () => {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -44,6 +46,7 @@ const SmtpSettings = () => {
     e.preventDefault();
     setSuccess('');
     setError('');
+    setTestResult(null);
     setIsLoading(true);
     try {
       await setSmtpSettings(settings);
@@ -56,8 +59,24 @@ const SmtpSettings = () => {
     }
   };
 
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    setTestResult(null);
+    setSuccess('');
+    setError('');
+    try {
+      const res = await testSmtpSettings(settings);
+      setTestResult({ type: 'success', message: res.data.message });
+    } catch (err) {
+      setTestResult({ type: 'error', message: err.response?.data?.error || 'Failed to connect.' });
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   const inputStyles = "w-full p-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo-inset focus:outline-none transition";
   const buttonStyles = "px-6 py-3 bg-dark-bg text-accent rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
+  const secondaryButtonStyles = "px-6 py-3 bg-dark-bg text-gray-300 rounded-lg shadow-neo active:shadow-neo-inset transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
 
   return (
     <SettingsCard title="SMTP Settings (for Email)">
@@ -97,7 +116,15 @@ const SmtpSettings = () => {
         </div>
         {success && <p className="text-green-600 text-sm text-center">{success}</p>}
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-        <div className="flex justify-end pt-2">
+        {testResult && (
+          <p className={`text-sm text-center ${testResult.type === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+            {testResult.message}
+          </p>
+        )}
+        <div className="flex justify-end gap-4 pt-2">
+          <button type="button" onClick={handleTestConnection} disabled={isTesting || isLoading} className={secondaryButtonStyles}>
+            {isTesting ? 'Testing...' : 'Test Connection'}
+          </button>
           <button type="submit" className={buttonStyles} disabled={isLoading}>
             {isLoading ? 'Saving...' : 'Save SMTP Settings'}
           </button>

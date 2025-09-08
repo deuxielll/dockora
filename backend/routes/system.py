@@ -324,19 +324,23 @@ def set_smtp_settings():
     return jsonify({"message": "SMTP settings saved successfully."})
 
 @system_bp.route("/system/smtp-test", methods=["POST"])
+@admin_required
 def test_smtp_connection():
-    # This endpoint is for testing during setup.
-    # It is only available if no users have been created yet.
-    if User.query.first():
-        return jsonify({"error": "This test endpoint is only available during initial setup."}), 403
-
     data = request.get_json()
+    # If called from settings, it will use saved settings. If from setup, it uses form data.
+    if not data:
+        settings_list = SystemSetting.query.filter(SystemSetting.key.like('smtp_%')).all()
+        data = {s.key: s.value for s in settings_list}
+
     smtp_server = data.get('smtp_server')
     smtp_port = data.get('smtp_port')
     smtp_user = data.get('smtp_user')
     smtp_password = data.get('smtp_password')
     smtp_sender = data.get('smtp_sender_email')
     smtp_use_tls = data.get('smtp_use_tls', True)
+    # Handle boolean from DB (string) or setup (boolean)
+    if isinstance(smtp_use_tls, str):
+        smtp_use_tls = smtp_use_tls.lower() == 'true'
 
     if not all([smtp_server, smtp_port, smtp_sender]):
         return jsonify({"error": "Server, Port, and Sender Email are required."}), 400
