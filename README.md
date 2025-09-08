@@ -2,7 +2,10 @@
 
 Dockora is a modern, self-hosted dashboard designed to simplify the management of your Docker containers, applications, and stacks. It provides a clean, customizable interface with various widgets to monitor your system and access your services with ease.
 
+## 🤖 Built with [AI](https://example-ai-link.com)
 
+This dashboard was powered by state-of-the-art Google Gemini
+with huge thanks to [**Dyad**](https://example-dyad-link.com) for enabling its creation.
 
 ![Dockora Screenshot](https://user-images.githubusercontent.com/12345/placeholder.png) <!-- TODO: Replace with an actual screenshot -->
 
